@@ -151,14 +151,18 @@ export default function SuperAdminScreen() {
                 <Text className="text-sm font-semibold text-muted uppercase tracking-wide">Planes</Text>
                 <View className="bg-surface rounded-2xl p-4 border border-border gap-3">
                   <View className="flex-row items-center justify-between">
-                    <Text className="text-base text-foreground font-medium">Plan Mensual</Text>
-                    <Text className="text-2xl font-bold text-primary">{metrics.monthlyPlanUsers}</Text>
+                    <Text className="text-base text-foreground font-medium">Plan Basico ($12)</Text>
+                    <Text className="text-2xl font-bold text-primary">{metrics.basicPlanUsers}</Text>
+                  </View>
+                  <View className="flex-row items-center justify-between">
+                    <Text className="text-base text-foreground font-medium">Plan VIP ($14)</Text>
+                    <Text className="text-2xl font-bold text-primary">{metrics.vipPlanUsers}</Text>
                   </View>
                   <View className="h-2 bg-surface rounded-full overflow-hidden border border-border">
                     <View
                       className="h-full bg-primary rounded-full"
                       style={{
-                        width: `${((metrics.monthlyPlanUsers / (metrics.monthlyPlanUsers + metrics.lifetimePlanUsers)) * 100) || 0}%`,
+                        width: `${(((metrics.basicPlanUsers + metrics.vipPlanUsers) / (metrics.basicPlanUsers + metrics.vipPlanUsers + metrics.lifetimePlanUsers)) * 100) || 0}%`,
                       }}
                     />
                   </View>
@@ -171,7 +175,7 @@ export default function SuperAdminScreen() {
                     <View
                       className="h-full bg-primary rounded-full"
                       style={{
-                        width: `${((metrics.lifetimePlanUsers / (metrics.monthlyPlanUsers + metrics.lifetimePlanUsers)) * 100) || 0}%`,
+                        width: `${((metrics.lifetimePlanUsers / (metrics.basicPlanUsers + metrics.vipPlanUsers + metrics.lifetimePlanUsers)) * 100) || 0}%`,
                       }}
                     />
                   </View>
@@ -323,8 +327,11 @@ function UserManagementCard({ user, onStatusChange, onPlanChange, colors }: User
   };
 
   const handleChangePlan = () => {
-    const newPlan = user.plan === "monthly" ? "lifetime" : "monthly";
-    const planLabel = newPlan === "monthly" ? "Mensual" : "Lifetime";
+    const planOptions: Array<"basic" | "vip" | "lifetime"> = ["basic", "vip", "lifetime"];
+    const currentIndex = planOptions.indexOf(user.plan as "basic" | "vip" | "lifetime");
+    const newPlan = planOptions[(currentIndex + 1) % planOptions.length];
+    const planLabels: Record<string, string> = { basic: "Básico ($12)", vip: "VIP ($14)", lifetime: "Lifetime" };
+    const planLabel = planLabels[newPlan] || "Desconocido";
 
     Alert.alert(
       "Cambiar Plan",

@@ -61,7 +61,7 @@ export async function searchUsers(query: string) {
     .orderBy(desc(users.createdAt));
 }
 
-export async function updateUserPlan(userId: number, plan: "monthly" | "lifetime") {
+export async function updateUserPlan(userId: number, plan: "basic" | "vip" | "lifetime") {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
@@ -132,12 +132,17 @@ export async function getTotalAudioTranscriptionsThisMonth() {
 
 export async function getUsersCountByPlan() {
   const db = await getDb();
-  if (!db) return { monthly: 0, lifetime: 0 };
+  if (!db) return { basic: 0, vip: 0, lifetime: 0 };
 
-  const monthly = await db
+  const basic = await db
     .select({ count: users.id })
     .from(users)
-    .where(and(eq(users.role, "user"), eq(users.plan, "monthly")));
+    .where(and(eq(users.role, "user"), eq(users.plan, "basic")));
+
+  const vip = await db
+    .select({ count: users.id })
+    .from(users)
+    .where(and(eq(users.role, "user"), eq(users.plan, "vip")));
 
   const lifetime = await db
     .select({ count: users.id })
@@ -145,7 +150,8 @@ export async function getUsersCountByPlan() {
     .where(and(eq(users.role, "user"), eq(users.plan, "lifetime")));
 
   return {
-    monthly: monthly.length,
+    basic: basic.length,
+    vip: vip.length,
     lifetime: lifetime.length,
   };
 }
@@ -159,10 +165,11 @@ export async function getSuperAdminMetrics() {
     getUsersCountByPlan(),
   ]);
 
-  const totalRevenue = (planCounts.monthly * 9.99) + (planCounts.lifetime * 49.99);
+  const totalRevenue = (planCounts.basic * 12) + (planCounts.vip * 14) + (planCounts.lifetime * 49.99);
   const recentPayments = [
-    { email: "usuario1@example.com", amount: 9.99, plan: "monthly", date: new Date() },
-    { email: "usuario2@example.com", amount: 49.99, plan: "lifetime", date: new Date() },
+    { email: "usuario1@example.com", amount: 12, plan: "basic", date: new Date() },
+    { email: "usuario2@example.com", amount: 14, plan: "vip", date: new Date() },
+    { email: "usuario3@example.com", amount: 49.99, plan: "lifetime", date: new Date() },
   ];
 
   return {
@@ -171,7 +178,8 @@ export async function getSuperAdminMetrics() {
     inactiveUsers,
     totalImages,
     totalAudio,
-    monthlyPlanUsers: planCounts.monthly,
+    basicPlanUsers: planCounts.basic,
+    vipPlanUsers: planCounts.vip,
     lifetimePlanUsers: planCounts.lifetime,
     totalRevenue: Math.round(totalRevenue * 100) / 100,
     recentPayments,
@@ -197,8 +205,8 @@ export async function canUserRecordAudio(userId: number): Promise<boolean> {
 
   const u = user[0];
 
-  // Usuarios con plan mensual no tienen límite
-  if (u.plan === "monthly") {
+  // Usuarios con plan basic y vip no tienen límite
+  if (u.plan === "basic" || u.plan === "vip") {
     return true;
   }
 

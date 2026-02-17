@@ -208,3 +208,16 @@
 - [x] Activar modo offline definitivamente
 - [x] Verificar que service worker está registrado
 - [x] Probar instalación en navegador
+
+
+## Despliegue Final y Optimización
+- [ ] Reparar URL de producción
+- [ ] Verificar que la app cargue correctamente
+- [ ] Implementar Plan Básico ($12)
+- [ ] Implementar Plan VIP ($14)
+- [ ] Agregar sección exclusiva de Soporte y Webinars para VIP
+- [ ] Enviar emails de bienvenida automáticos
+- [ ] Implementar "Olvidé mi contraseña"
+- [ ] Crear panel de auditoría de webhooks
+- [ ] Verificar Service Worker instalable
+- [ ] Probar PWA en navegador

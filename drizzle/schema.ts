@@ -18,7 +18,7 @@ export const users = mysqlTable("users", {
   loginMethod: varchar("loginMethod", { length: 64 }),
   role: mysqlEnum("role", ["user", "admin"]).default("user").notNull(),
   isActive: mysqlEnum("isActive", ["active", "inactive"]).default("active").notNull(),
-  plan: mysqlEnum("plan", ["monthly", "lifetime"]).default("monthly").notNull(),
+  plan: mysqlEnum("plan", ["basic", "vip", "lifetime"]).default("basic").notNull(),
   audioTranscriptionsThisMonth: int("audioTranscriptionsThisMonth").default(0).notNull(),
   lastAudioResetDate: timestamp("lastAudioResetDate").defaultNow().notNull(),
   storageUsedMB: int("storageUsedMB").default(0).notNull(),

@@ -21,7 +21,7 @@ function createAuthContext(): { ctx: TrpcContext; clearedCookies: CookieCall[] }
     loginMethod: "manus",
     role: "user",
     isActive: "active",
-    plan: "monthly",
+    plan: "basic",
     audioTranscriptionsThisMonth: 0,
     lastAudioResetDate: new Date(),
     storageUsedMB: 0,

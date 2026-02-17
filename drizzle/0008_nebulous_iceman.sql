@@ -1,0 +1,1 @@
+ALTER TABLE `users` MODIFY COLUMN `plan` enum('basic','vip','lifetime') NOT NULL DEFAULT 'basic';

@@ -399,7 +399,7 @@ export const appRouter = router({
       updatePlan: superAdminProcedure
         .input(z.object({
           id: z.number(),
-          plan: z.enum(["monthly", "lifetime"]),
+          plan: z.enum(["basic", "vip", "lifetime"]),
         }))
         .mutation(async ({ input }) => {
           await superAdminDb.updateUserPlan(input.id, input.plan);

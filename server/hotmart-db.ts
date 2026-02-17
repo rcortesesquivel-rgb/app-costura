@@ -213,7 +213,7 @@ export async function processPurchaseApproved(email: string, payload: any) {
 
   // Detectar si es suscripción o pago único
   const isRecurring = payload.product?.is_recurring || payload.subscription_id;
-  const plan = isRecurring ? "monthly" : "lifetime";
+  const plan = isRecurring ? "vip" : "lifetime";
   const isPriority = isRecurring ? 1 : 0;
 
   // Actualizar usuario
@@ -265,7 +265,7 @@ export async function createOrUpdateUserFromHotmart(email: string, payload: any)
     
     // Detectar si es suscripción o pago único
     const isRecurring = payload.product?.is_recurring || payload.subscription_id;
-    const plan = isRecurring ? "monthly" : "lifetime";
+    const plan = isRecurring ? "vip" : "lifetime";
     const isPriority = isRecurring ? 1 : 0;
 
     await db.insert(users).values({
@@ -313,7 +313,7 @@ export async function createOrUpdateUserFromHotmart(email: string, payload: any)
     // Usuario existe, actualizar
     const userId = user[0].id;
     const isRecurring = payload.product?.is_recurring || payload.subscription_id;
-    const plan = isRecurring ? "monthly" : "lifetime";
+    const plan = isRecurring ? "vip" : "lifetime";
     const isPriority = isRecurring ? 1 : 0;
 
     await db
