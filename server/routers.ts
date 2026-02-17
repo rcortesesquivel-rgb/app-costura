@@ -4,12 +4,27 @@ import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router } from "./_core/trpc";
 import * as db from "./db";
+import * as adminDb from "./admin-db";
 
 // Procedimiento protegido que requiere autenticación
 const protectedProcedure = publicProcedure.use(async (opts) => {
   const user = opts.ctx.user;
   if (!user || !user.id) {
     throw new Error("Unauthorized: User not authenticated");
+  }
+  return opts.next({
+    ctx: {
+      ...opts.ctx,
+      user: user,
+    },
+  });
+});
+
+// Procedimiento protegido solo para administradores
+const adminProcedure = publicProcedure.use(async (opts) => {
+  const user = opts.ctx.user;
+  if (!user || !user.id || user.role !== "admin") {
+    throw new Error("Unauthorized: Admin access required");
   }
   return opts.next({
     ctx: {
@@ -303,6 +318,51 @@ export const appRouter = router({
       .query(({ input, ctx }) => {
         return db.getHistorialByTrabajoId(input.trabajoId, ctx.user.id);
       }),
+  }),
+
+  // ============ ADMIN ============
+  admin: router({
+    // Usuarios
+    users: router({
+      list: adminProcedure.query(() => {
+        return adminDb.getAllUsers();
+      }),
+
+      getById: adminProcedure
+        .input(z.object({ id: z.number() }))
+        .query(({ input }) => {
+          return adminDb.getUserById(input.id);
+        }),
+
+      updateStatus: adminProcedure
+        .input(z.object({
+          id: z.number(),
+          isActive: z.enum(["active", "inactive"]),
+        }))
+        .mutation(async ({ input }) => {
+          await adminDb.updateUserStatus(input.id, input.isActive);
+          return { success: true };
+        }),
+    }),
+
+    // Estadísticas
+    stats: router({
+      overview: adminProcedure.query(() => {
+        return adminDb.getAdminStats();
+      }),
+
+      totalTrabajos: adminProcedure.query(() => {
+        return adminDb.getTotalTrabajos();
+      }),
+
+      trabajosByEstado: adminProcedure.query(() => {
+        return adminDb.getTrabajosCountByEstado();
+      }),
+
+      trabajosByTipo: adminProcedure.query(() => {
+        return adminDb.getTrabajosCountByTipo();
+      }),
+    }),
   }),
 });
 

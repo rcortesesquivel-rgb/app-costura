@@ -1,0 +1,1 @@
+ALTER TABLE `users` ADD `isActive` enum('active','inactive') DEFAULT 'active' NOT NULL;

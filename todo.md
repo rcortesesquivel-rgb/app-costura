@@ -99,3 +99,16 @@
 - [x] Aislar datos de trabajos por usuario
 - [x] Aislar datos de medidas por usuario
 - [x] Aislar datos de agregados por usuario
+
+
+## Vista de Administrador
+- [x] Agregar campo de estado (activo/inactivo) a tabla de usuarios
+- [x] Crear rutas API de administrador para listar usuarios
+- [x] Crear rutas API para activar/desactivar usuarios
+- [x] Crear rutas API para obtener estadísticas globales
+- [x] Crear pantalla de administrador
+- [x] Implementar lista de usuarios con estado
+- [x] Implementar botones para activar/desactivar usuarios
+- [x] Implementar vista de estadísticas (total de trabajos, usuarios activos, etc.)
+- [x] Proteger acceso a vista de administrador solo para admin
+- [x] Agregar tab de administrador en navegación principal
