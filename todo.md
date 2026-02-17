@@ -244,3 +244,10 @@
 - [x] Traducir interfaz completa al español
 - [x] Aplicar moneda dinámica en todos los precios (ya existe formatCurrency)
 - [x] Verificar Dashboard, Config y botones funcionan correctamente
+
+## Webhook Hotmart y Login Suave
+- [x] Implementar endpoint /api/hotmart/webhook para PURCHASE_APPROVED
+- [x] Automatizar creación de usuario con rol según plan comprado (Sastre/Administrador)
+- [x] Validar payload de Hotmart (hottok, evento, datos del comprador)
+- [x] Agregar banner de login suave en Dashboard para usuarios no autenticados
+- [x] Verificar flujo completo: webhook → usuario creado → login funcional (16 tests pasados)

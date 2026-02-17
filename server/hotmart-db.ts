@@ -44,25 +44,191 @@ export async function getUnprocessedWebhooks() {
     .where(eq(hotmartWebhooks.processed, 0));
 }
 
+// ============ MAPEO DE PRODUCTOS HOTMART → ROLES ============
+
+/**
+ * Determina el rol y plan del usuario según el producto/oferta de Hotmart.
+ *
+ * Lógica de asignación:
+ * - Producto con nombre que contiene "admin" o "administrador" → rol "admin", plan según recurrencia
+ * - Suscripción recurrente → plan "vip"
+ * - Pago único → plan "lifetime"
+ * - Por defecto → rol "user" (Sastre)
+ *
+ * El nombre del producto se obtiene de payload.product.name o payload.product_name
+ */
+function determineRoleAndPlan(payload: any): {
+  role: "user" | "admin";
+  plan: "basic" | "vip" | "lifetime";
+  isPriority: number;
+} {
+  const productName = (
+    payload?.product?.name ||
+    payload?.product_name ||
+    payload?.offer?.name ||
+    ""
+  ).toLowerCase();
+
+  const isRecurring = !!(payload?.product?.is_recurring || payload?.subscription_id);
+
+  // Detectar si el producto es de tipo Administrador
+  const isAdminProduct =
+    productName.includes("admin") ||
+    productName.includes("administrador") ||
+    productName.includes("premium") ||
+    productName.includes("completo");
+
+  const role: "user" | "admin" = isAdminProduct ? "admin" : "user";
+  const plan: "basic" | "vip" | "lifetime" = isRecurring ? "vip" : "lifetime";
+  const isPriority = isRecurring ? 1 : 0;
+
+  return { role, plan, isPriority };
+}
+
 // ============ PROCESAMIENTO DE EVENTOS ============
 
-export async function processSubscriptionChargeSuccess(email: string, payload: any) {
+/**
+ * Procesa PURCHASE_APPROVED de Hotmart.
+ * Si el usuario no existe, lo crea automáticamente con:
+ * - openId compatible con el login por email (email:{email})
+ * - Rol según el producto comprado (Sastre o Administrador)
+ * - Plan según tipo de pago (VIP para suscripción, Lifetime para pago único)
+ * - Estado activo
+ *
+ * Si el usuario ya existe, actualiza su plan, rol y estado.
+ */
+export async function processPurchaseApproved(email: string, payload: any) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
+  const { role, plan, isPriority } = determineRoleAndPlan(payload);
+
+  // Nombre del comprador desde el payload de Hotmart
+  const buyerName =
+    payload?.buyer?.name ||
+    payload?.customer?.name ||
+    payload?.subscriber?.name ||
+    email.split("@")[0];
+
   // Buscar usuario por email
-  const user = await db
+  const existingUsers = await db
     .select()
     .from(users)
     .where(eq(users.email, email));
 
-  if (!user || user.length === 0) {
-    throw new Error(`User not found with email: ${email}`);
+  if (existingUsers && existingUsers.length > 0) {
+    // Usuario ya existe → actualizar plan, rol y estado
+    const userId = existingUsers[0].id;
+
+    await db
+      .update(users)
+      .set({
+        isActive: "active",
+        role,
+        plan,
+        isPriority,
+        name: existingUsers[0].name || buyerName, // No sobrescribir nombre si ya tiene uno
+        audioTranscriptionsThisMonth: 0,
+        lastAudioResetDate: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, userId));
+
+    // Registrar en auditoría
+    await db.insert(auditLog).values({
+      userId,
+      action: "purchase_approved_user_updated",
+      details: JSON.stringify({
+        email,
+        role,
+        plan,
+        isRecurring: !!payload?.subscription_id,
+        productName: payload?.product?.name || "N/A",
+        productId: payload?.product?.id,
+        purchaseId: payload?.purchase_id,
+        amount: payload?.purchase?.price?.value || payload?.amount,
+        currency: payload?.purchase?.price?.currency_code || "USD",
+        date: new Date().toISOString(),
+      }),
+    });
+
+    console.log(`[Hotmart] Usuario actualizado: ${email} → rol=${role}, plan=${plan}`);
+    return { success: true, userId, created: false, role, plan, isPriority };
+  } else {
+    // Usuario NO existe → crear nuevo usuario automáticamente
+    // Usar openId compatible con el sistema de login por email
+    const openId = `email:${email}`;
+
+    await db.insert(users).values({
+      openId,
+      email,
+      name: buyerName,
+      loginMethod: "hotmart",
+      role,
+      isActive: "active",
+      plan,
+      isPriority,
+      audioTranscriptionsThisMonth: 0,
+      lastAudioResetDate: new Date(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      lastSignedIn: new Date(),
+    });
+
+    // Obtener el usuario creado
+    const createdUser = await db
+      .select()
+      .from(users)
+      .where(eq(users.openId, openId));
+
+    const userId = createdUser[0]?.id;
+
+    // Registrar en auditoría
+    if (userId) {
+      await db.insert(auditLog).values({
+        userId,
+        action: "purchase_approved_user_created",
+        details: JSON.stringify({
+          email,
+          role,
+          plan,
+          buyerName,
+          isRecurring: !!payload?.subscription_id,
+          productName: payload?.product?.name || "N/A",
+          productId: payload?.product?.id,
+          purchaseId: payload?.purchase_id,
+          amount: payload?.purchase?.price?.value || payload?.amount,
+          currency: payload?.purchase?.price?.currency_code || "USD",
+          date: new Date().toISOString(),
+        }),
+      });
+    }
+
+    console.log(`[Hotmart] Nuevo usuario creado: ${email} → rol=${role}, plan=${plan}`);
+    return { success: true, userId, created: true, role, plan, isPriority };
+  }
+}
+
+/**
+ * Procesa subscription_charge_success de Hotmart.
+ * Renueva la suscripción del usuario (lo marca como activo).
+ */
+export async function processSubscriptionChargeSuccess(email: string, payload: any) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const existingUsers = await db
+    .select()
+    .from(users)
+    .where(eq(users.email, email));
+
+  if (!existingUsers || existingUsers.length === 0) {
+    // Si no existe, crear usuario automáticamente (mismo flujo que PURCHASE_APPROVED)
+    return processPurchaseApproved(email, { ...payload, subscription_id: true });
   }
 
-  const userId = user[0].id;
+  const userId = existingUsers[0].id;
 
-  // Actualizar estado a activo
   await db
     .update(users)
     .set({
@@ -71,38 +237,41 @@ export async function processSubscriptionChargeSuccess(email: string, payload: a
     })
     .where(eq(users.id, userId));
 
-  // Registrar en auditoría
   await db.insert(auditLog).values({
     userId,
     action: "subscription_charge_success",
     details: JSON.stringify({
       email,
-      chargeId: payload.charge_id,
-      amount: payload.amount,
+      chargeId: payload?.charge_id,
+      amount: payload?.purchase?.price?.value || payload?.amount,
       date: new Date().toISOString(),
     }),
   });
 
+  console.log(`[Hotmart] Suscripción renovada: ${email}`);
   return { success: true, userId };
 }
 
+/**
+ * Procesa subscription_cancellation de Hotmart.
+ * Desactiva la cuenta del usuario.
+ */
 export async function processSubscriptionCancellation(email: string, payload: any) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
-  // Buscar usuario por email
-  const user = await db
+  const existingUsers = await db
     .select()
     .from(users)
     .where(eq(users.email, email));
 
-  if (!user || user.length === 0) {
-    throw new Error(`User not found with email: ${email}`);
+  if (!existingUsers || existingUsers.length === 0) {
+    console.warn(`[Hotmart] Usuario no encontrado para cancelación: ${email}`);
+    return { success: false, error: "User not found" };
   }
 
-  const userId = user[0].id;
+  const userId = existingUsers[0].id;
 
-  // Actualizar estado a inactivo
   await db
     .update(users)
     .set({
@@ -111,37 +280,40 @@ export async function processSubscriptionCancellation(email: string, payload: an
     })
     .where(eq(users.id, userId));
 
-  // Registrar en auditoría
   await db.insert(auditLog).values({
     userId,
     action: "subscription_cancellation",
     details: JSON.stringify({
       email,
-      subscriptionId: payload.subscription_id,
+      subscriptionId: payload?.subscription_id,
       date: new Date().toISOString(),
     }),
   });
 
+  console.log(`[Hotmart] Suscripción cancelada: ${email}`);
   return { success: true, userId };
 }
 
+/**
+ * Procesa charge_refund de Hotmart.
+ * Desactiva la cuenta del usuario por reembolso.
+ */
 export async function processChargeRefund(email: string, payload: any) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
-  // Buscar usuario por email
-  const user = await db
+  const existingUsers = await db
     .select()
     .from(users)
     .where(eq(users.email, email));
 
-  if (!user || user.length === 0) {
-    throw new Error(`User not found with email: ${email}`);
+  if (!existingUsers || existingUsers.length === 0) {
+    console.warn(`[Hotmart] Usuario no encontrado para reembolso: ${email}`);
+    return { success: false, error: "User not found" };
   }
 
-  const userId = user[0].id;
+  const userId = existingUsers[0].id;
 
-  // Actualizar estado a inactivo
   await db
     .update(users)
     .set({
@@ -150,18 +322,18 @@ export async function processChargeRefund(email: string, payload: any) {
     })
     .where(eq(users.id, userId));
 
-  // Registrar en auditoría
   await db.insert(auditLog).values({
     userId,
     action: "charge_refund",
     details: JSON.stringify({
       email,
-      chargeId: payload.charge_id,
-      refundAmount: payload.refund_amount,
+      chargeId: payload?.charge_id,
+      refundAmount: payload?.refund_amount,
       date: new Date().toISOString(),
     }),
   });
 
+  console.log(`[Hotmart] Reembolso procesado: ${email}`);
   return { success: true, userId };
 }
 
@@ -193,156 +365,4 @@ export async function getAuditLog(userId: number, limit: number = 50) {
     .from(auditLog)
     .where(eq(auditLog.userId, userId))
     .limit(limit);
-}
-
-export async function processPurchaseApproved(email: string, payload: any) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-
-  // Buscar usuario por email
-  const user = await db
-    .select()
-    .from(users)
-    .where(eq(users.email, email));
-
-  if (!user || user.length === 0) {
-    throw new Error(`User not found with email: ${email}`);
-  }
-
-  const userId = user[0].id;
-
-  // Detectar si es suscripción o pago único
-  const isRecurring = payload.product?.is_recurring || payload.subscription_id;
-  const plan = isRecurring ? "vip" : "lifetime";
-  const isPriority = isRecurring ? 1 : 0;
-
-  // Actualizar usuario
-  await db
-    .update(users)
-    .set({
-      isActive: "active",
-      plan,
-      isPriority,
-      audioTranscriptionsThisMonth: 0,
-      lastAudioResetDate: new Date(),
-      updatedAt: new Date(),
-    })
-    .where(eq(users.id, userId));
-
-  // Registrar en auditoría
-  await db.insert(auditLog).values({
-    userId,
-    action: "purchase_approved",
-    details: JSON.stringify({
-      email,
-      plan,
-      isRecurring,
-      productId: payload.product?.id,
-      purchaseId: payload.purchase_id,
-      amount: payload.amount,
-      date: new Date().toISOString(),
-    }),
-  });
-
-  return { success: true, userId, plan, isPriority };
-}
-
-
-export async function createOrUpdateUserFromHotmart(email: string, payload: any) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-
-  // Buscar usuario por email
-  let user = await db
-    .select()
-    .from(users)
-    .where(eq(users.email, email));
-
-  // Si no existe, crear nuevo usuario
-  if (!user || user.length === 0) {
-    // Generar openId único para Hotmart
-    const openId = `hotmart_${email}_${Date.now()}`;
-    
-    // Detectar si es suscripción o pago único
-    const isRecurring = payload.product?.is_recurring || payload.subscription_id;
-    const plan = isRecurring ? "vip" : "lifetime";
-    const isPriority = isRecurring ? 1 : 0;
-
-    await db.insert(users).values({
-      openId,
-      email,
-      name: payload.customer?.name || email.split("@")[0],
-      loginMethod: "hotmart",
-      role: "user",
-      isActive: "active",
-      plan,
-      isPriority,
-      audioTranscriptionsThisMonth: 0,
-      lastAudioResetDate: new Date(),
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    });
-
-    // Obtener el usuario creado
-    const createdUser = await db
-      .select()
-      .from(users)
-      .where(eq(users.openId, openId));
-
-    const userId = createdUser[0]?.id;
-
-    // Registrar en auditoría
-    if (userId) {
-      await db.insert(auditLog).values({
-        userId,
-        action: "user_created_from_hotmart",
-        details: JSON.stringify({
-          email,
-          plan,
-          isRecurring,
-          productId: payload.product?.id,
-          purchaseId: payload.purchase_id,
-          amount: payload.amount,
-          date: new Date().toISOString(),
-        }),
-      });
-    }
-
-    return { success: true, userId, created: true, plan, isPriority };
-  } else {
-    // Usuario existe, actualizar
-    const userId = user[0].id;
-    const isRecurring = payload.product?.is_recurring || payload.subscription_id;
-    const plan = isRecurring ? "vip" : "lifetime";
-    const isPriority = isRecurring ? 1 : 0;
-
-    await db
-      .update(users)
-      .set({
-        isActive: "active",
-        plan,
-        isPriority,
-        audioTranscriptionsThisMonth: 0,
-        lastAudioResetDate: new Date(),
-        updatedAt: new Date(),
-      })
-      .where(eq(users.id, userId));
-
-    // Registrar en auditoría
-    await db.insert(auditLog).values({
-      userId,
-      action: "user_updated_from_hotmart",
-      details: JSON.stringify({
-        email,
-        plan,
-        isRecurring,
-        productId: payload.product?.id,
-        purchaseId: payload.purchase_id,
-        amount: payload.amount,
-        date: new Date().toISOString(),
-      }),
-    });
-
-    return { success: true, userId, created: false, plan, isPriority };
-  }
 }

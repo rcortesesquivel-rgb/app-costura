@@ -1,4 +1,4 @@
-import { ScrollView, Text, View, TouchableOpacity, ActivityIndicator, RefreshControl } from "react-native";
+import { ScrollView, Text, View, TouchableOpacity, ActivityIndicator, RefreshControl, Platform } from "react-native";
 import { useState } from "react";
 import { useRouter } from "expo-router";
 import * as Haptics from "expo-haptics";
@@ -12,7 +12,9 @@ import { useAuth } from "@/lib/auth-context";
 export default function DashboardScreen() {
   const colors = useColors();
   const router = useRouter();
+  const { isSignedIn, user } = useAuth();
   const [refreshing, setRefreshing] = useState(false);
+  const [bannerDismissed, setBannerDismissed] = useState(false);
 
   const { data: trabajosVencenHoy, isLoading: loadingVencen, refetch: refetchVencen } = trpc.trabajos.getVencenHoy.useQuery();
   const { data: todosTrabajos, isLoading: loadingTodos, refetch: refetchTodos } = trpc.trabajos.list.useQuery();
@@ -59,8 +61,17 @@ export default function DashboardScreen() {
   };
 
   const handleNuevoTrabajo = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
     router.push("/crear-trabajo" as any);
+  };
+
+  const handleLoginBanner = () => {
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    router.push("/auth/signin" as any);
   };
 
   if (loadingVencen || loadingTodos) {
@@ -83,10 +94,73 @@ export default function DashboardScreen() {
           {/* Header */}
           <View className="gap-2">
             <Text className="text-3xl font-bold text-foreground">Dashboard</Text>
-            <Text className="text-base text-muted">Gestión del taller de costura</Text>
+            <Text className="text-base text-muted">
+              {isSignedIn && user?.name
+                ? `Bienvenido/a, ${user.name}`
+                : "Gesti\u00f3n del taller de costura"}
+            </Text>
           </View>
 
-          {/* Estadísticas */}
+          {/* Banner de login suave (solo si no está autenticado y no lo cerró) */}
+          {!isSignedIn && !bannerDismissed && (
+            <View
+              className="rounded-2xl p-4 border"
+              style={{
+                backgroundColor: colors.primary + "10",
+                borderColor: colors.primary + "30",
+              }}
+            >
+              <View className="flex-row items-start gap-3">
+                <View
+                  className="rounded-full p-2"
+                  style={{ backgroundColor: colors.primary + "20" }}
+                >
+                  <IconSymbol name="person.fill" size={20} color={colors.primary} />
+                </View>
+                <View className="flex-1">
+                  <Text className="text-base font-semibold text-foreground">
+                    Inicia sesi{"\u00f3"}n para guardar tus datos
+                  </Text>
+                  <Text className="text-sm text-muted mt-1" style={{ lineHeight: 20 }}>
+                    Accede con tu cuenta para sincronizar clientes, trabajos y medidas en todos tus dispositivos.
+                  </Text>
+                  <View className="flex-row gap-3 mt-3">
+                    <TouchableOpacity
+                      onPress={handleLoginBanner}
+                      activeOpacity={0.8}
+                      style={{
+                        backgroundColor: colors.primary,
+                        paddingHorizontal: 16,
+                        paddingVertical: 8,
+                        borderRadius: 20,
+                      }}
+                    >
+                      <Text style={{ color: "#FFFFFF", fontWeight: "600", fontSize: 14 }}>
+                        Iniciar sesi{"\u00f3"}n
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() => setBannerDismissed(true)}
+                      activeOpacity={0.7}
+                      style={{
+                        paddingHorizontal: 16,
+                        paddingVertical: 8,
+                        borderRadius: 20,
+                        borderWidth: 1,
+                        borderColor: colors.border,
+                      }}
+                    >
+                      <Text style={{ color: colors.muted, fontWeight: "500", fontSize: 14 }}>
+                        Ahora no
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </View>
+            </View>
+          )}
+
+          {/* Estad\u00edsticas */}
           <View className="flex-row gap-3">
             <View className="flex-1 bg-surface rounded-2xl p-4 border border-border">
               <Text className="text-2xl font-bold text-foreground">{trabajosPendientes.length}</Text>
@@ -119,7 +193,9 @@ export default function DashboardScreen() {
                   key={trabajo.id}
                   className="bg-surface rounded-2xl p-4 border border-border"
                   onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    if (Platform.OS !== "web") {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    }
                     router.push(`/trabajo/${trabajo.id}` as any);
                   }}
                   activeOpacity={0.7}
@@ -170,7 +246,9 @@ export default function DashboardScreen() {
                   key={trabajo.id}
                   className="bg-surface rounded-2xl p-4 border border-border"
                   onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    if (Platform.OS !== "web") {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    }
                     router.push(`/trabajo/${trabajo.id}` as any);
                   }}
                   activeOpacity={0.7}
@@ -204,7 +282,7 @@ export default function DashboardScreen() {
         </View>
       </ScrollView>
 
-      {/* Botón flotante */}
+      {/* Bot\u00f3n flotante */}
       <View className="absolute bottom-24 right-6">
         <TouchableOpacity
           className="rounded-full p-4 shadow-lg"
