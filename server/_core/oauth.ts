@@ -171,4 +171,65 @@ export function registerOAuthRoutes(app: Express) {
       res.status(401).json({ error: "Invalid token" });
     }
   });
+
+  // Sign up with email and password
+  app.post("/api/auth/signup", async (req: Request, res: Response) => {
+    try {
+      const { email, password, name } = req.body;
+
+      if (!email || !password || !name) {
+        res.status(400).json({ error: "email, password, and name are required" });
+        return;
+      }
+
+      // Use email as openId for email/password authentication
+      const openId = `email:${email}`;
+
+      // Create or update user in database
+      await syncUser({
+        openId,
+        email,
+        name,
+        loginMethod: "email",
+      });
+
+      // Return user (no session cookie set - client will handle auth)
+      const user = { openId, email, name, loginMethod: "email" };
+
+      res.json({ success: true, user: buildUserResponse(user) });
+    } catch (error) {
+      console.error("[Auth] /api/auth/signup failed:", error);
+      res.status(500).json({ error: "Sign up failed" });
+    }
+  });
+
+  // Sign in with email and password
+  app.post("/api/auth/signin", async (req: Request, res: Response) => {
+    try {
+      const { email, password } = req.body;
+
+      if (!email || !password) {
+        res.status(400).json({ error: "email and password are required" });
+        return;
+      }
+
+      // Use email as openId for email/password authentication
+      const openId = `email:${email}`;
+
+      // Create or update user in database (auto-create if doesn't exist)
+      await syncUser({
+        openId,
+        email,
+        loginMethod: "email",
+      });
+
+      // Return user (no session cookie set - client will handle auth)
+      const user = { openId, email, loginMethod: "email" };
+
+      res.json({ success: true, user: buildUserResponse(user) });
+    } catch (error) {
+      console.error("[Auth] /api/auth/signin failed:", error);
+      res.status(500).json({ error: "Sign in failed" });
+    }
+  });
 }

@@ -6,6 +6,7 @@ import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { trpc } from "@/lib/trpc";
 import { useColors } from "@/hooks/use-colors";
+import { formatCurrency } from "@/lib/format-currency";
 
 export default function TrabajoDetalleScreen() {
   const colors = useColors();
@@ -222,7 +223,7 @@ export default function TrabajoDetalleScreen() {
             <View className="bg-surface rounded-2xl p-4 border border-border gap-3">
               <View className="flex-row justify-between">
                 <Text className="text-sm text-muted">Precio base</Text>
-                <Text className="text-sm font-medium text-foreground">${trabajo.precioBase}</Text>
+                <Text className="text-sm font-medium text-foreground">{formatCurrency(trabajo.precioBase)}</Text>
               </View>
 
               {agregados && agregados.length > 0 && (
@@ -232,7 +233,7 @@ export default function TrabajoDetalleScreen() {
                   {agregados.map((agregado) => (
                     <View key={agregado.id} className="flex-row justify-between">
                       <Text className="text-sm text-muted">{agregado.concepto}</Text>
-                      <Text className="text-sm font-medium text-foreground">${agregado.precio}</Text>
+                      <Text className="text-sm font-medium text-foreground">{formatCurrency(agregado.precio)}</Text>
                     </View>
                   ))}
                 </>
@@ -243,19 +244,19 @@ export default function TrabajoDetalleScreen() {
               <View className="flex-row justify-between">
                 <Text className="text-base font-semibold text-foreground">Total</Text>
                 <Text className="text-base font-bold" style={{ color: colors.primary }}>
-                  ${totales?.total.toFixed(2) || "0.00"}
+                  {formatCurrency(totales?.total)}
                 </Text>
               </View>
 
               <View className="flex-row justify-between">
                 <Text className="text-sm text-muted">Abono inicial</Text>
-                <Text className="text-sm font-medium text-foreground">${trabajo.abonoInicial}</Text>
+                <Text className="text-sm font-medium text-foreground">{formatCurrency(trabajo.abonoInicial)}</Text>
               </View>
 
               <View className="flex-row justify-between">
                 <Text className="text-base font-semibold text-foreground">Saldo pendiente</Text>
                 <Text className="text-base font-bold" style={{ color: colors.error }}>
-                  ${totales?.saldo.toFixed(2) || "0.00"}
+                  {formatCurrency(totales?.saldo)}
                 </Text>
               </View>
             </View>

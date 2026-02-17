@@ -1,4 +1,4 @@
-import { ScrollView, Text, View, TextInput, TouchableOpacity, Alert, KeyboardAvoidingView, Platform, ActivityIndicator } from "react-native";
+import { ScrollView, Text, View, Platform, KeyboardAvoidingView, Alert } from "react-native";
 import { useState } from "react";
 import { useRouter } from "expo-router";
 import * as Haptics from "expo-haptics";
@@ -7,6 +7,7 @@ import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useColors } from "@/hooks/use-colors";
 import { useAuth } from "@/lib/auth-context";
+import { WebSafeButton } from "@/components/web-safe-button";
 
 export default function SignUpScreen() {
   const colors = useColors();
@@ -18,47 +19,181 @@ export default function SignUpScreen() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
 
-  const validateEmail = (email: string) => {
+  const validateEmail = (emailStr: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
+    return emailRegex.test(emailStr);
   };
 
   const handleSignUp = async () => {
+    setErrorMsg("");
+
     if (!nombre.trim()) {
-      Alert.alert("Error", "El nombre es obligatorio");
+      setErrorMsg("El nombre es obligatorio");
       return;
     }
-
     if (!validateEmail(email)) {
-      Alert.alert("Error", "Por favor ingresa un email válido");
+      setErrorMsg("Por favor ingresa un email válido");
       return;
     }
-
     if (password.length < 6) {
-      Alert.alert("Error", "La contraseña debe tener al menos 6 caracteres");
+      setErrorMsg("La contraseña debe tener al menos 6 caracteres");
       return;
     }
-
     if (password !== confirmPassword) {
-      Alert.alert("Error", "Las contraseñas no coinciden");
+      setErrorMsg("Las contraseñas no coinciden");
       return;
     }
 
     setIsLoading(true);
     try {
       await signUp(email, password, nombre);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      if (Platform.OS !== "web") {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
       router.replace("/(tabs)");
-    } catch (error) {
-      Alert.alert("Error", "No se pudo crear la cuenta. Intenta de nuevo.");
-      console.error("Sign up error:", error);
+    } catch (error: any) {
+      setErrorMsg(error.message || "No se pudo crear la cuenta. Intenta de nuevo.");
     } finally {
       setIsLoading(false);
     }
   };
 
+  // Web version with native HTML inputs for reliable state sync
+  if (Platform.OS === "web") {
+    const inputStyle = {
+      backgroundColor: colors.surface,
+      border: `1px solid ${colors.border}`,
+      borderRadius: 12,
+      padding: "12px 16px",
+      fontSize: 16,
+      color: colors.foreground,
+      outline: "none",
+      fontFamily: "inherit",
+      width: "100%",
+      boxSizing: "border-box" as const,
+    };
+
+    return (
+      <ScreenContainer className="bg-background">
+        <ScrollView contentContainerStyle={{ flexGrow: 1, paddingBottom: 20 }}>
+          <View className="p-6 gap-6 flex-1 justify-center">
+            {/* Logo */}
+            <View className="items-center gap-3">
+              <View style={{ backgroundColor: `${colors.primary}15`, borderRadius: 999, padding: 24 }}>
+                <IconSymbol name="scissors" size={48} color={colors.primary} />
+              </View>
+              <Text className="text-3xl font-bold text-foreground">Taller de Costura</Text>
+              <Text className="text-base text-muted">Crea tu cuenta</Text>
+            </View>
+
+            {/* Error message */}
+            {errorMsg ? (
+              <View style={{ backgroundColor: "#FEE2E2", borderRadius: 8, padding: 12 }}>
+                <Text style={{ color: "#DC2626", fontSize: 14, textAlign: "center" }}>{errorMsg}</Text>
+              </View>
+            ) : null}
+
+            {/* Web-native form */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                <label style={{ fontSize: 14, fontWeight: "600", color: colors.foreground }}>Nombre completo</label>
+                <input
+                  type="text"
+                  placeholder="Tu nombre"
+                  value={nombre}
+                  onChange={(e) => setNombre(e.target.value)}
+                  disabled={isLoading}
+                  style={inputStyle}
+                />
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                <label style={{ fontSize: 14, fontWeight: "600", color: colors.foreground }}>Email</label>
+                <input
+                  type="email"
+                  placeholder="tu@email.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  disabled={isLoading}
+                  style={inputStyle}
+                />
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                <label style={{ fontSize: 14, fontWeight: "600", color: colors.foreground }}>Contraseña</label>
+                <input
+                  type="password"
+                  placeholder="Mínimo 6 caracteres"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  disabled={isLoading}
+                  style={inputStyle}
+                />
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                <label style={{ fontSize: 14, fontWeight: "600", color: colors.foreground }}>Confirmar contraseña</label>
+                <input
+                  type="password"
+                  placeholder="Repite tu contraseña"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  disabled={isLoading}
+                  onKeyDown={(e) => { if (e.key === "Enter") handleSignUp(); }}
+                  style={inputStyle}
+                />
+              </div>
+
+              <button
+                onClick={handleSignUp}
+                disabled={isLoading}
+                style={{
+                  backgroundColor: colors.primary,
+                  color: "#FFFFFF",
+                  border: "none",
+                  borderRadius: 12,
+                  padding: "16px 24px",
+                  fontSize: 16,
+                  fontWeight: "600",
+                  cursor: isLoading ? "not-allowed" : "pointer",
+                  opacity: isLoading ? 0.7 : 1,
+                  fontFamily: "inherit",
+                  transition: "opacity 0.2s",
+                  width: "100%",
+                }}
+              >
+                {isLoading ? "Creando cuenta..." : "Crear cuenta"}
+              </button>
+
+              <div style={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8 }}>
+                <span style={{ fontSize: 14, color: colors.muted }}>¿Ya tienes cuenta?</span>
+                <button
+                  onClick={() => router.replace("/auth/signin" as any)}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: colors.primary,
+                    fontSize: 14,
+                    fontWeight: "600",
+                    cursor: "pointer",
+                    padding: 0,
+                    fontFamily: "inherit",
+                  }}
+                >
+                  Inicia sesión
+                </button>
+              </div>
+            </div>
+          </View>
+        </ScrollView>
+      </ScreenContainer>
+    );
+  }
+
+  // Native version (iOS/Android)
+  const TextInput = require("react-native").TextInput;
   return (
     <ScreenContainer className="bg-background">
       <KeyboardAvoidingView
@@ -67,129 +202,59 @@ export default function SignUpScreen() {
       >
         <ScrollView contentContainerStyle={{ flexGrow: 1, paddingBottom: 20 }}>
           <View className="p-6 gap-6 flex-1 justify-center">
-            {/* Logo */}
             <View className="items-center gap-3">
-              <View className="bg-primary/10 rounded-full p-6">
+              <View style={{ backgroundColor: `${colors.primary}15`, borderRadius: 999, padding: 24 }}>
                 <IconSymbol name="scissors" size={48} color={colors.primary} />
               </View>
               <Text className="text-3xl font-bold text-foreground">Taller de Costura</Text>
-              <Text className="text-base text-muted">Crea tu cuenta para empezar</Text>
+              <Text className="text-base text-muted">Crea tu cuenta</Text>
             </View>
 
-            {/* Formulario */}
+            {errorMsg ? (
+              <View style={{ backgroundColor: "#FEE2E2", borderRadius: 8, padding: 12 }}>
+                <Text style={{ color: "#DC2626", fontSize: 14, textAlign: "center" }}>{errorMsg}</Text>
+              </View>
+            ) : null}
+
             <View className="gap-4">
-              {/* Nombre */}
               <View className="gap-2">
                 <Text className="text-sm font-semibold text-foreground">Nombre completo</Text>
                 <View className="bg-surface rounded-xl border border-border flex-row items-center px-4 py-3 gap-3">
                   <IconSymbol name="person.fill" size={20} color={colors.muted} />
-                  <TextInput
-                    className="flex-1 text-base text-foreground"
-                    placeholder="Tu nombre"
-                    placeholderTextColor={colors.muted}
-                    value={nombre}
-                    onChangeText={setNombre}
-                    editable={!isLoading}
-                    returnKeyType="next"
-                  />
+                  <TextInput className="flex-1 text-base text-foreground" placeholder="Tu nombre" placeholderTextColor={colors.muted} value={nombre} onChangeText={setNombre} editable={!isLoading} returnKeyType="next" />
                 </View>
               </View>
 
-              {/* Email */}
               <View className="gap-2">
                 <Text className="text-sm font-semibold text-foreground">Email</Text>
                 <View className="bg-surface rounded-xl border border-border flex-row items-center px-4 py-3 gap-3">
                   <IconSymbol name="envelope.fill" size={20} color={colors.muted} />
-                  <TextInput
-                    className="flex-1 text-base text-foreground"
-                    placeholder="tu@email.com"
-                    placeholderTextColor={colors.muted}
-                    value={email}
-                    onChangeText={setEmail}
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                    editable={!isLoading}
-                    returnKeyType="next"
-                  />
+                  <TextInput className="flex-1 text-base text-foreground" placeholder="tu@email.com" placeholderTextColor={colors.muted} value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" editable={!isLoading} returnKeyType="next" />
                 </View>
               </View>
 
-              {/* Contraseña */}
               <View className="gap-2">
                 <Text className="text-sm font-semibold text-foreground">Contraseña</Text>
                 <View className="bg-surface rounded-xl border border-border flex-row items-center px-4 py-3 gap-3">
                   <IconSymbol name="lock.fill" size={20} color={colors.muted} />
-                  <TextInput
-                    className="flex-1 text-base text-foreground"
-                    placeholder="Mínimo 6 caracteres"
-                    placeholderTextColor={colors.muted}
-                    value={password}
-                    onChangeText={setPassword}
-                    secureTextEntry={!showPassword}
-                    editable={!isLoading}
-                    returnKeyType="next"
-                  />
-                  <TouchableOpacity
-                    onPress={() => setShowPassword(!showPassword)}
-                    disabled={isLoading}
-                  >
-                    <IconSymbol
-                      name={showPassword ? "eye.fill" : "eye.slash.fill"}
-                      size={20}
-                      color={colors.muted}
-                    />
-                  </TouchableOpacity>
+                  <TextInput className="flex-1 text-base text-foreground" placeholder="Mínimo 6 caracteres" placeholderTextColor={colors.muted} value={password} onChangeText={setPassword} secureTextEntry editable={!isLoading} returnKeyType="next" />
                 </View>
               </View>
 
-              {/* Confirmar Contraseña */}
               <View className="gap-2">
                 <Text className="text-sm font-semibold text-foreground">Confirmar contraseña</Text>
                 <View className="bg-surface rounded-xl border border-border flex-row items-center px-4 py-3 gap-3">
                   <IconSymbol name="lock.fill" size={20} color={colors.muted} />
-                  <TextInput
-                    className="flex-1 text-base text-foreground"
-                    placeholder="Repite tu contraseña"
-                    placeholderTextColor={colors.muted}
-                    value={confirmPassword}
-                    onChangeText={setConfirmPassword}
-                    secureTextEntry={!showPassword}
-                    editable={!isLoading}
-                    returnKeyType="done"
-                  />
+                  <TextInput className="flex-1 text-base text-foreground" placeholder="Repite tu contraseña" placeholderTextColor={colors.muted} value={confirmPassword} onChangeText={setConfirmPassword} secureTextEntry editable={!isLoading} returnKeyType="done" onSubmitEditing={handleSignUp} />
                 </View>
               </View>
             </View>
 
-            {/* Botón de registro */}
-            <TouchableOpacity
-              className="rounded-xl py-4 items-center"
-              style={{ backgroundColor: colors.primary }}
-              onPress={handleSignUp}
-              disabled={isLoading}
-              activeOpacity={0.8}
-            >
-              {isLoading ? (
-                <ActivityIndicator color="#FFFFFF" />
-              ) : (
-                <Text className="text-base font-semibold text-white">Crear cuenta</Text>
-              )}
-            </TouchableOpacity>
+            <WebSafeButton onPress={handleSignUp} title="Crear cuenta" isLoading={isLoading} backgroundColor={colors.primary} />
 
-            {/* Enlace a login */}
-            <View className="flex-row items-center justify-center gap-2">
+            <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8 }}>
               <Text className="text-sm text-muted">¿Ya tienes cuenta?</Text>
-              <TouchableOpacity
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  router.replace("/auth/signin" as any);
-                }}
-                disabled={isLoading}
-              >
-                <Text className="text-sm font-semibold" style={{ color: colors.primary }}>
-                  Inicia sesión
-                </Text>
-              </TouchableOpacity>
+              <Text onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.replace("/auth/signin" as any); }} style={{ color: colors.primary, fontSize: 14, fontWeight: "600" }}>Inicia sesión</Text>
             </View>
           </View>
         </ScrollView>

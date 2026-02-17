@@ -7,6 +7,7 @@ import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { trpc } from "@/lib/trpc";
 import { useColors } from "@/hooks/use-colors";
+import { formatCurrency } from "@/lib/format-currency";
 
 // Declaración global para Web Speech API
 declare global {
@@ -403,7 +404,7 @@ export default function CrearTrabajoScreen() {
                 <View key={index} className="bg-surface rounded-xl border border-border p-3 flex-row items-center justify-between">
                   <View className="flex-1">
                     <Text className="text-base text-foreground">{item.concepto}</Text>
-                    <Text className="text-sm text-muted mt-1">${item.precio}</Text>
+                    <Text className="text-sm text-muted mt-1">{formatCurrency(item.precio)}</Text>
                   </View>
                   <TouchableOpacity onPress={() => handleEliminarItem(index)} activeOpacity={0.7}>
                     <IconSymbol name="trash.fill" size={20} color={colors.error} />
@@ -442,19 +443,19 @@ export default function CrearTrabajoScreen() {
             <View className="bg-surface rounded-2xl p-4 border border-border gap-2">
               <View className="flex-row justify-between">
                 <Text className="text-sm text-muted">Precio base</Text>
-                <Text className="text-sm font-medium text-foreground">${precioBase || "0"}</Text>
+                <Text className="text-sm font-medium text-foreground">{formatCurrency(precioBase || "0")}</Text>
               </View>
               <View className="flex-row justify-between">
                 <Text className="text-sm text-muted">Agregados</Text>
                 <Text className="text-sm font-medium text-foreground">
-                  ${agregados.reduce((sum, item) => sum + (parseFloat(item.precio) || 0), 0).toFixed(2)}
+                  {formatCurrency(agregados.reduce((sum, item) => sum + (parseFloat(item.precio) || 0), 0))}
                 </Text>
               </View>
               <View className="h-px bg-border my-1" />
               <View className="flex-row justify-between">
                 <Text className="text-base font-semibold text-foreground">Total</Text>
                 <Text className="text-base font-bold" style={{ color: colors.primary }}>
-                  ${calcularTotal().toFixed(2)}
+                  {formatCurrency(calcularTotal())}
                 </Text>
               </View>
             </View>
@@ -469,7 +470,7 @@ export default function CrearTrabajoScreen() {
                 onChangeText={setAbonoInicial}
                 keyboardType="numeric"
               />
-              <Text className="text-xs text-muted">Saldo pendiente: ${calcularSaldo().toFixed(2)}</Text>
+              <Text className="text-xs text-muted">Saldo pendiente: {formatCurrency(calcularSaldo())}</Text>
             </View>
 
             {/* Botones */}

@@ -35,6 +35,17 @@ const MAPPING = {
   "phone.fill": "phone",
   "location.fill": "location-on",
   "calendar": "event",
+  "lock.fill": "lock",
+  "envelope.fill": "email",
+  "eye.fill": "visibility",
+  "eye.slash.fill": "visibility-off",
+  "shield.fill": "shield",
+  "arrow.right.square.fill": "logout",
+  "wrench.fill": "build",
+  "star.fill": "star",
+  "bell.fill": "notifications",
+  "info.circle.fill": "info",
+  "arrow.left.circle.fill": "arrow-back",
 } as IconMapping;
 
 /**

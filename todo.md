@@ -221,3 +221,18 @@
 - [ ] Crear panel de auditoría de webhooks
 - [ ] Verificar Service Worker instalable
 - [ ] Probar PWA en navegador
+
+
+## Estabilización de Autenticación (Prioridad Alta)
+- [ ] Eliminar bloqueo OAuth - isLoading=false por defecto
+- [ ] Implementar login simple con localStorage (sin depender de OAuth de Manus)
+- [ ] Configurar acceso validado por webhook de Hotmart (PURCHASE_APPROVED)
+- [ ] Implementar formateo de moneda local con Intl.NumberFormat
+- [ ] Limpiar caché de Metro y reiniciar servidor
+- [ ] Verificar que #root renderice la UI correctamente
+
+## Fix Crítico - Bucle Infinito y Pantalla en Blanco
+- [x] Hard Reset del servidor de previsualización
+- [x] Eliminar redirección automática que causa bucle infinito en _layout.tsx
+- [x] Cambiar autenticación a LocalStorage simple (Dashboard carga directo)
+- [x] Confirmar que la pantalla ya no está en blanco

@@ -18,7 +18,7 @@ import type { EdgeInsets, Metrics, Rect } from "react-native-safe-area-context";
 
 import { trpc, createTRPCClient } from "@/lib/trpc";
 import { initManusRuntime, subscribeSafeAreaInsets } from "@/lib/_core/manus-runtime";
-import { AuthProvider, useAuth } from "@/lib/auth-context";
+import { AuthProvider } from "@/lib/auth-context";
 
 const DEFAULT_WEB_INSETS: EdgeInsets = { top: 0, right: 0, bottom: 0, left: 0 };
 const DEFAULT_WEB_FRAME: Rect = { x: 0, y: 0, width: 0, height: 0 };
@@ -27,36 +27,25 @@ export const unstable_settings = {
   anchor: "(tabs)",
 };
 
+/**
+ * Root layout content - NO redirects, NO auth blocking.
+ * The app always loads the tabs (Dashboard) directly.
+ * Auth screens are available but never forced via redirect.
+ */
 function RootLayoutContent() {
-  const { isSignedIn } = useAuth();
-  const TEST_MODE = process.env.EXPO_PUBLIC_TEST_MODE === "true";
-
-  if (TEST_MODE) {
-    return (
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="test" />
-      </Stack>
-    );
-  }
-
-  if (isSignedIn) {
-    return (
+  return (
+    <>
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="auth" />
         <Stack.Screen name="oauth/callback" />
         <Stack.Screen name="crear-cliente" />
         <Stack.Screen name="cliente/[id]" />
         <Stack.Screen name="crear-trabajo" />
         <Stack.Screen name="trabajo/[id]" />
       </Stack>
-    );
-  }
-
-  // Always show auth screen if not signed in
-  return (
-    <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="auth" options={{ headerShown: false }} />
-    </Stack>
+      <StatusBar style="auto" />
+    </>
   );
 }
 
@@ -113,7 +102,6 @@ export default function RootLayout() {
         <QueryClientProvider client={queryClient}>
           <AuthProvider>
             <RootLayoutContent />
-            <StatusBar style="auto" />
           </AuthProvider>
         </QueryClientProvider>
       </trpc.Provider>

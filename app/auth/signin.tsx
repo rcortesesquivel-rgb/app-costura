@@ -1,4 +1,4 @@
-import { ScrollView, Text, View, TextInput, TouchableOpacity, Alert, KeyboardAvoidingView, Platform, ActivityIndicator } from "react-native";
+import { ScrollView, Text, View, Platform, KeyboardAvoidingView, Alert } from "react-native";
 import { useState } from "react";
 import { useRouter } from "expo-router";
 import * as Haptics from "expo-haptics";
@@ -7,6 +7,7 @@ import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useColors } from "@/hooks/use-colors";
 import { useAuth } from "@/lib/auth-context";
+import { WebSafeButton } from "@/components/web-safe-button";
 
 export default function SignInScreen() {
   const colors = useColors();
@@ -16,37 +17,147 @@ export default function SignInScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
 
   const handleSignIn = async () => {
+    setErrorMsg("");
+
     if (!email.trim() || !password.trim()) {
-      Alert.alert("Error", "Por favor completa todos los campos");
+      setErrorMsg("Por favor completa todos los campos");
       return;
     }
 
     setIsLoading(true);
     try {
       await signIn(email, password);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      if (Platform.OS !== "web") {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
       router.replace("/(tabs)");
     } catch (error: any) {
-      if (error.message === "ACCOUNT_INACTIVE") {
-        Alert.alert(
-          "Cuenta Inactiva",
-          "Tu suscripción ha vencido. Por favor, renueva tu membresía en Hotmart para continuar usando la app.",
-          [
-            { text: "OK", onPress: () => {} },
-          ]
-        );
-      } else {
-        Alert.alert("Error", "Email o contraseña incorrectos");
-      }
-      console.error("Sign in error:", error);
+      const msg = error.message === "ACCOUNT_INACTIVE"
+        ? "Tu suscripción ha vencido. Renueva tu membresía en Hotmart."
+        : "Email o contraseña incorrectos";
+      setErrorMsg(msg);
     } finally {
       setIsLoading(false);
     }
   };
 
+  // On web, use native HTML inputs for reliable state sync
+  if (Platform.OS === "web") {
+    return (
+      <ScreenContainer className="bg-background">
+        <ScrollView contentContainerStyle={{ flexGrow: 1, paddingBottom: 20 }}>
+          <View className="p-6 gap-6 flex-1 justify-center">
+            {/* Logo */}
+            <View className="items-center gap-3">
+              <View style={{ backgroundColor: `${colors.primary}15`, borderRadius: 999, padding: 24 }}>
+                <IconSymbol name="scissors" size={48} color={colors.primary} />
+              </View>
+              <Text className="text-3xl font-bold text-foreground">Taller de Costura</Text>
+              <Text className="text-base text-muted">Inicia sesión en tu cuenta</Text>
+            </View>
+
+            {/* Error message */}
+            {errorMsg ? (
+              <View style={{ backgroundColor: "#FEE2E2", borderRadius: 8, padding: 12 }}>
+                <Text style={{ color: "#DC2626", fontSize: 14, textAlign: "center" }}>{errorMsg}</Text>
+              </View>
+            ) : null}
+
+            {/* Web-native form */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                <label style={{ fontSize: 14, fontWeight: "600", color: colors.foreground }}>Email</label>
+                <input
+                  type="email"
+                  placeholder="tu@email.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  disabled={isLoading}
+                  style={{
+                    backgroundColor: colors.surface,
+                    border: `1px solid ${colors.border}`,
+                    borderRadius: 12,
+                    padding: "12px 16px",
+                    fontSize: 16,
+                    color: colors.foreground,
+                    outline: "none",
+                    fontFamily: "inherit",
+                  }}
+                />
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                <label style={{ fontSize: 14, fontWeight: "600", color: colors.foreground }}>Contraseña</label>
+                <input
+                  type="password"
+                  placeholder="Tu contraseña"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  disabled={isLoading}
+                  onKeyDown={(e) => { if (e.key === "Enter") handleSignIn(); }}
+                  style={{
+                    backgroundColor: colors.surface,
+                    border: `1px solid ${colors.border}`,
+                    borderRadius: 12,
+                    padding: "12px 16px",
+                    fontSize: 16,
+                    color: colors.foreground,
+                    outline: "none",
+                    fontFamily: "inherit",
+                  }}
+                />
+              </div>
+
+              <button
+                onClick={handleSignIn}
+                disabled={isLoading}
+                style={{
+                  backgroundColor: colors.primary,
+                  color: "#FFFFFF",
+                  border: "none",
+                  borderRadius: 12,
+                  padding: "16px 24px",
+                  fontSize: 16,
+                  fontWeight: "600",
+                  cursor: isLoading ? "not-allowed" : "pointer",
+                  opacity: isLoading ? 0.7 : 1,
+                  fontFamily: "inherit",
+                  transition: "opacity 0.2s",
+                }}
+              >
+                {isLoading ? "Iniciando sesión..." : "Iniciar sesión"}
+              </button>
+
+              <div style={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8 }}>
+                <span style={{ fontSize: 14, color: colors.muted }}>¿No tienes cuenta?</span>
+                <button
+                  onClick={() => router.replace("/auth/signup" as any)}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: colors.primary,
+                    fontSize: 14,
+                    fontWeight: "600",
+                    cursor: "pointer",
+                    padding: 0,
+                    fontFamily: "inherit",
+                  }}
+                >
+                  Regístrate aquí
+                </button>
+              </div>
+            </div>
+          </View>
+        </ScrollView>
+      </ScreenContainer>
+    );
+  }
+
+  // Native version (iOS/Android)
+  const TextInput = require("react-native").TextInput;
   return (
     <ScreenContainer className="bg-background">
       <KeyboardAvoidingView
@@ -55,18 +166,21 @@ export default function SignInScreen() {
       >
         <ScrollView contentContainerStyle={{ flexGrow: 1, paddingBottom: 20 }}>
           <View className="p-6 gap-6 flex-1 justify-center">
-            {/* Logo */}
             <View className="items-center gap-3">
-              <View className="bg-primary/10 rounded-full p-6">
+              <View style={{ backgroundColor: `${colors.primary}15`, borderRadius: 999, padding: 24 }}>
                 <IconSymbol name="scissors" size={48} color={colors.primary} />
               </View>
               <Text className="text-3xl font-bold text-foreground">Taller de Costura</Text>
               <Text className="text-base text-muted">Inicia sesión en tu cuenta</Text>
             </View>
 
-            {/* Formulario */}
+            {errorMsg ? (
+              <View style={{ backgroundColor: "#FEE2E2", borderRadius: 8, padding: 12 }}>
+                <Text style={{ color: "#DC2626", fontSize: 14, textAlign: "center" }}>{errorMsg}</Text>
+              </View>
+            ) : null}
+
             <View className="gap-4">
-              {/* Email */}
               <View className="gap-2">
                 <Text className="text-sm font-semibold text-foreground">Email</Text>
                 <View className="bg-surface rounded-xl border border-border flex-row items-center px-4 py-3 gap-3">
@@ -85,7 +199,6 @@ export default function SignInScreen() {
                 </View>
               </View>
 
-              {/* Contraseña */}
               <View className="gap-2">
                 <Text className="text-sm font-semibold text-foreground">Contraseña</Text>
                 <View className="bg-surface rounded-xl border border-border flex-row items-center px-4 py-3 gap-3">
@@ -96,53 +209,33 @@ export default function SignInScreen() {
                     placeholderTextColor={colors.muted}
                     value={password}
                     onChangeText={setPassword}
-                    secureTextEntry={!showPassword}
+                    secureTextEntry
                     editable={!isLoading}
                     returnKeyType="done"
+                    onSubmitEditing={handleSignIn}
                   />
-                  <TouchableOpacity
-                    onPress={() => setShowPassword(!showPassword)}
-                    disabled={isLoading}
-                  >
-                    <IconSymbol
-                      name={showPassword ? "eye.fill" : "eye.slash.fill"}
-                      size={20}
-                      color={colors.muted}
-                    />
-                  </TouchableOpacity>
                 </View>
               </View>
             </View>
 
-            {/* Botón de login */}
-            <TouchableOpacity
-              className="rounded-xl py-4 items-center"
-              style={{ backgroundColor: colors.primary }}
+            <WebSafeButton
               onPress={handleSignIn}
-              disabled={isLoading}
-              activeOpacity={0.8}
-            >
-              {isLoading ? (
-                <ActivityIndicator color="#FFFFFF" />
-              ) : (
-                <Text className="text-base font-semibold text-white">Iniciar sesión</Text>
-              )}
-            </TouchableOpacity>
+              title="Iniciar sesión"
+              isLoading={isLoading}
+              backgroundColor={colors.primary}
+            />
 
-            {/* Enlace a registro */}
-            <View className="flex-row items-center justify-center gap-2">
+            <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8 }}>
               <Text className="text-sm text-muted">¿No tienes cuenta?</Text>
-              <TouchableOpacity
+              <Text
                 onPress={() => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                   router.replace("/auth/signup" as any);
                 }}
-                disabled={isLoading}
+                style={{ color: colors.primary, fontSize: 14, fontWeight: "600" }}
               >
-                <Text className="text-sm font-semibold" style={{ color: colors.primary }}>
-                  Regístrate aquí
-                </Text>
-              </TouchableOpacity>
+                Regístrate aquí
+              </Text>
             </View>
           </View>
         </ScrollView>
