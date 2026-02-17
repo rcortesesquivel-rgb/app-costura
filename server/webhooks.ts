@@ -73,9 +73,6 @@ function validateHotmartHottok(
     }
 
     console.error("[Webhook] No valid Hottok found in any location");
-    console.error("[Webhook] Configured Hottok length:", configuredHottok.length);
-    console.error("[Webhook] Candidates count:", candidates.length);
-
     return false;
   } catch (error) {
     console.error("[Webhook] Error validating Hottok:", error);
@@ -125,6 +122,8 @@ function validateHotmartSignature(
  */
 router.post("/hotmart", async (req: Request, res: Response) => {
   try {
+    console.log("\n[Webhook] Nueva solicitud recibida");
+
     // Obtener Hottok de múltiples ubicaciones posibles
     const hottokFromHeader = req.headers["hottok"] as string | undefined;
     const hottokFromAuth = req.headers["authorization"] as string | undefined;
@@ -185,18 +184,22 @@ router.post("/hotmart", async (req: Request, res: Response) => {
     try {
       switch (eventType) {
         case "subscription_charge_success":
+          console.log("[Webhook] Processing subscription_charge_success");
           await hotmartDb.processSubscriptionChargeSuccess(email, payload.data);
           break;
 
         case "subscription_cancellation":
+          console.log("[Webhook] Processing subscription_cancellation");
           await hotmartDb.processSubscriptionCancellation(email, payload.data);
           break;
 
         case "charge_refund":
+          console.log("[Webhook] Processing charge_refund");
           await hotmartDb.processChargeRefund(email, payload.data);
           break;
 
         case "PURCHASE_APPROVED":
+          console.log("[Webhook] Processing PURCHASE_APPROVED");
           await hotmartDb.processPurchaseApproved(email, payload.data);
           break;
 
