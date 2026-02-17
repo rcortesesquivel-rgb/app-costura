@@ -124,7 +124,7 @@ export default function CrearTrabajoScreen() {
     if (canRecord === false) {
       Alert.alert(
         "Límite alcanzado",
-        "Has alcanzado el límite de 20 transcripciones este mes. Actualiza tu plan a Mensual para transcripciones ilimitadas."
+        "Has alcanzado tu límite mensual de audio. Pasate al Plan Mensual para uso ilimitado."
       );
       return;
     }

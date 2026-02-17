@@ -177,3 +177,16 @@
 - [x] Agregar permisos de notificaciones en manifest
 - [x] Implementar historial de notificaciones
 - [x] Agregar configuración de preferencias de notificaciones
+
+
+## PURCHASE_APPROVED y Restricciones de Plan
+- [x] Agregar campos de límite de almacenamiento a tabla de usuarios
+- [x] Agregar campo de prioridad (isPriority) a tabla de usuarios
+- [x] Implementar procesamiento de evento PURCHASE_APPROVED
+- [x] Detectar automáticamente si es suscripción o pago único
+- [x] Aplicar plan "Pago Único (Lifetime)" automáticamente
+- [x] Validar límite de 20 transcripciones de audio para Lifetime
+- [x] Validar límite de 1GB de almacenamiento para Lifetime
+- [x] Mostrar mensaje de límite alcanzado en cliente
+- [x] Marcar usuarios de membresía mensual con estrella en admin panel
+- [x] Filtrar por prioridad en panel de administrador

@@ -84,6 +84,10 @@ router.post("/hotmart", async (req: Request, res: Response) => {
           await hotmartDb.processChargeRefund(email, payload.data);
           break;
 
+        case "PURCHASE_APPROVED":
+          await hotmartDb.processPurchaseApproved(email, payload.data);
+          break;
+
         default:
           console.log(`Unhandled event type: ${eventType}`);
       }

@@ -194,3 +194,55 @@ export async function getAuditLog(userId: number, limit: number = 50) {
     .where(eq(auditLog.userId, userId))
     .limit(limit);
 }
+
+export async function processPurchaseApproved(email: string, payload: any) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  // Buscar usuario por email
+  const user = await db
+    .select()
+    .from(users)
+    .where(eq(users.email, email));
+
+  if (!user || user.length === 0) {
+    throw new Error(`User not found with email: ${email}`);
+  }
+
+  const userId = user[0].id;
+
+  // Detectar si es suscripción o pago único
+  const isRecurring = payload.product?.is_recurring || payload.subscription_id;
+  const plan = isRecurring ? "monthly" : "lifetime";
+  const isPriority = isRecurring ? 1 : 0;
+
+  // Actualizar usuario
+  await db
+    .update(users)
+    .set({
+      isActive: "active",
+      plan,
+      isPriority,
+      audioTranscriptionsThisMonth: 0,
+      lastAudioResetDate: new Date(),
+      updatedAt: new Date(),
+    })
+    .where(eq(users.id, userId));
+
+  // Registrar en auditoría
+  await db.insert(auditLog).values({
+    userId,
+    action: "purchase_approved",
+    details: JSON.stringify({
+      email,
+      plan,
+      isRecurring,
+      productId: payload.product?.id,
+      purchaseId: payload.purchase_id,
+      amount: payload.amount,
+      date: new Date().toISOString(),
+    }),
+  });
+
+  return { success: true, userId, plan, isPriority };
+}

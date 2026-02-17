@@ -257,6 +257,22 @@ function UserCard({ user, onStatusChange, colors }: UserCardProps) {
             <Text className="text-sm text-muted">{user.name}</Text>
           )}
           
+          {/* Plan y Prioridad */}
+          <View className="flex-row items-center gap-2 mt-2">
+            <View className="flex-row items-center gap-1 flex-1">
+              <IconSymbol name="creditcard.fill" size={14} color={colors.primary} />
+              <Text className="text-xs font-medium text-primary">
+                {user.plan === "monthly" ? "Mensual" : "Lifetime"}
+              </Text>
+            </View>
+            {user.isPriority === 1 && (
+              <View className="flex-row items-center gap-1 bg-warning/10 rounded-full px-2 py-1">
+                <Text style={{ fontSize: 12 }}>⭐</Text>
+                <Text className="text-xs font-semibold text-warning">Prioridad</Text>
+              </View>
+            )}
+          </View>
+          
           <View className="flex-row items-center gap-2 mt-1">
             <View className="flex-row items-center gap-1 flex-1">
               <IconSymbol name="person.fill" size={14} color={colors.muted} />
