@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { notificationsRouter } from "./notifications-routes";
 import { COOKIE_NAME } from "../shared/const.js";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
@@ -6,6 +7,7 @@ import { publicProcedure, router } from "./_core/trpc";
 import * as db from "./db";
 import * as adminDb from "./admin-db";
 import * as superAdminDb from "./superadmin-db";
+import * as notificationsDb from "./notifications-db";
 
 // Procedimiento protegido que requiere autenticación
 const protectedProcedure = publicProcedure.use(async (opts) => {
@@ -435,6 +437,9 @@ export const appRouter = router({
         return { success: true };
       }),
     }),
+
+    // Notificaciones
+    notifications: notificationsRouter,
   }),
 });
 

@@ -164,3 +164,16 @@
 - [x] Agregar soporte para Android (display: fullscreen)
 - [ ] Probar instalación en iOS
 - [ ] Probar instalación en Android
+
+
+## Notificaciones Push
+- [x] Crear tabla de suscripciones push en base de datos
+- [x] Crear tabla de notificaciones enviadas para auditoría
+- [x] Implementar registro de dispositivos para push
+- [x] Crear rutas API para enviar notificaciones
+- [x] Implementar notificación cuando trabajo está "Listo para entrega"
+- [x] Implementar notificación cuando hay pago pendiente
+- [x] Crear servicio de notificaciones en cliente
+- [x] Agregar permisos de notificaciones en manifest
+- [x] Implementar historial de notificaciones
+- [x] Agregar configuración de preferencias de notificaciones

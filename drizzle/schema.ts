@@ -153,6 +153,47 @@ export const hotmartWebhooks = mysqlTable("hotmartWebhooks", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
+// Tabla de suscripciones push para notificaciones
+export const pushSubscriptions = mysqlTable("pushSubscriptions", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  endpoint: text("endpoint").notNull(), // URL del endpoint push
+  auth: varchar("auth", { length: 255 }).notNull(), // Clave de autenticación
+  p256dh: varchar("p256dh", { length: 255 }).notNull(), // Clave pública
+  userAgent: varchar("userAgent", { length: 500 }), // Información del navegador
+  isActive: int("isActive").default(1).notNull(), // 1 = activo, 0 = inactivo
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+// Tabla de notificaciones enviadas
+export const notifications = mysqlTable("notifications", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  trabajoId: int("trabajoId"), // ID del trabajo relacionado
+  type: varchar("type", { length: 50 }).notNull(), // "ready_for_delivery", "pending_payment", etc.
+  title: varchar("title", { length: 255 }).notNull(),
+  body: text("body").notNull(),
+  data: text("data"), // JSON con datos adicionales
+  sent: int("sent").default(0).notNull(), // 1 = enviada, 0 = pendiente
+  sentAt: timestamp("sentAt"),
+  read: int("read").default(0).notNull(), // 1 = leída, 0 = no leída
+  readAt: timestamp("readAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+// Tabla de preferencias de notificaciones
+export const notificationPreferences = mysqlTable("notificationPreferences", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().unique(),
+  readyForDelivery: int("readyForDelivery").default(1).notNull(), // Habilitar notificaciones de trabajos listos
+  pendingPayment: int("pendingPayment").default(1).notNull(), // Habilitar notificaciones de pagos pendientes
+  newClient: int("newClient").default(1).notNull(), // Habilitar notificaciones de nuevos clientes
+  systemUpdates: int("systemUpdates").default(1).notNull(), // Habilitar notificaciones del sistema
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
 // Export types
 export type Cliente = typeof clientes.$inferSelect;
 export type InsertCliente = typeof clientes.$inferInsert;
@@ -170,3 +211,9 @@ export type AuditLog = typeof auditLog.$inferSelect;
 export type InsertAuditLog = typeof auditLog.$inferInsert;
 export type HotmartWebhook = typeof hotmartWebhooks.$inferSelect;
 export type InsertHotmartWebhook = typeof hotmartWebhooks.$inferInsert;
+export type PushSubscription = typeof pushSubscriptions.$inferSelect;
+export type InsertPushSubscription = typeof pushSubscriptions.$inferInsert;
+export type Notification = typeof notifications.$inferSelect;
+export type InsertNotification = typeof notifications.$inferInsert;
+export type NotificationPreference = typeof notificationPreferences.$inferSelect;
+export type InsertNotificationPreference = typeof notificationPreferences.$inferInsert;

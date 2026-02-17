@@ -43,6 +43,13 @@
       "when": 1771343137959,
       "tag": "0005_third_black_crow",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1771346535098,
+      "tag": "0006_mute_the_fury",
+      "breakpoints": true
     }
   ]
 }
