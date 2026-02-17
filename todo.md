@@ -151,3 +151,16 @@
 - [x] Cambiar favicon.png
 - [x] Cambiar android-icon-foreground.png
 - [x] Actualizar app.config.ts con nueva URL del logo
+
+
+## PWA (Progressive Web App)
+- [x] Crear archivo manifest.json con configuración PWA
+- [x] Agregar iconos para PWA en diferentes tamaños
+- [x] Crear service worker para caché y offline
+- [x] Configurar meta tags en HTML para PWA
+- [x] Registrar service worker en la aplicación
+- [x] Configurar pantalla completa sin barra del navegador
+- [x] Agregar soporte para iOS (apple-mobile-web-app-capable)
+- [x] Agregar soporte para Android (display: fullscreen)
+- [ ] Probar instalación en iOS
+- [ ] Probar instalación en Android
