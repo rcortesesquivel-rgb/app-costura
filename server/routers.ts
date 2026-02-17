@@ -5,6 +5,7 @@ import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router } from "./_core/trpc";
 import * as db from "./db";
 import * as adminDb from "./admin-db";
+import * as superAdminDb from "./superadmin-db";
 
 // Procedimiento protegido que requiere autenticación
 const protectedProcedure = publicProcedure.use(async (opts) => {
@@ -25,6 +26,20 @@ const adminProcedure = publicProcedure.use(async (opts) => {
   const user = opts.ctx.user;
   if (!user || !user.id || user.role !== "admin") {
     throw new Error("Unauthorized: Admin access required");
+  }
+  return opts.next({
+    ctx: {
+      ...opts.ctx,
+      user: user,
+    },
+  });
+});
+
+// Procedimiento protegido solo para Super Administrador
+const superAdminProcedure = publicProcedure.use(async (opts) => {
+  const user = opts.ctx.user;
+  if (!user || !user.email || !superAdminDb.isSuperAdmin(user.email)) {
+    throw new Error("Unauthorized: Super admin access required");
   }
   return opts.next({
     ctx: {
@@ -361,6 +376,63 @@ export const appRouter = router({
 
       trabajosByTipo: adminProcedure.query(() => {
         return adminDb.getTrabajosCountByTipo();
+      }),
+    }),
+  }),
+
+  // ============ SUPER ADMIN ============
+  superAdmin: router({
+    // Usuarios
+    users: router({
+      list: superAdminProcedure.query(() => {
+        return superAdminDb.getAllUsersWithStats();
+      }),
+
+      search: superAdminProcedure
+        .input(z.object({ query: z.string() }))
+        .query(({ input }) => {
+          return superAdminDb.searchUsers(input.query);
+        }),
+
+      updatePlan: superAdminProcedure
+        .input(z.object({
+          id: z.number(),
+          plan: z.enum(["monthly", "lifetime"]),
+        }))
+        .mutation(async ({ input }) => {
+          await superAdminDb.updateUserPlan(input.id, input.plan);
+          return { success: true };
+        }),
+
+      updateStatus: superAdminProcedure
+        .input(z.object({
+          id: z.number(),
+          isActive: z.enum(["active", "inactive"]),
+        }))
+        .mutation(async ({ input }) => {
+          await superAdminDb.updateUserStatus(input.id, input.isActive);
+          return { success: true };
+        }),
+    }),
+
+    // Métricas
+    metrics: router({
+      overview: superAdminProcedure.query(() => {
+        return superAdminDb.getSuperAdminMetrics();
+      }),
+    }),
+
+    // Validación de límites de audio
+    audio: router({
+      canRecord: protectedProcedure.query(async ({ ctx }) => {
+        if (!ctx.user) return false;
+        return superAdminDb.canUserRecordAudio(ctx.user.id);
+      }),
+
+      recordTranscription: protectedProcedure.mutation(async ({ ctx }) => {
+        if (!ctx.user) throw new Error("User not authenticated");
+        await superAdminDb.incrementAudioTranscriptionCount(ctx.user.id);
+        return { success: true };
       }),
     }),
   }),

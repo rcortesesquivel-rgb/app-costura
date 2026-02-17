@@ -112,3 +112,21 @@
 - [x] Implementar vista de estadísticas (total de trabajos, usuarios activos, etc.)
 - [x] Proteger acceso a vista de administrador solo para admin
 - [x] Agregar tab de administrador en navegación principal
+
+
+## Super Administrador
+- [x] Agregar campo de plan (mensual/lifetime) a tabla de usuarios
+- [x] Agregar contador de transcripciones de audio por usuario
+- [x] Agregar fecha de última transcripción para resetear contador mensual
+- [ ] Crear tabla de auditoría para registrar cambios de estado
+- [x] Implementar compresión de imágenes en cliente (máximo 1MB)
+- [x] Crear rutas API de Super Administrador (solo para email específico)
+- [x] Crear pantalla de Super Administrador
+- [x] Implementar tabla de usuarios con información completa
+- [x] Implementar toggle para activar/desactivar usuarios
+- [x] Implementar selector de plan (mensual/lifetime)
+- [x] Crear buscador de usuarios por email o nombre
+- [x] Implementar métricas de uso (usuarios activos, imágenes, transcripciones)
+- [x] Validar límite de 20 transcripciones para plan Pago Único
+- [x] Proteger acceso solo para Super Administrador
+- [ ] Implementar validación de login para usuarios desactivados

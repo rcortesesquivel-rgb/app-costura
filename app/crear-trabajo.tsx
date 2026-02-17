@@ -44,6 +44,7 @@ export default function CrearTrabajoScreen() {
   const [recognition, setRecognition] = useState<any>(null);
 
   const { data: clientes, isLoading: loadingClientes } = trpc.clientes.list.useQuery();
+  const { data: canRecord } = trpc.superAdmin.audio.canRecord.useQuery();
 
   const utils = trpc.useUtils();
   const createMutation = trpc.trabajos.create.useMutation({
@@ -81,10 +82,17 @@ export default function CrearTrabajoScreen() {
         recognitionInstance.interimResults = false;
         recognitionInstance.lang = "es-ES";
 
-        recognitionInstance.onresult = (event: any) => {
+        recognitionInstance.onresult = async (event: any) => {
           const transcript = event.results[0][0].transcript;
           setDescripcion((prev) => (prev ? `${prev} ${transcript}` : transcript));
           setGrabando(false);
+          
+          // Registrar transcripción en el servidor
+          try {
+            await utils.client.superAdmin.audio.recordTranscription.mutate();
+          } catch (error) {
+            console.error("Error registrando transcripción:", error);
+          }
         };
 
         recognitionInstance.onerror = () => {
@@ -101,7 +109,7 @@ export default function CrearTrabajoScreen() {
     }
   }, []);
 
-  const handleIniciarGrabacion = () => {
+  const handleIniciarGrabacion = async () => {
     if (Platform.OS !== "web") {
       Alert.alert("Información", "La grabación de voz solo está disponible en la versión web.");
       return;
@@ -109,6 +117,15 @@ export default function CrearTrabajoScreen() {
 
     if (!recognition) {
       Alert.alert("Error", "Tu navegador no soporta reconocimiento de voz.");
+      return;
+    }
+
+    // Verificar límite de transcripciones
+    if (canRecord === false) {
+      Alert.alert(
+        "Límite alcanzado",
+        "Has alcanzado el límite de 20 transcripciones este mes. Actualiza tu plan a Mensual para transcripciones ilimitadas."
+      );
       return;
     }
 
