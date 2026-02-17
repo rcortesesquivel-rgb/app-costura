@@ -198,3 +198,13 @@
 - [x] Verificar validación HMAC-SHA256 con clave secreta
 - [x] Crear tests para webhooks de Hotmart
 - [x] Confirmar que todos los eventos se procesan correctamente
+
+
+## Configuración de Hottok y Endpoint
+- [x] Configurar Hottok de Hotmart en variables de entorno
+- [x] Verificar que endpoint /api/webhooks/hotmart acepta POST
+- [x] Validar autenticación con Hottok
+- [x] Probar recepción de PURCHASE_APPROVED
+- [x] Activar modo offline definitivamente
+- [x] Verificar que service worker está registrado
+- [x] Probar instalación en navegador
