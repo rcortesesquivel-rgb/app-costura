@@ -29,8 +29,18 @@ export default function SignInScreen() {
       await signIn(email, password);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       router.replace("/(tabs)");
-    } catch (error) {
-      Alert.alert("Error", "Email o contraseña incorrectos");
+    } catch (error: any) {
+      if (error.message === "ACCOUNT_INACTIVE") {
+        Alert.alert(
+          "Cuenta Inactiva",
+          "Tu suscripción ha vencido. Por favor, renueva tu membresía en Hotmart para continuar usando la app.",
+          [
+            { text: "OK", onPress: () => {} },
+          ]
+        );
+      } else {
+        Alert.alert("Error", "Email o contraseña incorrectos");
+      }
       console.error("Sign in error:", error);
     } finally {
       setIsLoading(false);

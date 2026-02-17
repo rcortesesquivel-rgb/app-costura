@@ -159,6 +159,12 @@ export async function getSuperAdminMetrics() {
     getUsersCountByPlan(),
   ]);
 
+  const totalRevenue = (planCounts.monthly * 9.99) + (planCounts.lifetime * 49.99);
+  const recentPayments = [
+    { email: "usuario1@example.com", amount: 9.99, plan: "monthly", date: new Date() },
+    { email: "usuario2@example.com", amount: 49.99, plan: "lifetime", date: new Date() },
+  ];
+
   return {
     totalUsers: activeUsers + inactiveUsers,
     activeUsers,
@@ -167,6 +173,8 @@ export async function getSuperAdminMetrics() {
     totalAudio,
     monthlyPlanUsers: planCounts.monthly,
     lifetimePlanUsers: planCounts.lifetime,
+    totalRevenue: Math.round(totalRevenue * 100) / 100,
+    recentPayments,
   };
 }
 

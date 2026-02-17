@@ -129,7 +129,7 @@
 - [x] Implementar métricas de uso (usuarios activos, imágenes, transcripciones)
 - [x] Validar límite de 20 transcripciones para plan Pago Único
 - [x] Proteger acceso solo para Super Administrador
-- [ ] Implementar validación de login para usuarios desactivados
+- [x] Implementar validación de login para usuarios desactivados
 
 
 ## Webhooks de Hotmart

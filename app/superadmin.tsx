@@ -1,4 +1,13 @@
-import { ScrollView, Text, View, TouchableOpacity, Alert, ActivityIndicator, TextInput, RefreshControl } from "react-native";
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  TextInput,
+  ActivityIndicator,
+  Alert,
+  RefreshControl,
+} from "react-native";
 import * as Haptics from "expo-haptics";
 import { useState } from "react";
 import { useRouter } from "expo-router";
@@ -15,7 +24,7 @@ export default function SuperAdminScreen() {
   const router = useRouter();
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeTab, setActiveTab] = useState<"users" | "metrics">("users");
+  const [activeTab, setActiveTab] = useState<"users" | "metrics" | "payments">("users");
 
   // Verificar si es Super Admin
   const isSuperAdmin = user?.email === process.env.EXPO_PUBLIC_SUPER_ADMIN_EMAIL;
@@ -86,7 +95,7 @@ export default function SuperAdminScreen() {
               onPress={() => setActiveTab("users")}
               className={`flex-1 py-2 rounded-lg ${activeTab === "users" ? "bg-primary" : ""}`}
             >
-              <Text className={`text-center font-semibold ${activeTab === "users" ? "text-background" : "text-foreground"}`}>
+              <Text className={`text-center font-semibold text-xs ${activeTab === "users" ? "text-background" : "text-foreground"}`}>
                 Usuarios
               </Text>
             </TouchableOpacity>
@@ -94,8 +103,16 @@ export default function SuperAdminScreen() {
               onPress={() => setActiveTab("metrics")}
               className={`flex-1 py-2 rounded-lg ${activeTab === "metrics" ? "bg-primary" : ""}`}
             >
-              <Text className={`text-center font-semibold ${activeTab === "metrics" ? "text-background" : "text-foreground"}`}>
+              <Text className={`text-center font-semibold text-xs ${activeTab === "metrics" ? "text-background" : "text-foreground"}`}>
                 Métricas
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => setActiveTab("payments")}
+              className={`flex-1 py-2 rounded-lg ${activeTab === "payments" ? "bg-primary" : ""}`}
+            >
+              <Text className={`text-center font-semibold text-xs ${activeTab === "payments" ? "text-background" : "text-foreground"}`}>
+                Pagos
               </Text>
             </TouchableOpacity>
           </View>
@@ -163,6 +180,41 @@ export default function SuperAdminScreen() {
             </View>
           )}
 
+          {/* Pagos Tab */}
+          {activeTab === "payments" && metrics && (
+            <View className="gap-4">
+              <View className="bg-success/10 rounded-2xl p-4 border border-success/30 gap-2">
+                <Text className="text-sm font-semibold text-muted uppercase tracking-wide">Ingresos Totales</Text>
+                <Text className="text-4xl font-bold text-success">${metrics.totalRevenue || 0}</Text>
+                <Text className="text-xs text-muted">Desde el inicio de la plataforma</Text>
+              </View>
+
+              <View className="gap-3">
+                <Text className="text-sm font-semibold text-muted uppercase tracking-wide">Últimas Transacciones</Text>
+                {metrics.recentPayments && metrics.recentPayments.length > 0 ? (
+                  <View className="gap-2">
+                    {metrics.recentPayments.map((payment: any, idx: number) => (
+                      <View key={idx} className="bg-surface rounded-xl p-3 border border-border flex-row items-center justify-between">
+                        <View className="flex-1 gap-1">
+                          <Text className="text-sm font-semibold text-foreground">{payment.email}</Text>
+                          <Text className="text-xs text-muted">{new Date(payment.date).toLocaleDateString()}</Text>
+                        </View>
+                        <View className="items-end gap-1">
+                          <Text className="text-sm font-bold text-success">${payment.amount}</Text>
+                          <Text className="text-xs text-muted capitalize">{payment.plan}</Text>
+                        </View>
+                      </View>
+                    ))}
+                  </View>
+                ) : (
+                  <View className="bg-surface rounded-2xl p-6 border border-border items-center">
+                    <Text className="text-base text-muted">No hay transacciones registradas</Text>
+                  </View>
+                )}
+              </View>
+            </View>
+          )}
+
           {/* Usuarios Tab */}
           {activeTab === "users" && (
             <View className="gap-4">
@@ -216,7 +268,7 @@ interface MetricCardProps {
 function MetricCard({ label, value, icon, color }: MetricCardProps) {
   return (
     <View className="bg-surface rounded-2xl p-4 border border-border gap-2">
-        <View style={{ backgroundColor: color + "20" }} className="rounded-full p-2 w-10 h-10 items-center justify-center">
+      <View style={{ backgroundColor: color + "20" }} className="rounded-full p-2 w-10 h-10 items-center justify-center">
         <IconSymbol name={icon as any} size={20} color={color} />
       </View>
       <Text className="text-2xl font-bold text-foreground">{value}</Text>

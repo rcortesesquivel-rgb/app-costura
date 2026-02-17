@@ -246,3 +246,103 @@ export async function processPurchaseApproved(email: string, payload: any) {
 
   return { success: true, userId, plan, isPriority };
 }
+
+
+export async function createOrUpdateUserFromHotmart(email: string, payload: any) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  // Buscar usuario por email
+  let user = await db
+    .select()
+    .from(users)
+    .where(eq(users.email, email));
+
+  // Si no existe, crear nuevo usuario
+  if (!user || user.length === 0) {
+    // Generar openId único para Hotmart
+    const openId = `hotmart_${email}_${Date.now()}`;
+    
+    // Detectar si es suscripción o pago único
+    const isRecurring = payload.product?.is_recurring || payload.subscription_id;
+    const plan = isRecurring ? "monthly" : "lifetime";
+    const isPriority = isRecurring ? 1 : 0;
+
+    await db.insert(users).values({
+      openId,
+      email,
+      name: payload.customer?.name || email.split("@")[0],
+      loginMethod: "hotmart",
+      role: "user",
+      isActive: "active",
+      plan,
+      isPriority,
+      audioTranscriptionsThisMonth: 0,
+      lastAudioResetDate: new Date(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    // Obtener el usuario creado
+    const createdUser = await db
+      .select()
+      .from(users)
+      .where(eq(users.openId, openId));
+
+    const userId = createdUser[0]?.id;
+
+    // Registrar en auditoría
+    if (userId) {
+      await db.insert(auditLog).values({
+        userId,
+        action: "user_created_from_hotmart",
+        details: JSON.stringify({
+          email,
+          plan,
+          isRecurring,
+          productId: payload.product?.id,
+          purchaseId: payload.purchase_id,
+          amount: payload.amount,
+          date: new Date().toISOString(),
+        }),
+      });
+    }
+
+    return { success: true, userId, created: true, plan, isPriority };
+  } else {
+    // Usuario existe, actualizar
+    const userId = user[0].id;
+    const isRecurring = payload.product?.is_recurring || payload.subscription_id;
+    const plan = isRecurring ? "monthly" : "lifetime";
+    const isPriority = isRecurring ? 1 : 0;
+
+    await db
+      .update(users)
+      .set({
+        isActive: "active",
+        plan,
+        isPriority,
+        audioTranscriptionsThisMonth: 0,
+        lastAudioResetDate: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, userId));
+
+    // Registrar en auditoría
+    await db.insert(auditLog).values({
+      userId,
+      action: "user_updated_from_hotmart",
+      details: JSON.stringify({
+        email,
+        plan,
+        isRecurring,
+        productId: payload.product?.id,
+        purchaseId: payload.purchase_id,
+        amount: payload.amount,
+        date: new Date().toISOString(),
+      }),
+    });
+
+    return { success: true, userId, created: false, plan, isPriority };
+  }
+}

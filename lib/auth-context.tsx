@@ -79,7 +79,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signIn = async (email: string, password: string) => {
     try {
-      // Llamar a la API de login
       const response = await fetch("/api/auth/signin", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -91,6 +90,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       const data = await response.json();
+      
+      if (data.user && data.user.isActive === "inactive") {
+        throw new Error("ACCOUNT_INACTIVE");
+      }
+      
       setUser(data.user);
       await AsyncStorage.setItem("authUser", JSON.stringify(data.user));
     } catch (error) {
