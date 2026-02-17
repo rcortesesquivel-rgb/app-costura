@@ -64,6 +64,13 @@
       "when": 1771360016618,
       "tag": "0008_nebulous_iceman",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "5",
+      "when": 1771372355816,
+      "tag": "0009_stiff_black_cat",
+      "breakpoints": true
     }
   ]
 }

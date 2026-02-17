@@ -1,27 +1,98 @@
-import { View, Text, TouchableOpacity, ScrollView } from "react-native";
+import { View, Text, TouchableOpacity, ScrollView, Platform, Alert } from "react-native";
 import { useRouter } from "expo-router";
+import { useState } from "react";
+import * as Haptics from "expo-haptics";
 import { ScreenContainer } from "@/components/screen-container";
+import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useAuth } from "@/lib/auth-context";
 import { useColors } from "@/hooks/use-colors";
+import { getApiBaseUrl } from "@/constants/oauth";
 
 export default function MiCuentaScreen() {
   const { user, isSignedIn, signOut } = useAuth();
   const router = useRouter();
   const colors = useColors();
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [isLoadingReset, setIsLoadingReset] = useState(false);
+  const [resetMessage, setResetMessage] = useState("");
 
   const handleLogout = async () => {
-    if (window.confirm("¿Estás seguro de que deseas cerrar sesión?")) {
-      await signOut();
-      router.replace("/(tabs)");
+    if (Platform.OS === "web") {
+      if (window.confirm("¿Estás seguro de que deseas cerrar sesión?")) {
+        await signOut();
+        router.replace("/(tabs)");
+      }
+    } else {
+      Alert.alert(
+        "Cerrar sesión",
+        "¿Estás seguro de que deseas cerrar sesión?",
+        [
+          { text: "Cancelar", onPress: () => {}, style: "cancel" },
+          {
+            text: "Cerrar sesión",
+            onPress: async () => {
+              await signOut();
+              router.replace("/(tabs)");
+            },
+            style: "destructive",
+          },
+        ]
+      );
     }
   };
 
   const handleLogin = () => {
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
     router.push("/auth/signin");
   };
 
   const handleSignUp = () => {
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
     router.push("/auth/signup");
+  };
+
+  const handleForgotPassword = async () => {
+    if (!forgotEmail.trim()) {
+      Alert.alert("Error", "Por favor ingresa tu email");
+      return;
+    }
+
+    setIsLoadingReset(true);
+    setResetMessage("");
+
+    try {
+      const baseUrl = getApiBaseUrl();
+      const response = await fetch(`${baseUrl}/api/auth/forgot-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: forgotEmail }),
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({ error: "Error al procesar" }));
+        throw new Error(err.error || "Error al enviar el correo de recuperación");
+      }
+
+      setResetMessage("✓ Se envió un enlace de recuperación a tu email. Revisa tu bandeja de entrada.");
+      setForgotEmail("");
+
+      // Cerrar el modal después de 3 segundos
+      setTimeout(() => {
+        setShowForgotPassword(false);
+        setResetMessage("");
+      }, 3000);
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : "Error desconocido";
+      Alert.alert("Error", errorMsg);
+    } finally {
+      setIsLoadingReset(false);
+    }
   };
 
   if (!isSignedIn) {
@@ -51,6 +122,14 @@ export default function MiCuentaScreen() {
               >
                 <Text className="text-center font-semibold text-background">Iniciar Sesión</Text>
               </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => setShowForgotPassword(true)}
+                style={{ paddingVertical: 8 }}
+              >
+                <Text style={{ color: colors.primary, textAlign: "center", fontSize: 14, fontWeight: "500" }}>
+                  ¿Olvidaste tu contraseña?
+                </Text>
+              </TouchableOpacity>
             </View>
 
             {/* Signup Card */}
@@ -78,6 +157,103 @@ export default function MiCuentaScreen() {
             </View>
           </View>
         </ScrollView>
+
+        {/* Modal de Olvidé mi contraseña */}
+        {showForgotPassword && (
+          <View
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: "rgba(0, 0, 0, 0.5)",
+              justifyContent: "center",
+              alignItems: "center",
+              zIndex: 1000,
+            }}
+          >
+            <View
+              className="rounded-2xl p-6 gap-4 w-11/12 max-w-sm"
+              style={{ backgroundColor: colors.surface, borderColor: colors.border, borderWidth: 1 }}
+            >
+              {/* Header */}
+              <View className="flex-row items-center justify-between">
+                <Text className="text-xl font-bold text-foreground">Recuperar Contraseña</Text>
+                <TouchableOpacity onPress={() => setShowForgotPassword(false)}>
+                  <IconSymbol name="xmark.circle.fill" size={24} color={colors.muted} />
+                </TouchableOpacity>
+              </View>
+
+              {/* Descripción */}
+              <Text className="text-sm text-muted">
+                Ingresa tu email y te enviaremos un enlace para recuperar tu contraseña.
+              </Text>
+
+              {/* Input de Email */}
+              <View
+                className="rounded-lg p-3 border"
+                style={{ borderColor: colors.border, backgroundColor: colors.background }}
+              >
+                <Text className="text-xs font-semibold text-muted uppercase mb-2">Email</Text>
+                <input
+                  type="email"
+                  placeholder="tu@email.com"
+                  value={forgotEmail}
+                  onChange={(e) => setForgotEmail(e.currentTarget.value)}
+                  style={{
+                    fontSize: 16,
+                    padding: 8,
+                    color: colors.foreground,
+                    border: "none",
+                    outline: "none",
+                    fontFamily: "inherit",
+                  }}
+                />
+              </View>
+
+              {/* Mensaje de éxito */}
+              {resetMessage && (
+                <View className="bg-success/10 rounded-lg p-3 border border-success/30">
+                  <Text className="text-sm text-success font-semibold">{resetMessage}</Text>
+                </View>
+              )}
+
+              {/* Botones */}
+              <View className="flex-row gap-3 mt-2">
+                <TouchableOpacity
+                  onPress={() => setShowForgotPassword(false)}
+                  style={{
+                    flex: 1,
+                    paddingVertical: 10,
+                    paddingHorizontal: 12,
+                    borderRadius: 8,
+                    borderWidth: 1,
+                    borderColor: colors.border,
+                  }}
+                >
+                  <Text className="text-center font-semibold text-foreground">Cancelar</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={handleForgotPassword}
+                  disabled={isLoadingReset}
+                  style={{
+                    flex: 1,
+                    paddingVertical: 10,
+                    paddingHorizontal: 12,
+                    borderRadius: 8,
+                    backgroundColor: colors.primary,
+                    opacity: isLoadingReset ? 0.6 : 1,
+                  }}
+                >
+                  <Text className="text-center font-semibold text-background">
+                    {isLoadingReset ? "Enviando..." : "Enviar"}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        )}
       </ScreenContainer>
     );
   }
@@ -111,7 +287,7 @@ export default function MiCuentaScreen() {
               <View>
                 <Text className="text-xs font-semibold text-muted uppercase mb-1">Rol</Text>
                 <Text className="text-base text-foreground capitalize">
-                  {user?.role === "admin" ? "Administrador" : "Usuario"}
+                  {user?.role === "admin" ? "Administrador" : "Sastre"}
                 </Text>
               </View>
               <View>
@@ -121,7 +297,29 @@ export default function MiCuentaScreen() {
             </View>
           </View>
 
-          {/* Actions */}
+          {/* Cambiar Contraseña */}
+          <TouchableOpacity
+            onPress={() => setShowForgotPassword(true)}
+            style={{
+              backgroundColor: colors.surface,
+              paddingVertical: 12,
+              paddingHorizontal: 16,
+              borderRadius: 8,
+              borderWidth: 1,
+              borderColor: colors.border,
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+              <IconSymbol name="lock.fill" size={20} color={colors.primary} />
+              <Text className="font-semibold text-foreground">Cambiar Contraseña</Text>
+            </View>
+            <IconSymbol name="chevron.right" size={20} color={colors.muted} />
+          </TouchableOpacity>
+
+          {/* Cerrar Sesión */}
           <TouchableOpacity
             onPress={handleLogout}
             style={{
@@ -136,6 +334,81 @@ export default function MiCuentaScreen() {
           </TouchableOpacity>
         </View>
       </ScrollView>
+
+      {/* Modal de Cambiar Contraseña (reutiliza el mismo modal) */}
+      {showForgotPassword && isSignedIn && (
+        <View
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.5)",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 1000,
+          }}
+        >
+          <View
+            className="rounded-2xl p-6 gap-4 w-11/12 max-w-sm"
+            style={{ backgroundColor: colors.surface, borderColor: colors.border, borderWidth: 1 }}
+          >
+            {/* Header */}
+            <View className="flex-row items-center justify-between">
+              <Text className="text-xl font-bold text-foreground">Cambiar Contraseña</Text>
+              <TouchableOpacity onPress={() => setShowForgotPassword(false)}>
+                <IconSymbol name="xmark.circle.fill" size={24} color={colors.muted} />
+              </TouchableOpacity>
+            </View>
+
+            {/* Descripción */}
+            <Text className="text-sm text-muted">
+              Te enviaremos un enlace de recuperación a tu email para cambiar tu contraseña.
+            </Text>
+
+            {/* Mensaje de éxito */}
+            {resetMessage && (
+              <View className="bg-success/10 rounded-lg p-3 border border-success/30">
+                <Text className="text-sm text-success font-semibold">{resetMessage}</Text>
+              </View>
+            )}
+
+            {/* Botones */}
+            <View className="flex-row gap-3 mt-2">
+              <TouchableOpacity
+                onPress={() => setShowForgotPassword(false)}
+                style={{
+                  flex: 1,
+                  paddingVertical: 10,
+                  paddingHorizontal: 12,
+                  borderRadius: 8,
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                }}
+              >
+                <Text className="text-center font-semibold text-foreground">Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={handleForgotPassword}
+                disabled={isLoadingReset}
+                style={{
+                  flex: 1,
+                  paddingVertical: 10,
+                  paddingHorizontal: 12,
+                  borderRadius: 8,
+                  backgroundColor: colors.primary,
+                  opacity: isLoadingReset ? 0.6 : 1,
+                }}
+              >
+                <Text className="text-center font-semibold text-background">
+                  {isLoadingReset ? "Enviando..." : "Enviar Enlace"}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      )}
     </ScreenContainer>
   );
 }

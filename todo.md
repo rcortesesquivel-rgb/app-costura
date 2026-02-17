@@ -251,3 +251,13 @@
 - [x] Validar payload de Hotmart (hottok, evento, datos del comprador)
 - [x] Agregar banner de login suave en Dashboard para usuarios no autenticados
 - [x] Verificar flujo completo: webhook → usuario creado → login funcional (16 tests pasados)
+
+## Configuración de Hotmart y Olvidé mi Contraseña
+- [x] Configurar variables de entorno HOTMART_HOTTOK y HOTMART_WEBHOOK_SECRET
+- [x] Proporcionar instrucciones exactas para webhook en panel de Hotmart
+- [x] Implementar flujo de "Olvidé mi contraseña" en Mi Cuenta
+- [x] Crear endpoint /api/auth/forgot-password
+- [x] Crear endpoint /api/auth/reset-password
+- [x] Agregar campos resetToken y resetTokenExpiry al schema
+- [x] Ejecutar migración de base de datos (pnpm db:push)
+- [x] Crear 17 tests unitarios para validar flujo (todos pasados)
