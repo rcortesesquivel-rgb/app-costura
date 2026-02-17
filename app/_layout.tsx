@@ -29,14 +29,17 @@ export const unstable_settings = {
 
 function RootLayoutContent() {
   const { isSignedIn, isLoading } = useAuth();
+  const TEST_MODE = process.env.EXPO_PUBLIC_TEST_MODE === "true";
 
-  if (isLoading) {
+  if (isLoading && !TEST_MODE) {
     return null;
   }
 
   return (
     <Stack screenOptions={{ headerShown: false }}>
-      {isSignedIn ? (
+      {TEST_MODE ? (
+        <Stack.Screen name="test" />
+      ) : isSignedIn ? (
         <>
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="oauth/callback" />
