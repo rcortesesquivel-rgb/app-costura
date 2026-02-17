@@ -190,3 +190,11 @@
 - [x] Mostrar mensaje de límite alcanzado en cliente
 - [x] Marcar usuarios de membresía mensual con estrella en admin panel
 - [x] Filtrar por prioridad en panel de administrador
+
+
+## Configuración Final de Webhooks y Offline
+- [x] Verificar procesamiento de PURCHASE_APPROVED
+- [x] Optimizar service worker para modo offline completo
+- [x] Verificar validación HMAC-SHA256 con clave secreta
+- [x] Crear tests para webhooks de Hotmart
+- [x] Confirmar que todos los eventos se procesan correctamente
