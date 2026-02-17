@@ -28,29 +28,34 @@ export const unstable_settings = {
 };
 
 function RootLayoutContent() {
-  const { isSignedIn, isLoading } = useAuth();
+  const { isSignedIn } = useAuth();
   const TEST_MODE = process.env.EXPO_PUBLIC_TEST_MODE === "true";
 
-  if (isLoading && !TEST_MODE) {
-    return null;
+  if (TEST_MODE) {
+    return (
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="test" />
+      </Stack>
+    );
   }
 
+  if (isSignedIn) {
+    return (
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="oauth/callback" />
+        <Stack.Screen name="crear-cliente" />
+        <Stack.Screen name="cliente/[id]" />
+        <Stack.Screen name="crear-trabajo" />
+        <Stack.Screen name="trabajo/[id]" />
+      </Stack>
+    );
+  }
+
+  // Always show auth screen if not signed in
   return (
     <Stack screenOptions={{ headerShown: false }}>
-      {TEST_MODE ? (
-        <Stack.Screen name="test" />
-      ) : isSignedIn ? (
-        <>
-          <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="oauth/callback" />
-          <Stack.Screen name="crear-cliente" />
-          <Stack.Screen name="cliente/[id]" />
-          <Stack.Screen name="crear-trabajo" />
-          <Stack.Screen name="trabajo/[id]" />
-        </>
-      ) : (
-        <Stack.Screen name="auth" options={{ headerShown: false }} />
-      )}
+      <Stack.Screen name="auth" options={{ headerShown: false }} />
     </Stack>
   );
 }

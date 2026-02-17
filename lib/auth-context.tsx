@@ -1,6 +1,4 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { trpc } from "./trpc";
 
 export interface AuthUser {
   id: number;
@@ -23,54 +21,28 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const { data: currentUser } = trpc.auth.me.useQuery(undefined, {
-    enabled: !isLoading,
-  });
-
-  // Cargar usuario desde AsyncStorage al iniciar
+  // Simplest possible initialization: just set loading to false immediately
   useEffect(() => {
-    const loadUser = async () => {
-      try {
-        const storedUser = await AsyncStorage.getItem("authUser");
-        if (storedUser) {
-          setUser(JSON.parse(storedUser));
-        }
-      } catch (error) {
-        console.error("Error loading user from storage:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadUser();
+    setIsLoading(false);
   }, []);
-
-  // Actualizar usuario cuando cambia currentUser
-  useEffect(() => {
-    if (currentUser) {
-      setUser(currentUser);
-      AsyncStorage.setItem("authUser", JSON.stringify(currentUser));
-    }
-  }, [currentUser]);
 
   const signUp = async (email: string, password: string, name: string) => {
     try {
-      // Llamar a la API de registro
       const response = await fetch("/api/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password, name }),
+        credentials: "include",
       });
 
       if (!response.ok) {
         throw new Error("Sign up failed");
       }
 
-      const data = await response.json();
-      setUser(data.user);
-      await AsyncStorage.setItem("authUser", JSON.stringify(data.user));
+      // After signup, assume user is logged in
+      setUser({ id: 0, openId: email, name, email, role: "user" });
     } catch (error) {
       console.error("Sign up error:", error);
       throw error;
@@ -83,6 +55,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
+        credentials: "include",
       });
 
       if (!response.ok) {
@@ -94,9 +67,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (data.user && data.user.isActive === "inactive") {
         throw new Error("ACCOUNT_INACTIVE");
       }
-      
-      setUser(data.user);
-      await AsyncStorage.setItem("authUser", JSON.stringify(data.user));
+
+      // After signin, set user
+      if (data.user) {
+        setUser(data.user);
+      }
     } catch (error) {
       console.error("Sign in error:", error);
       throw error;
@@ -107,13 +82,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       await fetch("/api/auth/logout", {
         method: "POST",
+        credentials: "include",
       });
 
+      // Clear local state
       setUser(null);
-      await AsyncStorage.removeItem("authUser");
     } catch (error) {
       console.error("Sign out error:", error);
-      throw error;
+      // Clear state anyway
+      setUser(null);
     }
   };
 
