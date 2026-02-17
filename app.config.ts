@@ -29,10 +29,10 @@ const schemeFromBundleId = `manus${timestamp}`;
 const env = {
   // App branding - update these values directly (do not use env vars)
   appName: "Taller de Costura",
-  appSlug: "{{project_name}}",
+  appSlug: "taller-costura-app",
   // S3 URL of the app logo - set this to the URL returned by generate_image when creating custom logo
   // Leave empty to use the default icon from assets/images/icon.png
-  logoUrl: "https://private-us-east-1.manuscdn.com/sessionFile/ptta630OWDEuOBYm47S1jz/sandbox/gIh4KR37LWdmPvhNQCGxuJ-img-1_1771338379000_na1fn_dGFsbGVyLWNvc3R1cmEtbG9nbw.png?x-oss-process=image/resize,w_1920,h_1920/format,webp/quality,q_80&Expires=1798761600&Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly9wcml2YXRlLXVzLWVhc3QtMS5tYW51c2Nkbi5jb20vc2Vzc2lvbkZpbGUvcHR0YTYzME9XREV1T0JZbTQ3UzFqei9zYW5kYm94L2dJaDRLUjM3TFdkbVB2aE5RQ0d4dUotaW1nLTFfMTc3MTMzODM3OTAwMF9uYTFmbl9kR0ZzYkdWeUxXTnZjM1IxY21FdGJHOW5idy5wbmc~eC1vc3MtcHJvY2Vzcz1pbWFnZS9yZXNpemUsd18xOTIwLGhfMTkyMC9mb3JtYXQsd2VicC9xdWFsaXR5LHFfODAiLCJDb25kaXRpb24iOnsiRGF0ZUxlc3NUaGFuIjp7IkFXUzpFcG9jaFRpbWUiOjE3OTg3NjE2MDB9fX1dfQ__&Key-Pair-Id=K2HSFNDJXOU9YS&Signature=r8Y4lx~tVWoUWFwn39HkccHBbbVC-Vmq0UUCi5itDe~md1tm5vnMe6x2HBHdUIjGNnDutCiZpYxnp8WwgTH~ui7IL2yhHWyQjwGmwFHaHOLWZ0htASEzHu567Y6Pm4SGjlyscAf6E7G9dp~ow4KKQ7DK~o51QLlNNgwzaD1aNWeafozsYWJH5ukHNjx3Hot0eSKEdWALG2TjwBs8uN2rCdgyT4a46wsPJtHCWjEyzZaIb3IpieMzPtq01tI3noN7Wi~5WIZxRrhv88gi2IQl4LC3TZKsz3gtikXS3JQTDyxG0VMG0N9iLFPPvdmLlxTMLd4H62LAeQnqeOIAG7DpXw__",
+  logoUrl: "",
   scheme: schemeFromBundleId,
   iosBundleId: bundleId,
   androidPackage: bundleId,

@@ -131,6 +131,28 @@ export const historialEstados = mysqlTable("historialEstados", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
+// Tabla de auditoría para cambios administrativos
+export const auditLog = mysqlTable("auditLog", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(), // Usuario afectado
+  adminId: int("adminId"), // Admin que realizó la acción
+  action: varchar("action", { length: 100 }).notNull(), // ej: "user_activated", "plan_changed"
+  details: text("details"), // JSON con detalles del cambio
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+// Tabla de webhooks de Hotmart
+export const hotmartWebhooks = mysqlTable("hotmartWebhooks", {
+  id: int("id").autoincrement().primaryKey(),
+  eventType: varchar("eventType", { length: 100 }).notNull(), // ej: "subscription_charge_success"
+  email: varchar("email", { length: 320 }).notNull(),
+  payload: text("payload").notNull(), // JSON con datos del evento
+  processed: int("processed").default(0).notNull(), // 0 = false, 1 = true
+  processedAt: timestamp("processedAt"),
+  error: text("error"), // Error si ocurrió
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
 // Export types
 export type Cliente = typeof clientes.$inferSelect;
 export type InsertCliente = typeof clientes.$inferInsert;
@@ -144,3 +166,7 @@ export type Imagen = typeof imagenes.$inferSelect;
 export type InsertImagen = typeof imagenes.$inferInsert;
 export type HistorialEstado = typeof historialEstados.$inferSelect;
 export type InsertHistorialEstado = typeof historialEstados.$inferInsert;
+export type AuditLog = typeof auditLog.$inferSelect;
+export type InsertAuditLog = typeof auditLog.$inferInsert;
+export type HotmartWebhook = typeof hotmartWebhooks.$inferSelect;
+export type InsertHotmartWebhook = typeof hotmartWebhooks.$inferInsert;

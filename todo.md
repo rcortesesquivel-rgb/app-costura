@@ -130,3 +130,24 @@
 - [x] Validar límite de 20 transcripciones para plan Pago Único
 - [x] Proteger acceso solo para Super Administrador
 - [ ] Implementar validación de login para usuarios desactivados
+
+
+## Webhooks de Hotmart
+- [x] Crear tabla de auditoría para registrar eventos
+- [x] Crear tabla de webhooks para almacenar eventos procesados
+- [x] Implementar endpoint /api/webhooks/hotmart
+- [x] Agregar validación de firma HMAC de Hotmart
+- [x] Procesar evento subscription_charge_success
+- [x] Procesar evento subscription_cancellation
+- [x] Procesar evento charge_refund
+- [x] Agregar manejo de errores y reintentos
+- [x] Crear logs de webhooks para debugging
+- [x] Documentar configuración de Hotmart
+
+## Cambio de Logo
+- [x] Recibir imagen del logo del usuario
+- [x] Cambiar icon.png
+- [x] Cambiar splash-icon.png
+- [x] Cambiar favicon.png
+- [x] Cambiar android-icon-foreground.png
+- [x] Actualizar app.config.ts con nueva URL del logo
