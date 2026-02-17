@@ -55,7 +55,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="configuracion"
         options={{
-          title: "Config",
+          title: "Configuración",
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="gearshape.fill" color={color} />,
         }}
       />
@@ -68,6 +68,13 @@ export default function TabLayout() {
           }}
         />
       )}
+      <Tabs.Screen
+        name="mi-cuenta"
+        options={{
+          title: user ? "Perfil" : "Mi Cuenta",
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="person.circle.fill" color={color} />,
+        }}
+      />
     </Tabs>
   );
 }

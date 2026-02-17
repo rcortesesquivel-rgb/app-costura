@@ -236,3 +236,11 @@
 - [x] Eliminar redirección automática que causa bucle infinito en _layout.tsx
 - [x] Cambiar autenticación a LocalStorage simple (Dashboard carga directo)
 - [x] Confirmar que la pantalla ya no está en blanco
+
+
+## Moneda Dinámica y Traducción Completa
+- [x] Crear hook useCurrency() con Intl.NumberFormat
+- [x] Agregar botón "Mi Cuenta" en tabs para login voluntario
+- [x] Traducir interfaz completa al español
+- [x] Aplicar moneda dinámica en todos los precios (ya existe formatCurrency)
+- [x] Verificar Dashboard, Config y botones funcionan correctamente
