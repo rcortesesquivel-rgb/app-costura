@@ -1,12 +1,16 @@
 import { ScrollView, Text, View, TouchableOpacity, Alert } from "react-native";
 import * as Haptics from "expo-haptics";
+import { useRouter } from "expo-router";
 
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useColors } from "@/hooks/use-colors";
+import { useAuth } from "@/lib/auth-context";
 
 export default function ConfiguracionScreen() {
   const colors = useColors();
+  const router = useRouter();
+  const { user, signOut } = useAuth();
 
   const handleAcercaDe = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -26,6 +30,29 @@ export default function ConfiguracionScreen() {
     );
   };
 
+  const handleLogout = () => {
+    Alert.alert(
+      "Cerrar sesión",
+      "¿Estás seguro de que deseas cerrar sesión?",
+      [
+        { text: "Cancelar", onPress: () => {}, style: "cancel" },
+        {
+          text: "Cerrar sesión",
+          onPress: async () => {
+            try {
+              await signOut();
+              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+              router.replace("/auth/signin" as any);
+            } catch (error) {
+              Alert.alert("Error", "No se pudo cerrar sesión");
+            }
+          },
+          style: "destructive",
+        },
+      ]
+    );
+  };
+
   return (
     <ScreenContainer className="bg-background">
       <ScrollView contentContainerStyle={{ flexGrow: 1, paddingBottom: 20 }}>
@@ -35,6 +62,21 @@ export default function ConfiguracionScreen() {
             <Text className="text-3xl font-bold text-foreground">Configuración</Text>
             <Text className="text-base text-muted">Ajustes de la aplicación</Text>
           </View>
+
+          {/* Usuario */}
+          {user && (
+            <View className="bg-gradient-to-r from-primary/10 to-primary/5 rounded-2xl p-4 border border-primary/20">
+              <View className="flex-row items-center gap-3">
+                <View className="bg-primary rounded-full p-3">
+                  <IconSymbol name="person.fill" size={24} color="#FFFFFF" />
+                </View>
+                <View className="flex-1">
+                  <Text className="text-base font-semibold text-foreground">{user.name || user.email}</Text>
+                  <Text className="text-sm text-muted mt-1">{user.email}</Text>
+                </View>
+              </View>
+            </View>
+          )}
 
           {/* Sección General */}
           <View className="gap-3">
@@ -122,6 +164,20 @@ export default function ConfiguracionScreen() {
               </View>
             </View>
           </View>
+
+          {/* Cerrar sesión */}
+          <TouchableOpacity
+            className="rounded-2xl py-4 items-center border border-error/30 bg-error/5"
+            onPress={handleLogout}
+            activeOpacity={0.8}
+          >
+            <View className="flex-row items-center gap-2">
+              <IconSymbol name="arrow.left.circle.fill" size={20} color={colors.error} />
+              <Text className="text-base font-semibold" style={{ color: colors.error }}>
+                Cerrar sesión
+              </Text>
+            </View>
+          </TouchableOpacity>
         </View>
       </ScrollView>
     </ScreenContainer>

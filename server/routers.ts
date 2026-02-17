@@ -5,6 +5,20 @@ import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router } from "./_core/trpc";
 import * as db from "./db";
 
+// Procedimiento protegido que requiere autenticación
+const protectedProcedure = publicProcedure.use(async (opts) => {
+  const user = opts.ctx.user;
+  if (!user || !user.id) {
+    throw new Error("Unauthorized: User not authenticated");
+  }
+  return opts.next({
+    ctx: {
+      ...opts.ctx,
+      user: user,
+    },
+  });
+});
+
 export const appRouter = router({
   // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
   system: systemRouter,
@@ -21,29 +35,32 @@ export const appRouter = router({
 
   // ============ CLIENTES ============
   clientes: router({
-    list: publicProcedure.query(() => {
-      return db.getAllClientes();
+    list: protectedProcedure.query(({ ctx }) => {
+      return db.getAllClientes(ctx.user.id);
     }),
 
-    getById: publicProcedure
+    getById: protectedProcedure
       .input(z.object({ id: z.number() }))
-      .query(({ input }) => {
-        return db.getClienteById(input.id);
+      .query(({ input, ctx }) => {
+        return db.getClienteById(input.id, ctx.user.id);
       }),
 
-    create: publicProcedure
+    create: protectedProcedure
       .input(z.object({
         nombreCompleto: z.string().min(1).max(255),
         telefono: z.string().max(20).optional(),
         direccion: z.string().optional(),
         redesSociales: z.string().optional(),
       }))
-      .mutation(async ({ input }) => {
-        const id = await db.createCliente(input);
+      .mutation(async ({ input, ctx }) => {
+        const id = await db.createCliente({
+          ...input,
+          userId: ctx.user.id,
+        });
         return { id };
       }),
 
-    update: publicProcedure
+    update: protectedProcedure
       .input(z.object({
         id: z.number(),
         data: z.object({
@@ -53,34 +70,34 @@ export const appRouter = router({
           redesSociales: z.string().optional(),
         }),
       }))
-      .mutation(async ({ input }) => {
-        await db.updateCliente(input.id, input.data);
+      .mutation(async ({ input, ctx }) => {
+        await db.updateCliente(input.id, ctx.user.id, input.data);
         return { success: true };
       }),
 
-    delete: publicProcedure
+    delete: protectedProcedure
       .input(z.object({ id: z.number() }))
-      .mutation(async ({ input }) => {
-        await db.deleteCliente(input.id);
+      .mutation(async ({ input, ctx }) => {
+        await db.deleteCliente(input.id, ctx.user.id);
         return { success: true };
       }),
 
-    search: publicProcedure
+    search: protectedProcedure
       .input(z.object({ query: z.string() }))
-      .query(({ input }) => {
-        return db.searchClientes(input.query);
+      .query(({ input, ctx }) => {
+        return db.searchClientes(input.query, ctx.user.id);
       }),
   }),
 
   // ============ MEDIDAS ============
   medidas: router({
-    getByClienteId: publicProcedure
+    getByClienteId: protectedProcedure
       .input(z.object({ clienteId: z.number() }))
-      .query(({ input }) => {
-        return db.getMedidasByClienteId(input.clienteId);
+      .query(({ input, ctx }) => {
+        return db.getMedidasByClienteId(input.clienteId, ctx.user.id);
       }),
 
-    create: publicProcedure
+    create: protectedProcedure
       .input(z.object({
         clienteId: z.number(),
         cuello: z.string().max(10).optional(),
@@ -97,12 +114,15 @@ export const appRouter = router({
         anchoEspalda: z.string().max(10).optional(),
         notas: z.string().optional(),
       }))
-      .mutation(async ({ input }) => {
-        const id = await db.createMedidas(input);
+      .mutation(async ({ input, ctx }) => {
+        const id = await db.createMedidas({
+          ...input,
+          userId: ctx.user.id,
+        });
         return { id };
       }),
 
-    update: publicProcedure
+    update: protectedProcedure
       .input(z.object({
         id: z.number(),
         data: z.object({
@@ -121,187 +141,167 @@ export const appRouter = router({
           notas: z.string().optional(),
         }),
       }))
-      .mutation(async ({ input }) => {
-        await db.updateMedidas(input.id, input.data);
+      .mutation(async ({ input, ctx }) => {
+        await db.updateMedidas(input.id, ctx.user.id, input.data);
         return { success: true };
       }),
   }),
 
   // ============ TRABAJOS ============
   trabajos: router({
-    list: publicProcedure.query(() => {
-      return db.getAllTrabajos();
+    list: protectedProcedure.query(({ ctx }) => {
+      return db.getAllTrabajos(ctx.user.id);
     }),
 
-    getById: publicProcedure
+    getById: protectedProcedure
       .input(z.object({ id: z.number() }))
-      .query(({ input }) => {
-        return db.getTrabajoById(input.id);
+      .query(({ input, ctx }) => {
+        return db.getTrabajoById(input.id, ctx.user.id);
       }),
 
-    getByClienteId: publicProcedure
+    getByClienteId: protectedProcedure
       .input(z.object({ clienteId: z.number() }))
-      .query(({ input }) => {
-        return db.getTrabajosByClienteId(input.clienteId);
+      .query(({ input, ctx }) => {
+        return db.getTrabajosByClienteId(input.clienteId, ctx.user.id);
       }),
 
-    getByEstado: publicProcedure
-      .input(z.object({ estado: z.string() }))
-      .query(({ input }) => {
-        return db.getTrabajosByEstado(input.estado);
-      }),
-
-    getVencenHoy: publicProcedure.query(() => {
-      return db.getTrabajosVencenHoy();
+    getVencenHoy: protectedProcedure.query(({ ctx }) => {
+      return db.getTrabajosVencenHoy(ctx.user.id);
     }),
 
-    create: publicProcedure
+    create: protectedProcedure
       .input(z.object({
         clienteId: z.number(),
         tipo: z.enum(["arreglo", "confeccion", "personalizacion"]),
         descripcion: z.string().min(1),
         precioBase: z.string(),
-        abonoInicial: z.string().default("0"),
-        tipoPrenda: z.string().max(100).optional(),
+        abonoInicial: z.string().optional(),
+        tipoPrenda: z.string().optional(),
         nivelUrgencia: z.enum(["baja", "media", "alta"]).optional(),
-        tipoTela: z.string().max(100).optional(),
-        metrosRequeridos: z.string().max(10).optional(),
-        fechaPrueba: z.date().optional(),
-        tipoPersonalizacion: z.string().max(100).optional(),
-        estado: z.enum(["en_espera", "cortando", "cosiendo", "listo", "entregado"]).default("en_espera"),
+        tipoTela: z.string().optional(),
+        metrosRequeridos: z.string().optional(),
+        tipoPersonalizacion: z.string().optional(),
         fechaEntrega: z.date().optional(),
         notasVoz: z.string().optional(),
       }))
-      .mutation(async ({ input }) => {
-        const id = await db.createTrabajo(input);
+      .mutation(async ({ input, ctx }) => {
+        const id = await db.createTrabajo({
+          ...input,
+          userId: ctx.user.id,
+          estado: "en_espera",
+        });
         return { id };
       }),
 
-    update: publicProcedure
-      .input(z.object({
-        id: z.number(),
-        data: z.object({
-          descripcion: z.string().min(1).optional(),
-          precioBase: z.string().optional(),
-          abonoInicial: z.string().optional(),
-          tipoPrenda: z.string().max(100).optional(),
-          nivelUrgencia: z.enum(["baja", "media", "alta"]).optional(),
-          tipoTela: z.string().max(100).optional(),
-          metrosRequeridos: z.string().max(10).optional(),
-          fechaPrueba: z.date().optional(),
-          tipoPersonalizacion: z.string().max(100).optional(),
-          estado: z.enum(["en_espera", "cortando", "cosiendo", "listo", "entregado"]).optional(),
-          fechaEntrega: z.date().optional(),
-          fechaEntregado: z.date().optional(),
-          notasVoz: z.string().optional(),
-        }),
-      }))
-      .mutation(async ({ input }) => {
-        await db.updateTrabajo(input.id, input.data);
-        return { success: true };
-      }),
-
-    updateEstado: publicProcedure
+    updateEstado: protectedProcedure
       .input(z.object({
         id: z.number(),
         estadoAnterior: z.string().optional(),
         estadoNuevo: z.string(),
       }))
-      .mutation(async ({ input }) => {
-        await db.updateTrabajo(input.id, { estado: input.estadoNuevo as any });
-        await db.createHistorialEstado({
-          trabajoId: input.id,
-          estadoAnterior: input.estadoAnterior,
-          estadoNuevo: input.estadoNuevo,
+      .mutation(async ({ input, ctx }) => {
+        await db.updateTrabajo(input.id, ctx.user.id, {
+          estado: input.estadoNuevo as any,
         });
+
+        if (input.estadoAnterior) {
+          await db.createHistorialEstado({
+            userId: ctx.user.id,
+            trabajoId: input.id,
+            estadoAnterior: input.estadoAnterior,
+            estadoNuevo: input.estadoNuevo,
+          });
+        }
+
         return { success: true };
       }),
 
-    delete: publicProcedure
-      .input(z.object({ id: z.number() }))
-      .mutation(async ({ input }) => {
-        await db.deleteTrabajo(input.id);
-        return { success: true };
-      }),
-
-    search: publicProcedure
+    search: protectedProcedure
       .input(z.object({
         query: z.string().optional(),
         tipo: z.string().optional(),
         estado: z.string().optional(),
-        clienteId: z.number().optional(),
       }))
-      .query(({ input }) => {
-        return db.searchTrabajos(input);
+      .query(({ input, ctx }) => {
+        return db.searchTrabajos({
+          ...input,
+          userId: ctx.user.id,
+        });
       }),
 
-    calcularTotal: publicProcedure
+    calcularTotal: protectedProcedure
       .input(z.object({ trabajoId: z.number() }))
-      .query(({ input }) => {
-        return db.calcularTotalTrabajo(input.trabajoId);
+      .query(({ input, ctx }) => {
+        return db.calcularTotalTrabajo(input.trabajoId, ctx.user.id);
       }),
   }),
 
   // ============ AGREGADOS ============
   agregados: router({
-    getByTrabajoId: publicProcedure
+    getByTrabajoId: protectedProcedure
       .input(z.object({ trabajoId: z.number() }))
-      .query(({ input }) => {
-        return db.getAgregadosByTrabajoId(input.trabajoId);
+      .query(({ input, ctx }) => {
+        return db.getAgregadosByTrabajoId(input.trabajoId, ctx.user.id);
       }),
 
-    create: publicProcedure
+    create: protectedProcedure
       .input(z.object({
         trabajoId: z.number(),
         concepto: z.string().min(1).max(255),
         precio: z.string(),
       }))
-      .mutation(async ({ input }) => {
-        const id = await db.createAgregado(input);
+      .mutation(async ({ input, ctx }) => {
+        const id = await db.createAgregado({
+          ...input,
+          userId: ctx.user.id,
+        });
         return { id };
       }),
 
-    delete: publicProcedure
+    delete: protectedProcedure
       .input(z.object({ id: z.number() }))
-      .mutation(async ({ input }) => {
-        await db.deleteAgregado(input.id);
+      .mutation(async ({ input, ctx }) => {
+        await db.deleteAgregado(input.id, ctx.user.id);
         return { success: true };
       }),
   }),
 
   // ============ IMÁGENES ============
   imagenes: router({
-    getByTrabajoId: publicProcedure
+    getByTrabajoId: protectedProcedure
       .input(z.object({ trabajoId: z.number() }))
-      .query(({ input }) => {
-        return db.getImagenesByTrabajoId(input.trabajoId);
+      .query(({ input, ctx }) => {
+        return db.getImagenesByTrabajoId(input.trabajoId, ctx.user.id);
       }),
 
-    create: publicProcedure
+    create: protectedProcedure
       .input(z.object({
         trabajoId: z.number(),
         url: z.string(),
-        tipo: z.string().max(50).optional(),
+        tipo: z.string().optional(),
       }))
-      .mutation(async ({ input }) => {
-        const id = await db.createImagen(input);
+      .mutation(async ({ input, ctx }) => {
+        const id = await db.createImagen({
+          ...input,
+          userId: ctx.user.id,
+        });
         return { id };
       }),
 
-    delete: publicProcedure
+    delete: protectedProcedure
       .input(z.object({ id: z.number() }))
-      .mutation(async ({ input }) => {
-        await db.deleteImagen(input.id);
+      .mutation(async ({ input, ctx }) => {
+        await db.deleteImagen(input.id, ctx.user.id);
         return { success: true };
       }),
   }),
 
   // ============ HISTORIAL ============
   historial: router({
-    getByTrabajoId: publicProcedure
+    getByTrabajoId: protectedProcedure
       .input(z.object({ trabajoId: z.number() }))
-      .query(({ input }) => {
-        return db.getHistorialByTrabajoId(input.trabajoId);
+      .query(({ input, ctx }) => {
+        return db.getHistorialByTrabajoId(input.trabajoId, ctx.user.id);
       }),
   }),
 });

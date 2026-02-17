@@ -106,18 +106,20 @@ export async function getUserByOpenId(openId: string) {
 
 // ============ CLIENTES ============
 
-export async function getAllClientes() {
+export async function getAllClientes(userId: number) {
   const db = await getDb();
   if (!db) return [];
   
-  return db.select().from(clientes).orderBy(desc(clientes.createdAt));
+  return db.select().from(clientes).where(eq(clientes.userId, userId)).orderBy(desc(clientes.createdAt));
 }
 
-export async function getClienteById(id: number) {
+export async function getClienteById(id: number, userId: number) {
   const db = await getDb();
   if (!db) return null;
   
-  const result = await db.select().from(clientes).where(eq(clientes.id, id));
+  const result = await db.select().from(clientes).where(
+    and(eq(clientes.id, id), eq(clientes.userId, userId))
+  );
   return result[0] || null;
 }
 
@@ -129,39 +131,48 @@ export async function createCliente(data: InsertCliente) {
   return Number(result[0].insertId);
 }
 
-export async function updateCliente(id: number, data: Partial<InsertCliente>) {
+export async function updateCliente(id: number, userId: number, data: Partial<InsertCliente>) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
-  await db.update(clientes).set(data).where(eq(clientes.id, id));
+  await db.update(clientes).set(data).where(
+    and(eq(clientes.id, id), eq(clientes.userId, userId))
+  );
 }
 
-export async function deleteCliente(id: number) {
+export async function deleteCliente(id: number, userId: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
-  await db.delete(clientes).where(eq(clientes.id, id));
+  await db.delete(clientes).where(
+    and(eq(clientes.id, id), eq(clientes.userId, userId))
+  );
 }
 
-export async function searchClientes(query: string) {
+export async function searchClientes(query: string, userId: number) {
   const db = await getDb();
   if (!db) return [];
   
   return db.select().from(clientes).where(
-    or(
-      like(clientes.nombreCompleto, `%${query}%`),
-      like(clientes.telefono, `%${query}%`)
+    and(
+      eq(clientes.userId, userId),
+      or(
+        like(clientes.nombreCompleto, `%${query}%`),
+        like(clientes.telefono, `%${query}%`)
+      )
     )
   );
 }
 
 // ============ MEDIDAS ============
 
-export async function getMedidasByClienteId(clienteId: number) {
+export async function getMedidasByClienteId(clienteId: number, userId: number) {
   const db = await getDb();
   if (!db) return null;
   
-  const result = await db.select().from(medidas).where(eq(medidas.clienteId, clienteId));
+  const result = await db.select().from(medidas).where(
+    and(eq(medidas.clienteId, clienteId), eq(medidas.userId, userId))
+  );
   return result[0] || null;
 }
 
@@ -173,45 +184,53 @@ export async function createMedidas(data: InsertMedida) {
   return Number(result[0].insertId);
 }
 
-export async function updateMedidas(id: number, data: Partial<InsertMedida>) {
+export async function updateMedidas(id: number, userId: number, data: Partial<InsertMedida>) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
-  await db.update(medidas).set(data).where(eq(medidas.id, id));
+  await db.update(medidas).set(data).where(
+    and(eq(medidas.id, id), eq(medidas.userId, userId))
+  );
 }
 
 // ============ TRABAJOS ============
 
-export async function getAllTrabajos() {
+export async function getAllTrabajos(userId: number) {
   const db = await getDb();
   if (!db) return [];
   
-  return db.select().from(trabajos).orderBy(desc(trabajos.createdAt));
+  return db.select().from(trabajos).where(eq(trabajos.userId, userId)).orderBy(desc(trabajos.createdAt));
 }
 
-export async function getTrabajoById(id: number) {
+export async function getTrabajoById(id: number, userId: number) {
   const db = await getDb();
   if (!db) return null;
   
-  const result = await db.select().from(trabajos).where(eq(trabajos.id, id));
+  const result = await db.select().from(trabajos).where(
+    and(eq(trabajos.id, id), eq(trabajos.userId, userId))
+  );
   return result[0] || null;
 }
 
-export async function getTrabajosByClienteId(clienteId: number) {
+export async function getTrabajosByClienteId(clienteId: number, userId: number) {
   const db = await getDb();
   if (!db) return [];
   
-  return db.select().from(trabajos).where(eq(trabajos.clienteId, clienteId)).orderBy(desc(trabajos.createdAt));
+  return db.select().from(trabajos).where(
+    and(eq(trabajos.clienteId, clienteId), eq(trabajos.userId, userId))
+  ).orderBy(desc(trabajos.createdAt));
 }
 
-export async function getTrabajosByEstado(estado: string) {
+export async function getTrabajosByEstado(estado: string, userId: number) {
   const db = await getDb();
   if (!db) return [];
   
-  return db.select().from(trabajos).where(eq(trabajos.estado, estado as any)).orderBy(desc(trabajos.createdAt));
+  return db.select().from(trabajos).where(
+    and(eq(trabajos.estado, estado as any), eq(trabajos.userId, userId))
+  ).orderBy(desc(trabajos.createdAt));
 }
 
-export async function getTrabajosVencenHoy() {
+export async function getTrabajosVencenHoy(userId: number) {
   const db = await getDb();
   if (!db) return [];
   
@@ -223,6 +242,7 @@ export async function getTrabajosVencenHoy() {
   return db.select().from(trabajos).where(
     and(
       eq(trabajos.estado, "listo"),
+      eq(trabajos.userId, userId)
     )
   ).orderBy(desc(trabajos.fechaEntrega));
 }
@@ -235,18 +255,22 @@ export async function createTrabajo(data: InsertTrabajo) {
   return Number(result[0].insertId);
 }
 
-export async function updateTrabajo(id: number, data: Partial<InsertTrabajo>) {
+export async function updateTrabajo(id: number, userId: number, data: Partial<InsertTrabajo>) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
-  await db.update(trabajos).set(data).where(eq(trabajos.id, id));
+  await db.update(trabajos).set(data).where(
+    and(eq(trabajos.id, id), eq(trabajos.userId, userId))
+  );
 }
 
-export async function deleteTrabajo(id: number) {
+export async function deleteTrabajo(id: number, userId: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
-  await db.delete(trabajos).where(eq(trabajos.id, id));
+  await db.delete(trabajos).where(
+    and(eq(trabajos.id, id), eq(trabajos.userId, userId))
+  );
 }
 
 export async function searchTrabajos(params: {
@@ -254,11 +278,12 @@ export async function searchTrabajos(params: {
   tipo?: string;
   estado?: string;
   clienteId?: number;
+  userId: number;
 }) {
   const db = await getDb();
   if (!db) return [];
   
-  const conditions = [];
+  const conditions = [eq(trabajos.userId, params.userId)];
   
   if (params.tipo) {
     conditions.push(eq(trabajos.tipo, params.tipo as any));
@@ -276,20 +301,18 @@ export async function searchTrabajos(params: {
     conditions.push(like(trabajos.descripcion, `%${params.query}%`));
   }
   
-  if (conditions.length === 0) {
-    return db.select().from(trabajos).orderBy(desc(trabajos.createdAt));
-  }
-  
   return db.select().from(trabajos).where(and(...conditions)).orderBy(desc(trabajos.createdAt));
 }
 
 // ============ AGREGADOS ============
 
-export async function getAgregadosByTrabajoId(trabajoId: number) {
+export async function getAgregadosByTrabajoId(trabajoId: number, userId: number) {
   const db = await getDb();
   if (!db) return [];
   
-  return db.select().from(agregados).where(eq(agregados.trabajoId, trabajoId));
+  return db.select().from(agregados).where(
+    and(eq(agregados.trabajoId, trabajoId), eq(agregados.userId, userId))
+  );
 }
 
 export async function createAgregado(data: InsertAgregado) {
@@ -300,21 +323,23 @@ export async function createAgregado(data: InsertAgregado) {
   return Number(result[0].insertId);
 }
 
-export async function deleteAgregado(id: number) {
+export async function deleteAgregado(id: number, userId: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
-  await db.delete(agregados).where(eq(agregados.id, id));
+  await db.delete(agregados).where(
+    and(eq(agregados.id, id), eq(agregados.userId, userId))
+  );
 }
 
-export async function calcularTotalTrabajo(trabajoId: number) {
+export async function calcularTotalTrabajo(trabajoId: number, userId: number) {
   const db = await getDb();
   if (!db) return { total: 0, saldo: 0 };
   
-  const trabajo = await getTrabajoById(trabajoId);
+  const trabajo = await getTrabajoById(trabajoId, userId);
   if (!trabajo) return { total: 0, saldo: 0 };
   
-  const listaAgregados = await getAgregadosByTrabajoId(trabajoId);
+  const listaAgregados = await getAgregadosByTrabajoId(trabajoId, userId);
   
   const precioBase = parseFloat(trabajo.precioBase || "0");
   const abonoInicial = parseFloat(trabajo.abonoInicial || "0");
@@ -328,11 +353,13 @@ export async function calcularTotalTrabajo(trabajoId: number) {
 
 // ============ IMÁGENES ============
 
-export async function getImagenesByTrabajoId(trabajoId: number) {
+export async function getImagenesByTrabajoId(trabajoId: number, userId: number) {
   const db = await getDb();
   if (!db) return [];
   
-  return db.select().from(imagenes).where(eq(imagenes.trabajoId, trabajoId));
+  return db.select().from(imagenes).where(
+    and(eq(imagenes.trabajoId, trabajoId), eq(imagenes.userId, userId))
+  );
 }
 
 export async function createImagen(data: InsertImagen) {
@@ -343,20 +370,24 @@ export async function createImagen(data: InsertImagen) {
   return Number(result[0].insertId);
 }
 
-export async function deleteImagen(id: number) {
+export async function deleteImagen(id: number, userId: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
-  await db.delete(imagenes).where(eq(imagenes.id, id));
+  await db.delete(imagenes).where(
+    and(eq(imagenes.id, id), eq(imagenes.userId, userId))
+  );
 }
 
 // ============ HISTORIAL DE ESTADOS ============
 
-export async function getHistorialByTrabajoId(trabajoId: number) {
+export async function getHistorialByTrabajoId(trabajoId: number, userId: number) {
   const db = await getDb();
   if (!db) return [];
   
-  return db.select().from(historialEstados).where(eq(historialEstados.trabajoId, trabajoId)).orderBy(desc(historialEstados.createdAt));
+  return db.select().from(historialEstados).where(
+    and(eq(historialEstados.trabajoId, trabajoId), eq(historialEstados.userId, userId))
+  ).orderBy(desc(historialEstados.createdAt));
 }
 
 export async function createHistorialEstado(data: InsertHistorialEstado) {

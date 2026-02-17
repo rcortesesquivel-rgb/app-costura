@@ -15,6 +15,13 @@
       "when": 1771337913066,
       "tag": "0001_regular_mandrill",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1771341764631,
+      "tag": "0002_opposite_vampiro",
+      "breakpoints": true
     }
   ]
 }

@@ -82,3 +82,20 @@
 - [x] Preferencias de la app
 - [x] Gestión de datos
 - [x] Información de la aplicación
+
+
+## Multi-Tenant y Autenticación
+- [x] Agregar tabla de usuarios a la base de datos
+- [x] Agregar userId a todas las tablas (clientes, trabajos, medidas, agregados)
+- [x] Implementar Sign Up (registro de nuevos usuarios)
+- [x] Implementar Log In (inicio de sesión)
+- [x] Crear pantalla de Sign Up
+- [x] Crear pantalla de Log In
+- [x] Implementar persistencia de sesión con AsyncStorage
+- [x] Agregar validación de userId en todas las rutas API
+- [x] Implementar cierre de sesión (Log Out)
+- [x] Proteger rutas para usuarios no autenticados
+- [x] Aislar datos de clientes por usuario
+- [x] Aislar datos de trabajos por usuario
+- [x] Aislar datos de medidas por usuario
+- [x] Aislar datos de agregados por usuario

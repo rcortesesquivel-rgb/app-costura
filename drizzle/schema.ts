@@ -28,6 +28,7 @@ export type InsertUser = typeof users.$inferInsert;
 // Clientes del taller
 export const clientes = mysqlTable("clientes", {
   id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(), // Foreign key to users table
   nombreCompleto: varchar("nombreCompleto", { length: 255 }).notNull(),
   telefono: varchar("telefono", { length: 20 }),
   direccion: text("direccion"),
@@ -39,6 +40,7 @@ export const clientes = mysqlTable("clientes", {
 // Medidas de clientes
 export const medidas = mysqlTable("medidas", {
   id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(), // Foreign key to users table
   clienteId: int("clienteId").notNull(),
   cuello: varchar("cuello", { length: 10 }),
   hombros: varchar("hombros", { length: 10 }),
@@ -60,6 +62,7 @@ export const medidas = mysqlTable("medidas", {
 // Trabajos/Pedidos
 export const trabajos = mysqlTable("trabajos", {
   id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(), // Foreign key to users table
   clienteId: int("clienteId").notNull(),
   tipo: mysqlEnum("tipo", ["arreglo", "confeccion", "personalizacion"]).notNull(),
   
@@ -97,6 +100,7 @@ export const trabajos = mysqlTable("trabajos", {
 // Agregados de trabajos (lista dinámica)
 export const agregados = mysqlTable("agregados", {
   id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(), // Foreign key to users table
   trabajoId: int("trabajoId").notNull(),
   concepto: varchar("concepto", { length: 255 }).notNull(),
   precio: varchar("precio", { length: 20 }).notNull(),
@@ -106,6 +110,7 @@ export const agregados = mysqlTable("agregados", {
 // Imágenes adjuntas a trabajos
 export const imagenes = mysqlTable("imagenes", {
   id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(), // Foreign key to users table
   trabajoId: int("trabajoId").notNull(),
   url: text("url").notNull(),
   tipo: varchar("tipo", { length: 50 }), // referencia, boceto, etc.
@@ -115,6 +120,7 @@ export const imagenes = mysqlTable("imagenes", {
 // Historial de cambios de estado
 export const historialEstados = mysqlTable("historialEstados", {
   id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(), // Foreign key to users table
   trabajoId: int("trabajoId").notNull(),
   estadoAnterior: varchar("estadoAnterior", { length: 50 }),
   estadoNuevo: varchar("estadoNuevo", { length: 50 }).notNull(),
