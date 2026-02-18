@@ -1,0 +1,3 @@
+Error: "Attempted to navigate before mounting the Root Layout component"
+Causa: router.replace("/auth/signin") se ejecuta en useEffect antes de que el layout esté montado.
+Solución: Usar setTimeout o verificar que el layout esté montado antes de navegar, o usar Redirect component.

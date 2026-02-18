@@ -5,8 +5,10 @@ import * as Haptics from "expo-haptics";
 
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { VoiceInput } from "@/components/voice-input";
 import { trpc } from "@/lib/trpc";
 import { useColors } from "@/hooks/use-colors";
+import { formatCurrency } from "@/lib/format-currency";
 
 export default function EditarTrabajoScreen() {
   const colors = useColors();
@@ -18,6 +20,7 @@ export default function EditarTrabajoScreen() {
   const [descripcion, setDescripcion] = useState("");
   const [precioBase, setPrecioBase] = useState("");
   const [abonoInicial, setAbonoInicial] = useState("0");
+  const [fechaEntrega, setFechaEntrega] = useState("");
 
   const { data: trabajo, isLoading: loadingTrabajo } = trpc.trabajos.getById.useQuery({ id: trabajoId });
 
@@ -30,10 +33,7 @@ export default function EditarTrabajoScreen() {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
       Alert.alert("Éxito", "Trabajo actualizado correctamente", [
-        {
-          text: "OK",
-          onPress: () => router.back(),
-        },
+        { text: "OK", onPress: () => router.back() },
       ]);
     },
     onError: (error) => {
@@ -47,29 +47,42 @@ export default function EditarTrabajoScreen() {
       setDescripcion(trabajo.descripcion || "");
       setPrecioBase(trabajo.precioBase || "0");
       setAbonoInicial(trabajo.abonoInicial || "0");
+      if (trabajo.fechaEntrega) {
+        const d = new Date(trabajo.fechaEntrega);
+        setFechaEntrega(d.toISOString().split("T")[0]);
+      }
     }
   }, [trabajo]);
+
+  const calcularSaldo = () => {
+    return (parseFloat(precioBase || "0")) - (parseFloat(abonoInicial || "0"));
+  };
 
   const handleGuardar = () => {
     if (!descripcion.trim()) {
       Alert.alert("Error", "La descripción es obligatoria");
       return;
     }
-
     if (!precioBase || parseFloat(precioBase) <= 0) {
       Alert.alert("Error", "El precio base debe ser mayor a 0");
       return;
     }
-
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
 
-    const data = {
+    const data: any = {
       descripcion: descripcion.trim(),
       precioBase,
       abonoInicial: abonoInicial || "0",
     };
+
+    if (fechaEntrega) {
+      const parsed = new Date(fechaEntrega + "T12:00:00");
+      if (!isNaN(parsed.getTime())) {
+        data.fechaEntrega = parsed;
+      }
+    }
 
     updateMutation.mutate({ id: trabajoId, data });
   };
@@ -112,9 +125,16 @@ export default function EditarTrabajoScreen() {
             </View>
           </View>
 
-          {/* Descripción */}
+          {/* Descripción con dictado */}
           <View className="gap-2">
-            <Text className="text-base font-semibold text-foreground">Descripción</Text>
+            <View className="flex-row items-center justify-between">
+              <Text className="text-base font-semibold text-foreground">Descripción</Text>
+              <VoiceInput
+                mode="text"
+                onResult={(text) => setDescripcion((prev) => prev ? `${prev} ${text}` : text)}
+                size={32}
+              />
+            </View>
             <TextInput
               className="bg-surface rounded-xl p-4 text-base border"
               style={{ color: colors.foreground, borderColor: colors.border }}
@@ -127,31 +147,50 @@ export default function EditarTrabajoScreen() {
             />
           </View>
 
-          {/* Precio base */}
+          {/* Precio base con dictado numérico */}
           <View className="gap-2">
             <Text className="text-base font-semibold text-foreground">Precio base (₡)</Text>
-            <TextInput
-              className="bg-surface rounded-xl p-4 text-base border"
-              style={{ color: colors.foreground, borderColor: colors.border }}
-              placeholder="0.00"
-              placeholderTextColor={colors.muted}
-              value={precioBase}
-              onChangeText={setPrecioBase}
-              keyboardType="decimal-pad"
-            />
+            <View className="flex-row items-center gap-2">
+              <TextInput
+                className="flex-1 bg-surface rounded-xl p-4 text-base border"
+                style={{ color: colors.foreground, borderColor: colors.border }}
+                placeholder="0.00"
+                placeholderTextColor={colors.muted}
+                value={precioBase}
+                onChangeText={setPrecioBase}
+                keyboardType="decimal-pad"
+              />
+              <VoiceInput mode="numeric" onResult={setPrecioBase} size={36} />
+            </View>
           </View>
 
-          {/* Abono inicial */}
+          {/* Abono inicial con dictado numérico */}
           <View className="gap-2">
             <Text className="text-base font-semibold text-foreground">Abono inicial (₡)</Text>
+            <View className="flex-row items-center gap-2">
+              <TextInput
+                className="flex-1 bg-surface rounded-xl p-4 text-base border"
+                style={{ color: colors.foreground, borderColor: colors.border }}
+                placeholder="0.00"
+                placeholderTextColor={colors.muted}
+                value={abonoInicial}
+                onChangeText={setAbonoInicial}
+                keyboardType="decimal-pad"
+              />
+              <VoiceInput mode="numeric" onResult={setAbonoInicial} size={36} />
+            </View>
+          </View>
+
+          {/* Fecha de entrega */}
+          <View className="gap-2">
+            <Text className="text-base font-semibold text-foreground">Fecha de entrega</Text>
             <TextInput
               className="bg-surface rounded-xl p-4 text-base border"
               style={{ color: colors.foreground, borderColor: colors.border }}
-              placeholder="0.00"
+              placeholder="AAAA-MM-DD (ej: 2026-03-15)"
               placeholderTextColor={colors.muted}
-              value={abonoInicial}
-              onChangeText={setAbonoInicial}
-              keyboardType="decimal-pad"
+              value={fechaEntrega}
+              onChangeText={setFechaEntrega}
             />
           </View>
 
@@ -159,8 +198,8 @@ export default function EditarTrabajoScreen() {
           <View className="bg-surface rounded-2xl p-4 border border-border">
             <View className="flex-row justify-between">
               <Text className="text-base font-semibold text-foreground">Saldo pendiente</Text>
-              <Text className="text-base font-bold" style={{ color: (parseFloat(precioBase || "0") - parseFloat(abonoInicial || "0")) > 0 ? colors.error : colors.success }}>
-                ₡{((parseFloat(precioBase || "0") - parseFloat(abonoInicial || "0"))).toFixed(2)}
+              <Text className="text-base font-bold" style={{ color: calcularSaldo() > 0 ? colors.error : colors.success }}>
+                {formatCurrency(calcularSaldo())}
               </Text>
             </View>
           </View>

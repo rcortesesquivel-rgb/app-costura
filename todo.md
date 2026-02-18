@@ -357,3 +357,14 @@
 - [x] Propagar cambios de tipos a server/generate-recibo.ts
 - [x] Propagar cambios a formularios frontend
 - [x] Verificar que todo compila sin errores (0 errores TS, 10/10 tests pasados)
+
+## 4 Mejoras Finales - App Manos Libres (18 Feb 2026)
+- [x] Dictado Universal: Crear componente reutilizable VoiceInput con botón de micrófono
+- [x] Dictado Universal: Filtro numérico para campos de precio/abono (convertir texto hablado a número)
+- [x] Dictado Universal: Usar audioTranscriptionsThisMonth para limitar uso según plan
+- [x] Dictado Universal: Aumentar tiempo de escucha a 20 segundos
+- [x] Dictado Universal: Integrar en crear-trabajo.tsx y editar-trabajo.tsx
+- [x] Login Obligatorio: Forzar redirección al login en _layout.tsx si no hay sesión
+- [x] Fecha de Entrega: Agregar selector de fecha en crear-trabajo.tsx
+- [x] Fecha de Entrega: Agregar selector de fecha en editar-trabajo.tsx
+- [x] Filtros de Estado: Activar filtros por estado en la lista principal (index.tsx)

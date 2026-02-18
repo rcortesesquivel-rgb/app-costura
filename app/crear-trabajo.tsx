@@ -1,21 +1,14 @@
 import { ScrollView, Text, View, TextInput, TouchableOpacity, Alert, KeyboardAvoidingView, Platform, ActivityIndicator } from "react-native";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "expo-router";
 import * as Haptics from "expo-haptics";
 
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { VoiceInput } from "@/components/voice-input";
 import { trpc } from "@/lib/trpc";
 import { useColors } from "@/hooks/use-colors";
 import { formatCurrency } from "@/lib/format-currency";
-
-// Declaración global para Web Speech API
-declare global {
-  interface Window {
-    webkitSpeechRecognition: any;
-    SpeechRecognition: any;
-  }
-}
 
 export default function CrearTrabajoScreen() {
   const colors = useColors();
@@ -26,24 +19,19 @@ export default function CrearTrabajoScreen() {
   const [descripcion, setDescripcion] = useState("");
   const [precioBase, setPrecioBase] = useState("");
   const [abonoInicial, setAbonoInicial] = useState("0");
-  
+  const [fechaEntrega, setFechaEntrega] = useState("");
+
   // Agregados
   const [agregados, setAgregados] = useState<Array<{ concepto: string; precio: string; cantidad: string }>>([]);
   const [nuevoConcepto, setNuevoConcepto] = useState("");
   const [nuevoPrecio, setNuevoPrecio] = useState("");
   const [nuevaCantidad, setNuevaCantidad] = useState("1");
 
-  // Voz a texto
-  const [grabando, setGrabando] = useState(false);
-  const [recognition, setRecognition] = useState<any>(null);
-
   const { data: clientes, isLoading: loadingClientes } = trpc.clientes.list.useQuery();
-  const { data: canRecord } = trpc.superAdmin.audio.canRecord.useQuery();
 
   const utils = trpc.useUtils();
   const createMutation = trpc.trabajos.create.useMutation({
     onSuccess: async (data) => {
-      // Crear agregados con cantidad
       for (const agregado of agregados) {
         await utils.client.agregados.create.mutate({
           trabajoId: data.id,
@@ -52,16 +40,13 @@ export default function CrearTrabajoScreen() {
           cantidad: parseInt(agregado.cantidad) || 1,
         });
       }
-      
+
       await utils.trabajos.list.invalidate();
       if (Platform.OS !== "web") {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
       Alert.alert("Éxito", "Trabajo creado correctamente", [
-        {
-          text: "OK",
-          onPress: () => router.back(),
-        },
+        { text: "OK", onPress: () => router.back() },
       ]);
     },
     onError: (error) => {
@@ -69,79 +54,11 @@ export default function CrearTrabajoScreen() {
     },
   });
 
-  // Inicializar Web Speech API
-  useEffect(() => {
-    if (Platform.OS === "web") {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (SpeechRecognition) {
-        const recognitionInstance = new SpeechRecognition();
-        recognitionInstance.continuous = false;
-        recognitionInstance.interimResults = false;
-        recognitionInstance.lang = "es-ES";
-
-        recognitionInstance.onresult = async (event: any) => {
-          const transcript = event.results[0][0].transcript;
-          setDescripcion((prev) => (prev ? `${prev} ${transcript}` : transcript));
-          setGrabando(false);
-          
-          try {
-            await utils.client.superAdmin.audio.recordTranscription.mutate();
-          } catch (error) {
-            console.error("Error registrando transcripción:", error);
-          }
-        };
-
-        recognitionInstance.onerror = () => {
-          setGrabando(false);
-          Alert.alert("Error", "No se pudo grabar el audio. Asegúrate de dar permisos al micrófono.");
-        };
-
-        recognitionInstance.onend = () => {
-          setGrabando(false);
-        };
-
-        setRecognition(recognitionInstance);
-      }
-    }
-  }, []);
-
-  const handleIniciarGrabacion = async () => {
-    if (Platform.OS !== "web") {
-      Alert.alert("Información", "La grabación de voz solo está disponible en la versión web.");
-      return;
-    }
-
-    if (!recognition) {
-      Alert.alert("Error", "Tu navegador no soporta reconocimiento de voz.");
-      return;
-    }
-
-    if (canRecord === false) {
-      Alert.alert(
-        "Límite alcanzado",
-        "Has alcanzado tu límite mensual de audio. Pasate al Plan Mensual para uso ilimitado."
-      );
-      return;
-    }
-
-    if (grabando) {
-      recognition.stop();
-      setGrabando(false);
-    } else {
-      recognition.start();
-      setGrabando(true);
-      if (Platform.OS !== "web") {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-      }
-    }
-  };
-
   const handleAgregarItem = () => {
     if (!nuevoConcepto.trim() || !nuevoPrecio.trim() || !nuevaCantidad.trim()) {
       Alert.alert("Error", "Completa el concepto, precio y cantidad del agregado");
       return;
     }
-
     setAgregados([...agregados, { concepto: nuevoConcepto.trim(), precio: nuevoPrecio.trim(), cantidad: nuevaCantidad.trim() }]);
     setNuevoConcepto("");
     setNuevoPrecio("");
@@ -169,9 +86,7 @@ export default function CrearTrabajoScreen() {
   };
 
   const calcularSaldo = () => {
-    const total = calcularTotal();
-    const abono = parseFloat(abonoInicial) || 0;
-    return total - abono;
+    return calcularTotal() - (parseFloat(abonoInicial) || 0);
   };
 
   const handleGuardar = () => {
@@ -179,17 +94,25 @@ export default function CrearTrabajoScreen() {
       Alert.alert("Error", "Completa los campos obligatorios: cliente, descripción y precio base");
       return;
     }
-
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
 
-    createMutation.mutate({
+    const data: any = {
       clienteId: parseInt(clienteId),
       descripcion: descripcion.trim(),
       precioBase: precioBase.trim(),
       abonoInicial: abonoInicial.trim() || "0",
-    });
+    };
+
+    if (fechaEntrega) {
+      const parsed = new Date(fechaEntrega + "T12:00:00");
+      if (!isNaN(parsed.getTime())) {
+        data.fechaEntrega = parsed;
+      }
+    }
+
+    createMutation.mutate(data);
   };
 
   if (loadingClientes) {
@@ -242,21 +165,15 @@ export default function CrearTrabajoScreen() {
               </View>
             </View>
 
-            {/* Descripción con voz */}
+            {/* Descripción con dictado */}
             <View className="gap-2">
               <View className="flex-row items-center justify-between">
                 <Text className="text-sm font-semibold text-foreground">Descripción *</Text>
-                <TouchableOpacity
-                  className="flex-row items-center gap-2 rounded-full px-3 py-1"
-                  style={{ backgroundColor: grabando ? colors.error : colors.primary + "20" }}
-                  onPress={handleIniciarGrabacion}
-                  activeOpacity={0.7}
-                >
-                  <IconSymbol name="mic.fill" size={16} color={grabando ? "#FFFFFF" : colors.primary} />
-                  <Text className="text-xs font-medium" style={{ color: grabando ? "#FFFFFF" : colors.primary }}>
-                    {grabando ? "Grabando..." : "Grabar"}
-                  </Text>
-                </TouchableOpacity>
+                <VoiceInput
+                  mode="text"
+                  onResult={(text) => setDescripcion((prev) => prev ? `${prev} ${text}` : text)}
+                  size={32}
+                />
               </View>
               <TextInput
                 className="bg-surface rounded-xl border border-border px-4 py-3 text-base text-foreground"
@@ -269,23 +186,38 @@ export default function CrearTrabajoScreen() {
               />
             </View>
 
-            {/* Precio base */}
+            {/* Precio base con dictado numérico */}
             <View className="gap-2">
               <Text className="text-sm font-semibold text-foreground">Precio base (₡) *</Text>
+              <View className="flex-row items-center gap-2">
+                <TextInput
+                  className="flex-1 bg-surface rounded-xl border border-border px-4 py-3 text-base text-foreground"
+                  placeholder="0.00"
+                  placeholderTextColor={colors.muted}
+                  value={precioBase}
+                  onChangeText={setPrecioBase}
+                  keyboardType="decimal-pad"
+                />
+                <VoiceInput mode="numeric" onResult={setPrecioBase} size={36} />
+              </View>
+            </View>
+
+            {/* Fecha de entrega */}
+            <View className="gap-2">
+              <Text className="text-sm font-semibold text-foreground">Fecha de entrega</Text>
               <TextInput
                 className="bg-surface rounded-xl border border-border px-4 py-3 text-base text-foreground"
-                placeholder="0.00"
+                placeholder="AAAA-MM-DD (ej: 2026-03-15)"
                 placeholderTextColor={colors.muted}
-                value={precioBase}
-                onChangeText={setPrecioBase}
-                keyboardType="decimal-pad"
+                value={fechaEntrega}
+                onChangeText={setFechaEntrega}
               />
             </View>
 
             {/* Agregados dinámicos */}
             <View className="gap-3">
               <Text className="text-sm font-semibold text-foreground">Agregados</Text>
-              
+
               {agregados.map((item, index) => (
                 <View key={index} className="bg-surface rounded-xl border border-border p-3 flex-row items-center justify-between">
                   <View className="flex-1">
@@ -301,7 +233,8 @@ export default function CrearTrabajoScreen() {
               ))}
 
               <View className="gap-2">
-                <View className="flex-row gap-2">
+                {/* Concepto con dictado texto */}
+                <View className="flex-row gap-2 items-center">
                   <TextInput
                     className="flex-1 bg-surface rounded-xl border border-border px-4 py-3 text-base text-foreground"
                     placeholder="Concepto"
@@ -309,6 +242,10 @@ export default function CrearTrabajoScreen() {
                     value={nuevoConcepto}
                     onChangeText={setNuevoConcepto}
                   />
+                  <VoiceInput mode="text" onResult={setNuevoConcepto} size={32} />
+                </View>
+                {/* Cantidad y precio con dictado numérico */}
+                <View className="flex-row gap-2 items-center">
                   <TextInput
                     className="w-20 bg-surface rounded-xl border border-border px-4 py-3 text-base text-foreground"
                     placeholder="Cant."
@@ -317,14 +254,16 @@ export default function CrearTrabajoScreen() {
                     onChangeText={setNuevaCantidad}
                     keyboardType="numeric"
                   />
+                  <VoiceInput mode="numeric" onResult={setNuevaCantidad} size={28} />
                   <TextInput
-                    className="w-24 bg-surface rounded-xl border border-border px-4 py-3 text-base text-foreground"
+                    className="flex-1 bg-surface rounded-xl border border-border px-4 py-3 text-base text-foreground"
                     placeholder="Precio"
                     placeholderTextColor={colors.muted}
                     value={nuevoPrecio}
                     onChangeText={setNuevoPrecio}
                     keyboardType="decimal-pad"
                   />
+                  <VoiceInput mode="numeric" onResult={setNuevoPrecio} size={28} />
                   <TouchableOpacity
                     className="rounded-xl p-3 items-center justify-center"
                     style={{ backgroundColor: colors.primary }}
@@ -362,17 +301,20 @@ export default function CrearTrabajoScreen() {
               </View>
             </View>
 
-            {/* Abono inicial */}
+            {/* Abono inicial con dictado numérico */}
             <View className="gap-2">
               <Text className="text-sm font-semibold text-foreground">Abono inicial (₡)</Text>
-              <TextInput
-                className="bg-surface rounded-xl border border-border px-4 py-3 text-base text-foreground"
-                placeholder="0.00"
-                placeholderTextColor={colors.muted}
-                value={abonoInicial}
-                onChangeText={setAbonoInicial}
-                keyboardType="decimal-pad"
-              />
+              <View className="flex-row items-center gap-2">
+                <TextInput
+                  className="flex-1 bg-surface rounded-xl border border-border px-4 py-3 text-base text-foreground"
+                  placeholder="0.00"
+                  placeholderTextColor={colors.muted}
+                  value={abonoInicial}
+                  onChangeText={setAbonoInicial}
+                  keyboardType="decimal-pad"
+                />
+                <VoiceInput mode="numeric" onResult={setAbonoInicial} size={36} />
+              </View>
               <View className="flex-row justify-between mt-1">
                 <Text className="text-sm font-semibold text-foreground">Saldo pendiente:</Text>
                 <Text className="text-sm font-bold" style={{ color: calcularSaldo() > 0 ? colors.error : colors.success }}>

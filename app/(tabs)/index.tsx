@@ -9,12 +9,21 @@ import { trpc } from "@/lib/trpc";
 import { useColors } from "@/hooks/use-colors";
 import { useAuth } from "@/lib/auth-context";
 
+const ESTADOS = [
+  { value: "todos", label: "Todos" },
+  { value: "en_espera", label: "En espera" },
+  { value: "cortando", label: "Cortando" },
+  { value: "cosiendo", label: "Cosiendo" },
+  { value: "listo", label: "Listo" },
+  { value: "entregado", label: "Entregado" },
+] as const;
+
 export default function DashboardScreen() {
   const colors = useColors();
   const router = useRouter();
   const { isSignedIn, user } = useAuth();
   const [refreshing, setRefreshing] = useState(false);
-  const [bannerDismissed, setBannerDismissed] = useState(false);
+  const [estadoFiltro, setEstadoFiltro] = useState("todos");
 
   const { data: trabajosVencenHoy, isLoading: loadingVencen, refetch: refetchVencen } = trpc.trabajos.getVencenHoy.useQuery();
   const { data: todosTrabajos, isLoading: loadingTodos, refetch: refetchTodos } = trpc.trabajos.list.useQuery();
@@ -28,6 +37,16 @@ export default function DashboardScreen() {
 
   const trabajosPendientes = todosTrabajos?.filter(t => t.estado !== "entregado") || [];
   const trabajosActivos = todosTrabajos?.filter(t => t.estado === "cortando" || t.estado === "cosiendo") || [];
+
+  // Filtrar trabajos según el estado seleccionado
+  const trabajosFiltrados = estadoFiltro === "todos"
+    ? trabajosPendientes
+    : (todosTrabajos || []).filter(t => t.estado === estadoFiltro);
+
+  const getClienteNombre = (clienteId: number) => {
+    const cliente = clientes?.find(c => c.id === clienteId);
+    return cliente?.nombreCompleto || `Cliente #${clienteId}`;
+  };
 
   const getEstadoBadgeColor = (estado: string) => {
     switch (estado) {
@@ -51,15 +70,6 @@ export default function DashboardScreen() {
     }
   };
 
-  const getTipoIcon = (tipo: string) => {
-    switch (tipo) {
-      case "arreglo": return "scissors";
-      case "confeccion": return "tshirt.fill";
-      case "personalizacion": return "paintbrush.fill";
-      default: return "scissors";
-    }
-  };
-
   const handleNuevoTrabajo = () => {
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -67,11 +77,11 @@ export default function DashboardScreen() {
     router.push("/crear-trabajo" as any);
   };
 
-  const handleLoginBanner = () => {
+  const handleFiltro = (estado: string) => {
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
-    router.push("/(tabs)/mi-cuenta" as any);
+    setEstadoFiltro(estado);
   };
 
   if (loadingVencen || loadingTodos) {
@@ -97,70 +107,11 @@ export default function DashboardScreen() {
             <Text className="text-base text-muted">
               {isSignedIn && user?.name
                 ? `Bienvenido/a, ${user.name}`
-                : "Gesti\u00f3n del taller de costura"}
+                : "Gestión del taller de costura"}
             </Text>
           </View>
 
-          {/* Banner de login suave (solo si no está autenticado y no lo cerró) */}
-          {!isSignedIn && !bannerDismissed && (
-            <View
-              className="rounded-2xl p-4 border"
-              style={{
-                backgroundColor: colors.primary + "10",
-                borderColor: colors.primary + "30",
-              }}
-            >
-              <View className="flex-row items-start gap-3">
-                <View
-                  className="rounded-full p-2"
-                  style={{ backgroundColor: colors.primary + "20" }}
-                >
-                  <IconSymbol name="person.fill" size={20} color={colors.primary} />
-                </View>
-                <View className="flex-1">
-                  <Text className="text-base font-semibold text-foreground">
-                    Inicia sesi{"\u00f3"}n para guardar tus datos
-                  </Text>
-                  <Text className="text-sm text-muted mt-1" style={{ lineHeight: 20 }}>
-                    Accede con tu cuenta para sincronizar clientes, trabajos y medidas en todos tus dispositivos.
-                  </Text>
-                  <View className="flex-row gap-3 mt-3">
-                    <TouchableOpacity
-                      onPress={handleLoginBanner}
-                      activeOpacity={0.8}
-                      style={{
-                        backgroundColor: colors.primary,
-                        paddingHorizontal: 16,
-                        paddingVertical: 8,
-                        borderRadius: 20,
-                      }}
-                    >
-                      <Text style={{ color: "#FFFFFF", fontWeight: "600", fontSize: 14 }}>
-                        Iniciar sesi{"\u00f3"}n
-                      </Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      onPress={() => setBannerDismissed(true)}
-                      activeOpacity={0.7}
-                      style={{
-                        paddingHorizontal: 16,
-                        paddingVertical: 8,
-                        borderRadius: 20,
-                        borderWidth: 1,
-                        borderColor: colors.border,
-                      }}
-                    >
-                      <Text style={{ color: colors.muted, fontWeight: "500", fontSize: 14 }}>
-                        Ahora no
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              </View>
-            </View>
-          )}
-
-          {/* Estad\u00edsticas */}
+          {/* Estadísticas */}
           <View className="flex-row gap-3">
             <View className="flex-1 bg-surface rounded-2xl p-4 border border-border">
               <Text className="text-2xl font-bold text-foreground">{trabajosPendientes.length}</Text>
@@ -208,7 +159,7 @@ export default function DashboardScreen() {
                       <Text className="text-base font-semibold text-foreground" numberOfLines={1}>
                         {trabajo.descripcion}
                       </Text>
-                      <Text className="text-sm text-muted mt-1">Cliente ID: {trabajo.clienteId}</Text>
+                      <Text className="text-sm text-muted mt-1">{getClienteNombre(trabajo.clienteId)}</Text>
                       <View className="flex-row items-center gap-2 mt-2">
                         <View className="rounded-full px-3 py-1" style={{ backgroundColor: getEstadoBadgeColor(trabajo.estado) }}>
                           <Text className="text-xs font-semibold text-white">{getEstadoLabel(trabajo.estado)}</Text>
@@ -236,12 +187,71 @@ export default function DashboardScreen() {
             )}
           </View>
 
-          {/* Trabajos recientes */}
+          {/* Filtros de estado */}
           <View className="gap-3">
-            <Text className="text-xl font-semibold text-foreground">Trabajos recientes</Text>
+            <Text className="text-xl font-semibold text-foreground">Trabajos</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
+              {ESTADOS.map((estado) => {
+                const isActive = estadoFiltro === estado.value;
+                const count = estado.value === "todos"
+                  ? trabajosPendientes.length
+                  : (todosTrabajos || []).filter(t => t.estado === estado.value).length;
+                return (
+                  <TouchableOpacity
+                    key={estado.value}
+                    onPress={() => handleFiltro(estado.value)}
+                    activeOpacity={0.7}
+                    style={{
+                      backgroundColor: isActive ? colors.primary : "transparent",
+                      borderColor: isActive ? colors.primary : colors.border,
+                      borderWidth: 1,
+                      borderRadius: 20,
+                      paddingHorizontal: 14,
+                      paddingVertical: 8,
+                      flexDirection: "row",
+                      alignItems: "center",
+                      gap: 6,
+                    }}
+                  >
+                    <Text
+                      style={{
+                        color: isActive ? "#FFFFFF" : colors.foreground,
+                        fontWeight: "600",
+                        fontSize: 13,
+                      }}
+                    >
+                      {estado.label}
+                    </Text>
+                    <View
+                      style={{
+                        backgroundColor: isActive ? "rgba(255,255,255,0.3)" : colors.muted + "30",
+                        borderRadius: 10,
+                        paddingHorizontal: 6,
+                        paddingVertical: 2,
+                        minWidth: 22,
+                        alignItems: "center",
+                      }}
+                    >
+                      <Text
+                        style={{
+                          color: isActive ? "#FFFFFF" : colors.muted,
+                          fontWeight: "700",
+                          fontSize: 11,
+                        }}
+                      >
+                        {count}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          </View>
 
-            {trabajosPendientes.length > 0 ? (
-              trabajosPendientes.slice(0, 5).map((trabajo) => (
+          {/* Lista filtrada de trabajos */}
+          <View className="gap-3">
+            {trabajosFiltrados.length > 0 ? (
+              trabajosFiltrados.map((trabajo) => (
                 <TouchableOpacity
                   key={trabajo.id}
                   className="bg-surface rounded-2xl p-4 border border-border"
@@ -261,11 +271,19 @@ export default function DashboardScreen() {
                       <Text className="text-base font-semibold text-foreground" numberOfLines={1}>
                         {trabajo.descripcion}
                       </Text>
-                      <Text className="text-sm text-muted mt-1">Cliente ID: {trabajo.clienteId}</Text>
-                      <View className="flex-row items-center gap-2 mt-2">
+                      <Text className="text-sm text-muted mt-1">{getClienteNombre(trabajo.clienteId)}</Text>
+                      <View className="flex-row items-center gap-2 mt-2 flex-wrap">
                         <View className="rounded-full px-3 py-1" style={{ backgroundColor: getEstadoBadgeColor(trabajo.estado) }}>
                           <Text className="text-xs font-semibold text-white">{getEstadoLabel(trabajo.estado)}</Text>
                         </View>
+                        {trabajo.fechaEntrega && (
+                          <View className="flex-row items-center gap-1">
+                            <IconSymbol name="clock.fill" size={14} color={colors.muted} />
+                            <Text className="text-xs text-muted">
+                              {new Date(trabajo.fechaEntrega).toLocaleDateString()}
+                            </Text>
+                          </View>
+                        )}
                       </View>
                     </View>
                   </View>
@@ -274,7 +292,7 @@ export default function DashboardScreen() {
             ) : (
               <View className="bg-surface rounded-2xl p-6 border border-border items-center">
                 <Text className="text-base text-muted text-center">
-                  No hay trabajos pendientes
+                  {estadoFiltro === "todos" ? "No hay trabajos pendientes" : `No hay trabajos "${getEstadoLabel(estadoFiltro)}"`}
                 </Text>
               </View>
             )}
@@ -282,11 +300,11 @@ export default function DashboardScreen() {
         </View>
       </ScrollView>
 
-      {/* Bot\u00f3n flotante */}
+      {/* Botón flotante */}
       <View className="absolute bottom-24 right-6">
         <TouchableOpacity
           className="rounded-full p-4 shadow-lg"
-          style={{ 
+          style={{
             backgroundColor: colors.primary,
             shadowColor: "#000",
             shadowOffset: { width: 0, height: 4 },

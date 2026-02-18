@@ -1,8 +1,8 @@
 import "@/global.css";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Stack } from "expo-router";
+import { Redirect, Stack, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState, useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import "react-native-reanimated";
 import { Platform } from "react-native";
@@ -18,7 +18,7 @@ import type { EdgeInsets, Metrics, Rect } from "react-native-safe-area-context";
 
 import { trpc, createTRPCClient } from "@/lib/trpc";
 import { initManusRuntime, subscribeSafeAreaInsets } from "@/lib/_core/manus-runtime";
-import { AuthProvider } from "@/lib/auth-context";
+import { AuthProvider, useAuth } from "@/lib/auth-context";
 
 const DEFAULT_WEB_INSETS: EdgeInsets = { top: 0, right: 0, bottom: 0, left: 0 };
 const DEFAULT_WEB_FRAME: Rect = { x: 0, y: 0, width: 0, height: 0 };
@@ -28,11 +28,24 @@ export const unstable_settings = {
 };
 
 /**
- * Root layout content - NO redirects, NO auth blocking.
- * The app always loads the tabs (Dashboard) directly.
- * Auth screens are available but never forced via redirect.
+ * Root layout content - redirects to auth/signin if no session.
  */
 function RootLayoutContent() {
+  const { isSignedIn, isLoading } = useAuth();
+  const segments = useSegments();
+
+  const inAuthGroup = segments[0] === "auth" || segments[0] === "oauth" || segments[0] === "welcome";
+
+  // Redirección declarativa: si no hay sesión y no estamos en auth → login
+  if (!isLoading && !isSignedIn && !inAuthGroup) {
+    return <Redirect href="/auth/signin" />;
+  }
+
+  // Si hay sesión y estamos en auth → dashboard
+  if (!isLoading && isSignedIn && inAuthGroup) {
+    return <Redirect href="/(tabs)" />;
+  }
+
   return (
     <>
       <Stack screenOptions={{ headerShown: false }}>
@@ -43,6 +56,7 @@ function RootLayoutContent() {
         <Stack.Screen name="cliente/[id]" />
         <Stack.Screen name="crear-trabajo" />
         <Stack.Screen name="trabajo/[id]" />
+        <Stack.Screen name="editar-trabajo" />
       </Stack>
       <StatusBar style="auto" />
     </>
