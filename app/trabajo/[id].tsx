@@ -1,4 +1,4 @@
-import { ScrollView, Text, View, TouchableOpacity, ActivityIndicator, Alert } from "react-native";
+import { ScrollView, Text, View, TouchableOpacity, ActivityIndicator, Alert, Platform } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import * as Haptics from "expo-haptics";
 
@@ -261,6 +261,29 @@ export default function TrabajoDetalleScreen() {
               </View>
             </View>
           </View>
+
+          {/* Botón generar recibo */}
+          <TouchableOpacity
+            className="rounded-xl py-4 items-center flex-row justify-center gap-2"
+            style={{ backgroundColor: colors.primary }}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              if (Platform.OS === "web") {
+                const url = `${process.env.EXPO_PUBLIC_API_URL || "http://127.0.0.1:3000"}/api/recibo/${trabajoId}`;
+                window.open(url, "_blank");
+              } else {
+                Alert.alert(
+                  "Generar recibo",
+                  "La generación de recibos en móvil estará disponible próximamente. Por ahora, usa la versión web.",
+                  [{ text: "OK" }]
+                );
+              }
+            }}
+            activeOpacity={0.8}
+          >
+            <IconSymbol name="doc.fill" size={20} color="#FFFFFF" />
+            <Text className="text-base font-semibold text-white">Generar recibo</Text>
+          </TouchableOpacity>
 
           {/* Cambiar estado */}
           <View className="gap-2">

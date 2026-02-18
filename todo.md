@@ -316,3 +316,12 @@
 - [x] Corregir lógica de abonos: Saldo pendiente = Total - Abono inicial (ya funcionaba)
 - [x] Traducir formulario de trabajos al español (ya estaba en español)
 - [x] Probar creación de trabajo completo end-to-end (trabajo id=1 guardado en BD)
+
+
+## Generación de Recibos en PDF
+- [x] Crear endpoint del servidor para generar PDF del recibo (/api/recibo/:trabajoId)
+- [x] Implementar lógica de generación con detalles del cliente
+- [x] Incluir desglose de costos (precio base + agregados con cantidad)
+- [x] Mostrar total, abonos y saldo pendiente
+- [x] Agregar botón en la interfaz para generar y descargar recibo (app/trabajo/[id].tsx)
+- [x] Probar generación de PDF end-to-end (recibo HTML generado correctamente)

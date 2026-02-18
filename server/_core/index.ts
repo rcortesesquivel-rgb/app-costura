@@ -7,6 +7,7 @@ import { registerOAuthRoutes } from "./oauth";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import webhookRoutes from "../webhooks";
+import { setupReciboRoutes } from "../generate-recibo";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise((resolve) => {
@@ -63,6 +64,9 @@ async function startServer() {
 
   // Registrar rutas de webhooks
   app.use("/api/webhooks", webhookRoutes);
+  
+  // Registrar rutas de recibos
+  setupReciboRoutes(app);
 
   app.use(
     "/api/trpc",
