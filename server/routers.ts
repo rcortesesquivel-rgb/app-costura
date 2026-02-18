@@ -204,17 +204,10 @@ export const appRouter = router({
     create: protectedProcedure
       .input(z.object({
         clienteId: z.number(),
-        tipo: z.enum(["arreglo", "confeccion", "personalizacion"]),
         descripcion: z.string().min(1),
         precioBase: z.string(),
         abonoInicial: z.string().optional(),
-        tipoPrenda: z.string().optional(),
-        nivelUrgencia: z.enum(["baja", "media", "alta"]).optional(),
-        tipoTela: z.string().optional(),
-        metrosRequeridos: z.string().optional(),
-        tipoPersonalizacion: z.string().optional(),
         fechaEntrega: z.date().optional(),
-        notasVoz: z.string().optional(),
       }))
       .mutation(async ({ input, ctx }) => {
         const id = await db.createTrabajo({
@@ -252,17 +245,10 @@ export const appRouter = router({
       .input(z.object({
         id: z.number(),
         data: z.object({
-          tipo: z.enum(["arreglo", "confeccion", "personalizacion"]).optional(),
           descripcion: z.string().min(1).optional(),
           precioBase: z.string().optional(),
           abonoInicial: z.string().optional(),
-          tipoPrenda: z.string().optional(),
-          nivelUrgencia: z.enum(["baja", "media", "alta"]).optional(),
-          tipoTela: z.string().optional(),
-          metrosRequeridos: z.string().optional(),
-          tipoPersonalizacion: z.string().optional(),
           fechaEntrega: z.date().optional(),
-          notasVoz: z.string().optional(),
         }),
       }))
       .mutation(async ({ input, ctx }) => {
@@ -280,7 +266,6 @@ export const appRouter = router({
     search: protectedProcedure
       .input(z.object({
         query: z.string().optional(),
-        tipo: z.string().optional(),
         estado: z.string().optional(),
       }))
       .query(({ input, ctx }) => {
@@ -310,12 +295,10 @@ export const appRouter = router({
         trabajoId: z.number(),
         concepto: z.string().min(1).max(255),
         precio: z.string(),
+        cantidad: z.number().min(1).default(1),
       }))
       .mutation(async ({ input, ctx }) => {
-        const id = await db.createAgregado({
-          ...input,
-          userId: ctx.user.id,
-        });
+        const id = await db.createAgregado(input);
         return { id };
       }),
 

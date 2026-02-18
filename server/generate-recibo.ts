@@ -60,8 +60,8 @@ export function setupReciboRoutes(app: Express) {
       }
 
       // Calcular totales
-      const precioBase = parseFloat(trabajo.precioBase) || 0;
-      const abonoInicial = parseFloat(trabajo.abonoInicial) || 0;
+      const precioBase = parseFloat(trabajo.precioBase || "0") || 0;
+      const abonoInicial = parseFloat(trabajo.abonoInicial || "0") || 0;
       
       // Obtener agregados del trabajo
       const agregadosData = await db
@@ -260,25 +260,13 @@ export function setupReciboRoutes(app: Express) {
     <div class="info-section">
       <h2>Detalles del Trabajo</h2>
       <div class="info-row">
-        <span class="info-label">Tipo:</span>
-        <span class="info-value">${trabajo.tipo.charAt(0).toUpperCase() + trabajo.tipo.slice(1)}</span>
-      </div>
-      <div class="info-row">
         <span class="info-label">Descripción:</span>
-        <span class="info-value">${trabajo.descripcion}</span>
+        <span class="info-value">${trabajo.descripcion || 'Sin descripción'}</span>
       </div>
-      ${trabajo.tipoPrenda ? `
       <div class="info-row">
-        <span class="info-label">Tipo de prenda:</span>
-        <span class="info-value">${trabajo.tipoPrenda}</span>
+        <span class="info-label">Estado:</span>
+        <span class="info-value">${trabajo.estado.replace('_', ' ').charAt(0).toUpperCase() + trabajo.estado.replace('_', ' ').slice(1)}</span>
       </div>
-      ` : ''}
-      ${trabajo.nivelUrgencia ? `
-      <div class="info-row">
-        <span class="info-label">Urgencia:</span>
-        <span class="info-value">${trabajo.nivelUrgencia.charAt(0).toUpperCase() + trabajo.nivelUrgencia.slice(1)}</span>
-      </div>
-      ` : ''}
     </div>
     
     <div class="info-section">
@@ -299,14 +287,17 @@ export function setupReciboRoutes(app: Express) {
             <td class="text-right">${formatCurrency(precioBase)}</td>
             <td class="text-right">${formatCurrency(precioBase)}</td>
           </tr>
-          ${agregadosData.map((item: any) => `
+          ${agregadosData.map((item: any) => {
+            const precioUnit = parseFloat(item.precio || '0');
+            const cant = item.cantidad || 1;
+            return `
           <tr>
             <td>${item.concepto}</td>
-            <td class="text-right">${item.cantidad}</td>
-            <td class="text-right">${formatCurrency(item.precio)}</td>
-            <td class="text-right">${formatCurrency(item.precio * item.cantidad)}</td>
-          </tr>
-          `).join('')}
+            <td class="text-right">${cant}</td>
+            <td class="text-right">${formatCurrency(precioUnit)}</td>
+            <td class="text-right">${formatCurrency(precioUnit * cant)}</td>
+          </tr>`;
+          }).join('')}
         </tbody>
       </table>
     </div>

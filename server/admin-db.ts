@@ -101,16 +101,16 @@ export async function getTrabajosCountByTipo() {
 
   const result = await db
     .select({
-      tipo: trabajos.tipo,
+      estado: trabajos.estado,
       count: trabajos.id,
     })
     .from(trabajos);
 
-  // Agrupar manualmente
+  // Agrupar manualmente por estado
   const grouped: Record<string, number> = {};
   result.forEach((item) => {
-    const tipo = item.tipo || "unknown";
-    grouped[tipo] = (grouped[tipo] || 0) + 1;
+    const estado = item.estado || "unknown";
+    grouped[estado] = (grouped[estado] || 0) + 1;
   });
 
   return Object.entries(grouped).map(([tipo, count]) => ({

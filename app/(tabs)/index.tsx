@@ -202,7 +202,7 @@ export default function DashboardScreen() {
                 >
                   <View className="flex-row items-start gap-3">
                     <View className="bg-primary/10 rounded-full p-3">
-                      <IconSymbol name={getTipoIcon(trabajo.tipo)} size={24} color={colors.primary} />
+                      <IconSymbol name="paperplane.fill" size={24} color={colors.primary} />
                     </View>
                     <View className="flex-1">
                       <Text className="text-base font-semibold text-foreground" numberOfLines={1}>
@@ -255,7 +255,7 @@ export default function DashboardScreen() {
                 >
                   <View className="flex-row items-start gap-3">
                     <View className="bg-primary/10 rounded-full p-3">
-                      <IconSymbol name={getTipoIcon(trabajo.tipo)} size={24} color={colors.primary} />
+                      <IconSymbol name="paperplane.fill" size={24} color={colors.primary} />
                     </View>
                     <View className="flex-1">
                       <Text className="text-base font-semibold text-foreground" numberOfLines={1}>

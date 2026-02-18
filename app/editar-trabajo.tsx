@@ -1,4 +1,4 @@
-import { Text, View, ScrollView, TextInput, TouchableOpacity, Alert, Platform, ActivityIndicator } from "react-native";
+import { Text, View, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, Alert, Platform } from "react-native";
 import { useState, useEffect } from "react";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import * as Haptics from "expo-haptics";
@@ -7,7 +7,6 @@ import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { trpc } from "@/lib/trpc";
 import { useColors } from "@/hooks/use-colors";
-import { formatCurrency } from "@/lib/format-currency";
 
 export default function EditarTrabajoScreen() {
   const colors = useColors();
@@ -16,17 +15,9 @@ export default function EditarTrabajoScreen() {
   const trabajoId = parseInt(id as string);
 
   // Estado del formulario
-  const [tipo, setTipo] = useState<"arreglo" | "confeccion" | "personalizacion">("arreglo");
   const [descripcion, setDescripcion] = useState("");
   const [precioBase, setPrecioBase] = useState("");
   const [abonoInicial, setAbonoInicial] = useState("0");
-  
-  // Campos específicos
-  const [tipoPrenda, setTipoPrenda] = useState("");
-  const [nivelUrgencia, setNivelUrgencia] = useState<"baja" | "media" | "alta">("media");
-  const [tipoTela, setTipoTela] = useState("");
-  const [metrosRequeridos, setMetrosRequeridos] = useState("");
-  const [tipoPersonalizacion, setTipoPersonalizacion] = useState("");
 
   const { data: trabajo, isLoading: loadingTrabajo } = trpc.trabajos.getById.useQuery({ id: trabajoId });
 
@@ -35,7 +26,9 @@ export default function EditarTrabajoScreen() {
     onSuccess: async () => {
       await utils.trabajos.list.invalidate();
       await utils.trabajos.getById.invalidate({ id: trabajoId });
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      if (Platform.OS !== "web") {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
       Alert.alert("Éxito", "Trabajo actualizado correctamente", [
         {
           text: "OK",
@@ -51,15 +44,9 @@ export default function EditarTrabajoScreen() {
   // Cargar datos del trabajo cuando se obtienen
   useEffect(() => {
     if (trabajo) {
-      setTipo(trabajo.tipo as any);
       setDescripcion(trabajo.descripcion || "");
-      setPrecioBase(trabajo.precioBase || "");
+      setPrecioBase(trabajo.precioBase || "0");
       setAbonoInicial(trabajo.abonoInicial || "0");
-      setTipoPrenda(trabajo.tipoPrenda || "");
-      setNivelUrgencia((trabajo.nivelUrgencia as any) || "media");
-      setTipoTela(trabajo.tipoTela || "");
-      setMetrosRequeridos(trabajo.metrosRequeridos || "");
-      setTipoPersonalizacion(trabajo.tipoPersonalizacion || "");
     }
   }, [trabajo]);
 
@@ -74,25 +61,15 @@ export default function EditarTrabajoScreen() {
       return;
     }
 
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
 
-    const data: any = {
-      tipo,
+    const data = {
       descripcion: descripcion.trim(),
       precioBase,
       abonoInicial: abonoInicial || "0",
-      nivelUrgencia,
     };
-
-    // Campos específicos por tipo
-    if (tipo === "arreglo") {
-      data.tipoPrenda = tipoPrenda || null;
-    } else if (tipo === "confeccion") {
-      data.tipoTela = tipoTela || null;
-      data.metrosRequeridos = metrosRequeridos || null;
-    } else if (tipo === "personalizacion") {
-      data.tipoPersonalizacion = tipoPersonalizacion || null;
-    }
 
     updateMutation.mutate({ id: trabajoId, data });
   };
@@ -121,7 +98,9 @@ export default function EditarTrabajoScreen() {
           <View className="flex-row items-center gap-4">
             <TouchableOpacity
               onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                if (Platform.OS !== "web") {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                }
                 router.back();
               }}
               activeOpacity={0.7}
@@ -130,35 +109,6 @@ export default function EditarTrabajoScreen() {
             </TouchableOpacity>
             <View className="flex-1">
               <Text className="text-2xl font-bold text-foreground">Editar trabajo</Text>
-            </View>
-          </View>
-
-          {/* Tipo de trabajo */}
-          <View className="gap-2">
-            <Text className="text-base font-semibold text-foreground">Tipo de trabajo</Text>
-            <View className="flex-row gap-2">
-              {(["arreglo", "confeccion", "personalizacion"] as const).map((t) => (
-                <TouchableOpacity
-                  key={t}
-                  className="flex-1 rounded-xl py-3 border"
-                  style={{
-                    backgroundColor: tipo === t ? colors.primary + "20" : "transparent",
-                    borderColor: tipo === t ? colors.primary : colors.border,
-                  }}
-                  onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    setTipo(t);
-                  }}
-                  activeOpacity={0.7}
-                >
-                  <Text
-                    className="text-center text-sm font-medium"
-                    style={{ color: tipo === t ? colors.primary : colors.foreground }}
-                  >
-                    {t === "arreglo" ? "Arreglo" : t === "confeccion" ? "Confección" : "Personalización"}
-                  </Text>
-                </TouchableOpacity>
-              ))}
             </View>
           </View>
 
@@ -177,95 +127,9 @@ export default function EditarTrabajoScreen() {
             />
           </View>
 
-          {/* Campos específicos por tipo */}
-          {tipo === "arreglo" && (
-            <View className="gap-2">
-              <Text className="text-base font-semibold text-foreground">Tipo de prenda</Text>
-              <TextInput
-                className="bg-surface rounded-xl p-4 text-base border"
-                style={{ color: colors.foreground, borderColor: colors.border }}
-                placeholder="Ej: Pantalón, camisa, vestido"
-                placeholderTextColor={colors.muted}
-                value={tipoPrenda}
-                onChangeText={setTipoPrenda}
-              />
-            </View>
-          )}
-
-          {tipo === "confeccion" && (
-            <>
-              <View className="gap-2">
-                <Text className="text-base font-semibold text-foreground">Tipo de tela</Text>
-                <TextInput
-                  className="bg-surface rounded-xl p-4 text-base border"
-                  style={{ color: colors.foreground, borderColor: colors.border }}
-                  placeholder="Ej: Algodón, lino, seda"
-                  placeholderTextColor={colors.muted}
-                  value={tipoTela}
-                  onChangeText={setTipoTela}
-                />
-              </View>
-              <View className="gap-2">
-                <Text className="text-base font-semibold text-foreground">Metros requeridos</Text>
-                <TextInput
-                  className="bg-surface rounded-xl p-4 text-base border"
-                  style={{ color: colors.foreground, borderColor: colors.border }}
-                  placeholder="Ej: 2.5"
-                  placeholderTextColor={colors.muted}
-                  value={metrosRequeridos}
-                  onChangeText={setMetrosRequeridos}
-                  keyboardType="decimal-pad"
-                />
-              </View>
-            </>
-          )}
-
-          {tipo === "personalizacion" && (
-            <View className="gap-2">
-              <Text className="text-base font-semibold text-foreground">Tipo de personalización</Text>
-              <TextInput
-                className="bg-surface rounded-xl p-4 text-base border"
-                style={{ color: colors.foreground, borderColor: colors.border }}
-                placeholder="Ej: Bordado, estampado"
-                placeholderTextColor={colors.muted}
-                value={tipoPersonalizacion}
-                onChangeText={setTipoPersonalizacion}
-              />
-            </View>
-          )}
-
-          {/* Nivel de urgencia */}
-          <View className="gap-2">
-            <Text className="text-base font-semibold text-foreground">Nivel de urgencia</Text>
-            <View className="flex-row gap-2">
-              {(["baja", "media", "alta"] as const).map((nivel) => (
-                <TouchableOpacity
-                  key={nivel}
-                  className="flex-1 rounded-xl py-3 border"
-                  style={{
-                    backgroundColor: nivelUrgencia === nivel ? colors.primary + "20" : "transparent",
-                    borderColor: nivelUrgencia === nivel ? colors.primary : colors.border,
-                  }}
-                  onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    setNivelUrgencia(nivel);
-                  }}
-                  activeOpacity={0.7}
-                >
-                  <Text
-                    className="text-center text-sm font-medium"
-                    style={{ color: nivelUrgencia === nivel ? colors.primary : colors.foreground }}
-                  >
-                    {nivel.charAt(0).toUpperCase() + nivel.slice(1)}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-
           {/* Precio base */}
           <View className="gap-2">
-            <Text className="text-base font-semibold text-foreground">Precio base</Text>
+            <Text className="text-base font-semibold text-foreground">Precio base (₡)</Text>
             <TextInput
               className="bg-surface rounded-xl p-4 text-base border"
               style={{ color: colors.foreground, borderColor: colors.border }}
@@ -279,7 +143,7 @@ export default function EditarTrabajoScreen() {
 
           {/* Abono inicial */}
           <View className="gap-2">
-            <Text className="text-base font-semibold text-foreground">Abono inicial</Text>
+            <Text className="text-base font-semibold text-foreground">Abono inicial (₡)</Text>
             <TextInput
               className="bg-surface rounded-xl p-4 text-base border"
               style={{ color: colors.foreground, borderColor: colors.border }}
@@ -289,6 +153,16 @@ export default function EditarTrabajoScreen() {
               onChangeText={setAbonoInicial}
               keyboardType="decimal-pad"
             />
+          </View>
+
+          {/* Saldo pendiente en tiempo real */}
+          <View className="bg-surface rounded-2xl p-4 border border-border">
+            <View className="flex-row justify-between">
+              <Text className="text-base font-semibold text-foreground">Saldo pendiente</Text>
+              <Text className="text-base font-bold" style={{ color: (parseFloat(precioBase || "0") - parseFloat(abonoInicial || "0")) > 0 ? colors.error : colors.success }}>
+                ₡{((parseFloat(precioBase || "0") - parseFloat(abonoInicial || "0"))).toFixed(2)}
+              </Text>
+            </View>
           </View>
 
           {/* Botón guardar */}

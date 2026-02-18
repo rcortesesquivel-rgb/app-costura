@@ -23,17 +23,9 @@ export default function CrearTrabajoScreen() {
 
   // Estado del formulario
   const [clienteId, setClienteId] = useState("");
-  const [tipo, setTipo] = useState<"arreglo" | "confeccion" | "personalizacion">("arreglo");
   const [descripcion, setDescripcion] = useState("");
   const [precioBase, setPrecioBase] = useState("");
   const [abonoInicial, setAbonoInicial] = useState("0");
-  
-  // Campos específicos
-  const [tipoPrenda, setTipoPrenda] = useState("");
-  const [nivelUrgencia, setNivelUrgencia] = useState<"baja" | "media" | "alta">("media");
-  const [tipoTela, setTipoTela] = useState("");
-  const [metrosRequeridos, setMetrosRequeridos] = useState("");
-  const [tipoPersonalizacion, setTipoPersonalizacion] = useState("");
   
   // Agregados
   const [agregados, setAgregados] = useState<Array<{ concepto: string; precio: string; cantidad: string }>>([]);
@@ -51,17 +43,20 @@ export default function CrearTrabajoScreen() {
   const utils = trpc.useUtils();
   const createMutation = trpc.trabajos.create.useMutation({
     onSuccess: async (data) => {
-      // Crear agregados
+      // Crear agregados con cantidad
       for (const agregado of agregados) {
         await utils.client.agregados.create.mutate({
           trabajoId: data.id,
           concepto: agregado.concepto,
           precio: agregado.precio,
+          cantidad: parseInt(agregado.cantidad) || 1,
         });
       }
       
       await utils.trabajos.list.invalidate();
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      if (Platform.OS !== "web") {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
       Alert.alert("Éxito", "Trabajo creado correctamente", [
         {
           text: "OK",
@@ -89,7 +84,6 @@ export default function CrearTrabajoScreen() {
           setDescripcion((prev) => (prev ? `${prev} ${transcript}` : transcript));
           setGrabando(false);
           
-          // Registrar transcripción en el servidor
           try {
             await utils.client.superAdmin.audio.recordTranscription.mutate();
           } catch (error) {
@@ -122,7 +116,6 @@ export default function CrearTrabajoScreen() {
       return;
     }
 
-    // Verificar límite de transcripciones
     if (canRecord === false) {
       Alert.alert(
         "Límite alcanzado",
@@ -137,7 +130,9 @@ export default function CrearTrabajoScreen() {
     } else {
       recognition.start();
       setGrabando(true);
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      if (Platform.OS !== "web") {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      }
     }
   };
 
@@ -151,12 +146,16 @@ export default function CrearTrabajoScreen() {
     setNuevoConcepto("");
     setNuevoPrecio("");
     setNuevaCantidad("1");
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
   };
 
   const handleEliminarItem = (index: number) => {
     setAgregados(agregados.filter((_, i) => i !== index));
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
   };
 
   const calcularTotal = () => {
@@ -181,25 +180,16 @@ export default function CrearTrabajoScreen() {
       return;
     }
 
-    const data: any = {
-      clienteId: parseInt(clienteId),
-      tipo,
-      descripcion: descripcion.trim(),
-      precioBase: precioBase.trim(),
-      abonoInicial: abonoInicial.trim(),
-    };
-
-    if (tipo === "arreglo") {
-      data.tipoPrenda = tipoPrenda.trim() || undefined;
-      data.nivelUrgencia = nivelUrgencia;
-    } else if (tipo === "confeccion") {
-      data.tipoTela = tipoTela.trim() || undefined;
-      data.metrosRequeridos = metrosRequeridos.trim() || undefined;
-    } else if (tipo === "personalizacion") {
-      data.tipoPersonalizacion = tipoPersonalizacion.trim() || undefined;
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
 
-    createMutation.mutate(data);
+    createMutation.mutate({
+      clienteId: parseInt(clienteId),
+      descripcion: descripcion.trim(),
+      precioBase: precioBase.trim(),
+      abonoInicial: abonoInicial.trim() || "0",
+    });
   };
 
   if (loadingClientes) {
@@ -252,37 +242,6 @@ export default function CrearTrabajoScreen() {
               </View>
             </View>
 
-            {/* Tipo de trabajo */}
-            <View className="gap-2">
-              <Text className="text-sm font-semibold text-foreground">Tipo de trabajo *</Text>
-              <View className="flex-row gap-2">
-                {[
-                  { value: "arreglo", label: "Arreglo", icon: "scissors" },
-                  { value: "confeccion", label: "Confección", icon: "tshirt.fill" },
-                  { value: "personalizacion", label: "Personalización", icon: "paintbrush.fill" },
-                ].map((item) => (
-                  <TouchableOpacity
-                    key={item.value}
-                    className="flex-1 rounded-xl p-3 border items-center gap-2"
-                    style={{
-                      backgroundColor: tipo === item.value ? colors.primary + "20" : "transparent",
-                      borderColor: tipo === item.value ? colors.primary : colors.border,
-                    }}
-                    onPress={() => setTipo(item.value as any)}
-                    activeOpacity={0.7}
-                  >
-                    <IconSymbol name={item.icon as any} size={24} color={tipo === item.value ? colors.primary : colors.muted} />
-                    <Text
-                      className="text-xs font-medium text-center"
-                      style={{ color: tipo === item.value ? colors.primary : colors.foreground }}
-                    >
-                      {item.label}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
-
             {/* Descripción con voz */}
             <View className="gap-2">
               <View className="flex-row items-center justify-between">
@@ -310,95 +269,16 @@ export default function CrearTrabajoScreen() {
               />
             </View>
 
-            {/* Campos específicos por tipo */}
-            {tipo === "arreglo" && (
-              <>
-                <View className="gap-2">
-                  <Text className="text-sm font-semibold text-foreground">Tipo de prenda</Text>
-                  <TextInput
-                    className="bg-surface rounded-xl border border-border px-4 py-3 text-base text-foreground"
-                    placeholder="Ej: Pantalón, vestido, camisa..."
-                    placeholderTextColor={colors.muted}
-                    value={tipoPrenda}
-                    onChangeText={setTipoPrenda}
-                  />
-                </View>
-                <View className="gap-2">
-                  <Text className="text-sm font-semibold text-foreground">Nivel de urgencia</Text>
-                  <View className="flex-row gap-2">
-                    {["baja", "media", "alta"].map((nivel) => (
-                      <TouchableOpacity
-                        key={nivel}
-                        className="flex-1 rounded-xl p-3 border"
-                        style={{
-                          backgroundColor: nivelUrgencia === nivel ? colors.primary + "20" : "transparent",
-                          borderColor: nivelUrgencia === nivel ? colors.primary : colors.border,
-                        }}
-                        onPress={() => setNivelUrgencia(nivel as any)}
-                        activeOpacity={0.7}
-                      >
-                        <Text
-                          className="text-sm font-medium text-center capitalize"
-                          style={{ color: nivelUrgencia === nivel ? colors.primary : colors.foreground }}
-                        >
-                          {nivel}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                </View>
-              </>
-            )}
-
-            {tipo === "confeccion" && (
-              <>
-                <View className="gap-2">
-                  <Text className="text-sm font-semibold text-foreground">Tipo de tela</Text>
-                  <TextInput
-                    className="bg-surface rounded-xl border border-border px-4 py-3 text-base text-foreground"
-                    placeholder="Ej: Algodón, seda, lino..."
-                    placeholderTextColor={colors.muted}
-                    value={tipoTela}
-                    onChangeText={setTipoTela}
-                  />
-                </View>
-                <View className="gap-2">
-                  <Text className="text-sm font-semibold text-foreground">Metros requeridos</Text>
-                  <TextInput
-                    className="bg-surface rounded-xl border border-border px-4 py-3 text-base text-foreground"
-                    placeholder="Ej: 2.5"
-                    placeholderTextColor={colors.muted}
-                    value={metrosRequeridos}
-                    onChangeText={setMetrosRequeridos}
-                    keyboardType="numeric"
-                  />
-                </View>
-              </>
-            )}
-
-            {tipo === "personalizacion" && (
-              <View className="gap-2">
-                <Text className="text-sm font-semibold text-foreground">Tipo de personalización</Text>
-                <TextInput
-                  className="bg-surface rounded-xl border border-border px-4 py-3 text-base text-foreground"
-                  placeholder="Ej: Bordado, aplicación, estampado..."
-                  placeholderTextColor={colors.muted}
-                  value={tipoPersonalizacion}
-                  onChangeText={setTipoPersonalizacion}
-                />
-              </View>
-            )}
-
-            {/* Precios */}
+            {/* Precio base */}
             <View className="gap-2">
-              <Text className="text-sm font-semibold text-foreground">Precio base *</Text>
+              <Text className="text-sm font-semibold text-foreground">Precio base (₡) *</Text>
               <TextInput
                 className="bg-surface rounded-xl border border-border px-4 py-3 text-base text-foreground"
-                placeholder="0"
+                placeholder="0.00"
                 placeholderTextColor={colors.muted}
                 value={precioBase}
                 onChangeText={setPrecioBase}
-                keyboardType="numeric"
+                keyboardType="decimal-pad"
               />
             </View>
 
@@ -411,7 +291,7 @@ export default function CrearTrabajoScreen() {
                   <View className="flex-1">
                     <Text className="text-base text-foreground">{item.concepto}</Text>
                     <Text className="text-sm text-muted mt-1">
-                      {formatCurrency(item.precio)} × {item.cantidad} = {formatCurrency((parseFloat(item.precio) || 0) * (parseFloat(item.cantidad) || 1))}
+                      {formatCurrency(item.precio)} x {item.cantidad} = {formatCurrency((parseFloat(item.precio) || 0) * (parseFloat(item.cantidad) || 1))}
                     </Text>
                   </View>
                   <TouchableOpacity onPress={() => handleEliminarItem(index)} activeOpacity={0.7}>
@@ -443,7 +323,7 @@ export default function CrearTrabajoScreen() {
                     placeholderTextColor={colors.muted}
                     value={nuevoPrecio}
                     onChangeText={setNuevoPrecio}
-                    keyboardType="numeric"
+                    keyboardType="decimal-pad"
                   />
                   <TouchableOpacity
                     className="rounded-xl p-3 items-center justify-center"
@@ -482,17 +362,23 @@ export default function CrearTrabajoScreen() {
               </View>
             </View>
 
+            {/* Abono inicial */}
             <View className="gap-2">
-              <Text className="text-sm font-semibold text-foreground">Abono inicial</Text>
+              <Text className="text-sm font-semibold text-foreground">Abono inicial (₡)</Text>
               <TextInput
                 className="bg-surface rounded-xl border border-border px-4 py-3 text-base text-foreground"
-                placeholder="0"
+                placeholder="0.00"
                 placeholderTextColor={colors.muted}
                 value={abonoInicial}
                 onChangeText={setAbonoInicial}
-                keyboardType="numeric"
+                keyboardType="decimal-pad"
               />
-              <Text className="text-xs text-muted">Saldo pendiente: {formatCurrency(calcularSaldo())}</Text>
+              <View className="flex-row justify-between mt-1">
+                <Text className="text-sm font-semibold text-foreground">Saldo pendiente:</Text>
+                <Text className="text-sm font-bold" style={{ color: calcularSaldo() > 0 ? colors.error : colors.success }}>
+                  {formatCurrency(calcularSaldo())}
+                </Text>
+              </View>
             </View>
 
             {/* Botones */}

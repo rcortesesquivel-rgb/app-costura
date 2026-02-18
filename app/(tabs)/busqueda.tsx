@@ -17,7 +17,6 @@ export default function BusquedaScreen() {
 
   const { data: resultados, isLoading } = trpc.trabajos.search.useQuery({
     query: searchQuery,
-    tipo: tipoFiltro,
     estado: estadoFiltro,
   });
 
@@ -184,7 +183,7 @@ export default function BusquedaScreen() {
                 >
                   <View className="flex-row items-start gap-3">
                     <View className="bg-primary/10 rounded-full p-3">
-                      <IconSymbol name={getTipoIcon(trabajo.tipo)} size={24} color={colors.primary} />
+                      <IconSymbol name="paperplane.fill" size={24} color={colors.primary} />
                     </View>
                     <View className="flex-1">
                       <Text className="text-base font-semibold text-foreground" numberOfLines={2}>
@@ -195,9 +194,7 @@ export default function BusquedaScreen() {
                         <View className="rounded-full px-3 py-1" style={{ backgroundColor: getEstadoBadgeColor(trabajo.estado) }}>
                           <Text className="text-xs font-semibold text-white">{getEstadoLabel(trabajo.estado)}</Text>
                         </View>
-                        <View className="rounded-full px-3 py-1 bg-muted/20">
-                          <Text className="text-xs font-semibold text-muted">{getTipoLabel(trabajo.tipo)}</Text>
-                        </View>
+
                         {trabajo.fechaEntrega && (
                           <View className="flex-row items-center gap-1">
                             <IconSymbol name="clock.fill" size={14} color={colors.muted} />

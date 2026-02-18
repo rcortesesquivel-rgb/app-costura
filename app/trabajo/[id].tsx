@@ -169,45 +169,9 @@ export default function TrabajoDetalleScreen() {
             <Text className="text-lg font-semibold text-foreground">Detalles</Text>
             <View className="bg-surface rounded-2xl p-4 border border-border gap-3">
               <View>
-                <Text className="text-xs text-muted">Tipo</Text>
-                <Text className="text-base text-foreground mt-1">{getTipoLabel(trabajo.tipo)}</Text>
-              </View>
-
-              <View>
                 <Text className="text-xs text-muted">Descripción</Text>
-                <Text className="text-base text-foreground mt-1">{trabajo.descripcion}</Text>
+                <Text className="text-base text-foreground mt-1">{trabajo.descripcion || 'Sin descripción'}</Text>
               </View>
-
-              {trabajo.tipo === "arreglo" && trabajo.tipoPrenda && (
-                <View>
-                  <Text className="text-xs text-muted">Tipo de prenda</Text>
-                  <Text className="text-base text-foreground mt-1">{trabajo.tipoPrenda}</Text>
-                </View>
-              )}
-
-              {trabajo.tipo === "confeccion" && (
-                <>
-                  {trabajo.tipoTela && (
-                    <View>
-                      <Text className="text-xs text-muted">Tipo de tela</Text>
-                      <Text className="text-base text-foreground mt-1">{trabajo.tipoTela}</Text>
-                    </View>
-                  )}
-                  {trabajo.metrosRequeridos && (
-                    <View>
-                      <Text className="text-xs text-muted">Metros requeridos</Text>
-                      <Text className="text-base text-foreground mt-1">{trabajo.metrosRequeridos} m</Text>
-                    </View>
-                  )}
-                </>
-              )}
-
-              {trabajo.tipo === "personalizacion" && trabajo.tipoPersonalizacion && (
-                <View>
-                  <Text className="text-xs text-muted">Tipo de personalización</Text>
-                  <Text className="text-base text-foreground mt-1">{trabajo.tipoPersonalizacion}</Text>
-                </View>
-              )}
 
               {trabajo.fechaEntrega && (
                 <View>
@@ -215,13 +179,6 @@ export default function TrabajoDetalleScreen() {
                   <Text className="text-base text-foreground mt-1">
                     {new Date(trabajo.fechaEntrega).toLocaleDateString()}
                   </Text>
-                </View>
-              )}
-
-              {trabajo.notasVoz && (
-                <View>
-                  <Text className="text-xs text-muted">Notas de voz</Text>
-                  <Text className="text-base text-foreground mt-1">{trabajo.notasVoz}</Text>
                 </View>
               )}
             </View>

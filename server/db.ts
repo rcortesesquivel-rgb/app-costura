@@ -275,7 +275,6 @@ export async function deleteTrabajo(id: number, userId: number) {
 
 export async function searchTrabajos(params: {
   query?: string;
-  tipo?: string;
   estado?: string;
   clienteId?: number;
   userId: number;
@@ -284,10 +283,6 @@ export async function searchTrabajos(params: {
   if (!db) return [];
   
   const conditions = [eq(trabajos.userId, params.userId)];
-  
-  if (params.tipo) {
-    conditions.push(eq(trabajos.tipo, params.tipo as any));
-  }
   
   if (params.estado) {
     conditions.push(eq(trabajos.estado, params.estado as any));
@@ -311,7 +306,7 @@ export async function getAgregadosByTrabajoId(trabajoId: number, userId: number)
   if (!db) return [];
   
   return db.select().from(agregados).where(
-    and(eq(agregados.trabajoId, trabajoId), eq(agregados.userId, userId))
+    eq(agregados.trabajoId, trabajoId)
   );
 }
 
@@ -328,7 +323,7 @@ export async function deleteAgregado(id: number, userId: number) {
   if (!db) throw new Error("Database not available");
   
   await db.delete(agregados).where(
-    and(eq(agregados.id, id), eq(agregados.userId, userId))
+    eq(agregados.id, id)
   );
 }
 
@@ -343,7 +338,11 @@ export async function calcularTotalTrabajo(trabajoId: number, userId: number) {
   
   const precioBase = parseFloat(trabajo.precioBase || "0");
   const abonoInicial = parseFloat(trabajo.abonoInicial || "0");
-  const totalAgregados = listaAgregados.reduce((sum, ag) => sum + parseFloat(ag.precio || "0"), 0);
+  const totalAgregados = listaAgregados.reduce((sum, ag) => {
+    const precio = parseFloat(ag.precio || "0");
+    const cantidad = ag.cantidad || 1;
+    return sum + (precio * cantidad);
+  }, 0);
   
   const total = precioBase + totalAgregados;
   const saldo = total - abonoInicial;

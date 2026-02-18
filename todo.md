@@ -345,3 +345,15 @@
 - [x] Agregar botón "Editar" en pantalla de detalle de trabajo
 - [x] Crear pantalla /app/editar-trabajo.tsx con formulario pre-cargado
 - [x] Verificar que cambio de estados funciona correctamente (endpoint ya existía)
+
+## Corrección Esquema BD - Tipos Decimal y Campo Cantidad (18 Feb 2026)
+- [x] Reemplazar varchar por decimal(12,2) en trabajos.precioBase y trabajos.abonoInicial
+- [x] Reemplazar varchar por decimal(12,2) en agregados.precio
+- [x] Agregar campo cantidad (int, default 1) a tabla agregados
+- [x] Eliminar campos innecesarios de tabla trabajos (tipo, tipoPrenda, nivelUrgencia, tipoTela, metrosRequeridos, tipoPersonalizacion, notasVoz)
+- [x] Ejecutar migración de BD (pnpm db:push)
+- [x] Propagar cambios de tipos a server/db.ts
+- [x] Propagar cambios de tipos a server/routers.ts
+- [x] Propagar cambios de tipos a server/generate-recibo.ts
+- [x] Propagar cambios a formularios frontend
+- [x] Verificar que todo compila sin errores (0 errores TS, 10/10 tests pasados)

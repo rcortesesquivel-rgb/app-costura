@@ -1,4 +1,4 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
+import { decimal, int, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
 
 /**
  * Core user table backing auth flow.
@@ -71,37 +71,13 @@ export const medidas = mysqlTable("medidas", {
 // Trabajos/Pedidos
 export const trabajos = mysqlTable("trabajos", {
   id: int("id").autoincrement().primaryKey(),
-  userId: int("userId").notNull(), // Foreign key to users table
+  userId: int("userId").notNull(),
   clienteId: int("clienteId").notNull(),
-  tipo: mysqlEnum("tipo", ["arreglo", "confeccion", "personalizacion"]).notNull(),
-  
-  // Campos comunes
-  descripcion: text("descripcion").notNull(),
-  precioBase: varchar("precioBase", { length: 20 }).notNull(),
-  abonoInicial: varchar("abonoInicial", { length: 20 }).default("0").notNull(),
-  
-  // Campos específicos para Arreglos
-  tipoPrenda: varchar("tipoPrenda", { length: 100 }),
-  nivelUrgencia: mysqlEnum("nivelUrgencia", ["baja", "media", "alta"]),
-  
-  // Campos específicos para Confección
-  tipoTela: varchar("tipoTela", { length: 100 }),
-  metrosRequeridos: varchar("metrosRequeridos", { length: 10 }),
-  fechaPrueba: timestamp("fechaPrueba"),
-  
-  // Campos específicos para Personalización
-  tipoPersonalizacion: varchar("tipoPersonalizacion", { length: 100 }), // bordado, aplicación, etc.
-  
-  // Estado del trabajo
+  descripcion: text("descripcion"),
+  precioBase: decimal("precioBase", { precision: 12, scale: 2 }).default("0.00"),
+  abonoInicial: decimal("abonoInicial", { precision: 12, scale: 2 }).default("0.00"),
   estado: mysqlEnum("estado", ["en_espera", "cortando", "cosiendo", "listo", "entregado"]).default("en_espera").notNull(),
-  
-  // Fechas
   fechaEntrega: timestamp("fechaEntrega"),
-  fechaEntregado: timestamp("fechaEntregado"),
-  
-  // Notas de voz transcritas
-  notasVoz: text("notasVoz"),
-  
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
@@ -109,10 +85,10 @@ export const trabajos = mysqlTable("trabajos", {
 // Agregados de trabajos (lista dinámica)
 export const agregados = mysqlTable("agregados", {
   id: int("id").autoincrement().primaryKey(),
-  userId: int("userId").notNull(), // Foreign key to users table
   trabajoId: int("trabajoId").notNull(),
   concepto: varchar("concepto", { length: 255 }).notNull(),
-  precio: varchar("precio", { length: 20 }).notNull(),
+  precio: decimal("precio", { precision: 12, scale: 2 }).default("0.00"),
+  cantidad: int("cantidad").default(1).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
