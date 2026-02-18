@@ -12,54 +12,155 @@ const HOTMART_HOTTOK = process.env.HOTMART_HOTTOK || "";
 
 /**
  * Valida el Hottok de Hotmart.
- * Busca el token en: header hottok, header authorization, o body JSON.
+ *
+ * Según la documentación oficial de Hotmart (developers.hotmart.com):
+ * - El Hottok se envía en el header HTTP como: X-HOTMART-HOTTOK
+ * - Express convierte los headers a minúsculas: x-hotmart-hottok
+ * - También puede venir en el body del JSON como: hottok
+ *
+ * Esta función busca el token en TODAS las ubicaciones posibles:
+ * 1. Header: x-hotmart-hottok (nombre oficial de Hotmart)
+ * 2. Header: hottok (variante simplificada)
+ * 3. Header: x-hotmart-token (variante alternativa)
+ * 4. Header: authorization (formato Bearer)
+ * 5. Body JSON: hottok
+ * 6. Body JSON: data.hottok
+ * 7. Query string: hottok
  */
-function validateHotmartHottok(
-  hottokHeader: string | undefined,
-  hottokFromAuth: string | undefined,
-  hottokFromBody: string | undefined
-): boolean {
+function validateHotmartHottok(req: Request): boolean {
+  // Si no hay Hottok configurado, aceptar todo (modo desarrollo)
   if (!HOTMART_HOTTOK) {
-    // Si no hay Hottok configurado, aceptar (modo desarrollo)
-    console.warn("[Webhook] Hottok not configured — accepting request in dev mode");
+    console.warn("[Webhook] ⚠️ HOTMART_HOTTOK no configurado — aceptando solicitud en modo desarrollo");
     return true;
   }
 
-  try {
-    const configuredHottok = HOTMART_HOTTOK.trim();
-    const candidates = [hottokHeader, hottokFromAuth, hottokFromBody].filter(Boolean);
+  const configuredHottok = HOTMART_HOTTOK.trim();
 
-    for (const candidate of candidates) {
-      if (!candidate) continue;
+  // ═══ LOGS DE DIAGNÓSTICO ═══
+  console.log("[Webhook] 🔍 === DIAGNÓSTICO DE HOTTOK ===");
+  console.log("[Webhook] 🔑 Hottok configurado (primeros 15 chars):", configuredHottok.substring(0, 15) + "...");
+  console.log("[Webhook] 🔑 Hottok configurado (longitud):", configuredHottok.length);
 
-      let cleanToken = String(candidate).trim();
+  // Imprimir TODOS los headers recibidos para diagnóstico
+  console.log("[Webhook] 📋 Headers recibidos:");
+  const relevantHeaders = [
+    "x-hotmart-hottok",
+    "hottok",
+    "x-hotmart-token",
+    "authorization",
+    "content-type",
+    "x-hotmart-signature",
+  ];
+  for (const headerName of relevantHeaders) {
+    const value = req.headers[headerName];
+    if (value) {
+      const strValue = String(value);
+      console.log(`[Webhook]   → ${headerName}: "${strValue.substring(0, 20)}..." (longitud: ${strValue.length})`);
+    } else {
+      console.log(`[Webhook]   → ${headerName}: (no presente)`);
+    }
+  }
 
-      // Extraer token si viene en formato "Bearer {token}"
-      if (cleanToken.toLowerCase().startsWith("bearer ")) {
-        cleanToken = cleanToken.substring(7).trim();
-      }
+  // También imprimir todos los headers que empiecen con "x-hotmart"
+  for (const [key, value] of Object.entries(req.headers)) {
+    if (key.startsWith("x-hotmart") && !relevantHeaders.includes(key)) {
+      console.log(`[Webhook]   → ${key}: "${String(value).substring(0, 20)}..." (extra)`);
+    }
+  }
 
-      // Remover comillas
-      cleanToken = cleanToken.replace(/^"|"$/g, "").replace(/^'|'$/g, "").trim();
-      cleanToken = cleanToken.replace(/[\r\n\t]/g, "").trim();
+  // Recopilar TODOS los candidatos posibles del Hottok
+  const candidates: { source: string; value: string }[] = [];
 
-      if (cleanToken === configuredHottok) {
-        console.log("[Webhook] ✓ Hottok validation successful");
-        return true;
-      } else {
-        console.log("[Webhook] Hottok no coincide:", {
-          received: cleanToken.substring(0, 10) + "...",
-          expected: configuredHottok.substring(0, 10) + "...",
-        });
-      }
+  // 1. Header oficial de Hotmart: X-HOTMART-HOTTOK
+  if (req.headers["x-hotmart-hottok"]) {
+    candidates.push({ source: "header x-hotmart-hottok", value: String(req.headers["x-hotmart-hottok"]) });
+  }
+
+  // 2. Header simplificado: hottok
+  if (req.headers["hottok"]) {
+    candidates.push({ source: "header hottok", value: String(req.headers["hottok"]) });
+  }
+
+  // 3. Header alternativo: x-hotmart-token
+  if (req.headers["x-hotmart-token"]) {
+    candidates.push({ source: "header x-hotmart-token", value: String(req.headers["x-hotmart-token"]) });
+  }
+
+  // 4. Header Authorization (formato Bearer)
+  if (req.headers["authorization"]) {
+    candidates.push({ source: "header authorization", value: String(req.headers["authorization"]) });
+  }
+
+  // 5. Body JSON: hottok
+  if (req.body?.hottok) {
+    candidates.push({ source: "body hottok", value: String(req.body.hottok) });
+  }
+
+  // 6. Body JSON: data.hottok
+  if (req.body?.data?.hottok) {
+    candidates.push({ source: "body data.hottok", value: String(req.body.data.hottok) });
+  }
+
+  // 7. Query string: hottok
+  if (req.query?.hottok) {
+    candidates.push({ source: "query hottok", value: String(req.query.hottok) });
+  }
+
+  console.log(`[Webhook] 📦 Candidatos encontrados: ${candidates.length}`);
+
+  // Intentar validar cada candidato
+  for (const candidate of candidates) {
+    let cleanToken = candidate.value.trim();
+
+    // Extraer token si viene en formato "Bearer {token}"
+    if (cleanToken.toLowerCase().startsWith("bearer ")) {
+      cleanToken = cleanToken.substring(7).trim();
     }
 
-    console.error("[Webhook] No valid Hottok found");
-    return false;
-  } catch (error) {
-    console.error("[Webhook] Error validating Hottok:", error);
-    return false;
+    // Remover comillas simples y dobles
+    cleanToken = cleanToken.replace(/^["']|["']$/g, "").trim();
+
+    // Remover caracteres de control (saltos de línea, tabs, etc.)
+    cleanToken = cleanToken.replace(/[\r\n\t\x00-\x1f]/g, "").trim();
+
+    console.log(`[Webhook] 🔄 Comparando desde [${candidate.source}]:`);
+    console.log(`[Webhook]   → Token recibido (limpio): "${cleanToken.substring(0, 20)}..." (longitud: ${cleanToken.length})`);
+    console.log(`[Webhook]   → Token esperado:          "${configuredHottok.substring(0, 20)}..." (longitud: ${configuredHottok.length})`);
+
+    // Comparación exacta
+    if (cleanToken === configuredHottok) {
+      console.log(`[Webhook] ✅ Hottok VÁLIDO (coincidencia exacta desde ${candidate.source})`);
+      return true;
+    }
+
+    // Comparación case-insensitive (modo tolerante)
+    if (cleanToken.toLowerCase() === configuredHottok.toLowerCase()) {
+      console.log(`[Webhook] ✅ Hottok VÁLIDO (coincidencia case-insensitive desde ${candidate.source})`);
+      return true;
+    }
+
+    // Comparación sin espacios (modo ultra-tolerante)
+    const cleanTokenNoSpaces = cleanToken.replace(/\s/g, "");
+    const configuredNoSpaces = configuredHottok.replace(/\s/g, "");
+    if (cleanTokenNoSpaces === configuredNoSpaces) {
+      console.log(`[Webhook] ✅ Hottok VÁLIDO (coincidencia sin espacios desde ${candidate.source})`);
+      return true;
+    }
+
+    console.log(`[Webhook] ❌ No coincide desde ${candidate.source}`);
   }
+
+  // Si no se encontró ningún candidato válido
+  if (candidates.length === 0) {
+    console.error("[Webhook] ❌ No se encontró NINGÚN Hottok en la solicitud");
+    console.error("[Webhook] 💡 Hotmart debe enviar el header X-HOTMART-HOTTOK");
+  } else {
+    console.error("[Webhook] ❌ Ningún candidato coincide con el Hottok configurado");
+    console.error("[Webhook] 💡 Verifica que el Hottok en Hotmart sea exactamente igual al configurado en HOTMART_HOTTOK");
+  }
+
+  console.log("[Webhook] 🔍 === FIN DIAGNÓSTICO ===");
+  return false;
 }
 
 /**
@@ -70,13 +171,12 @@ function validateHotmartSignature(
   signature: string | undefined
 ): boolean {
   if (!HOTMART_WEBHOOK_SECRET) {
-    // Si no hay secret configurado, aceptar (modo desarrollo)
-    console.warn("[Webhook] HMAC secret not configured — skipping signature validation");
+    console.warn("[Webhook] ⚠️ HMAC secret no configurado — omitiendo validación de firma");
     return true;
   }
 
   if (!signature) {
-    console.warn("[Webhook] No signature provided — skipping HMAC validation");
+    console.warn("[Webhook] ⚠️ No se recibió firma HMAC — omitiendo validación");
     return true;
   }
 
@@ -85,9 +185,15 @@ function validateHotmartSignature(
     hmac.update(payload);
     const expectedSignature = hmac.digest("hex");
 
-    return expectedSignature === signature;
+    const isValid = expectedSignature === signature;
+    if (!isValid) {
+      console.error("[Webhook] ❌ Firma HMAC no coincide");
+      console.log("[Webhook]   → Firma recibida:", signature.substring(0, 20) + "...");
+      console.log("[Webhook]   → Firma esperada:", expectedSignature.substring(0, 20) + "...");
+    }
+    return isValid;
   } catch (error) {
-    console.error("[Webhook] Error validating signature:", error);
+    console.error("[Webhook] Error validando firma:", error);
     return false;
   }
 }
@@ -107,26 +213,17 @@ function validateHotmartSignature(
 router.post("/hotmart", async (req: Request, res: Response) => {
   try {
     console.log("\n[Webhook] ═══════════════════════════════════════");
-    console.log("[Webhook] Nueva solicitud recibida:", new Date().toISOString());
+    console.log("[Webhook] 📨 Nueva solicitud recibida:", new Date().toISOString());
+    console.log("[Webhook] 📦 Content-Type:", req.headers["content-type"]);
+    console.log("[Webhook] 📦 Body keys:", Object.keys(req.body || {}).join(", "));
 
-    // Obtener Hottok de múltiples ubicaciones posibles
-    // Hotmart envía el Hottok en el header x-hotmart-token
-    const hottokFromHeader = (req.headers["x-hotmart-token"] || req.headers["hottok"]) as string | undefined;
-    const hottokFromAuth = req.headers["authorization"] as string | undefined;
-    const hottokFromBody = req.body?.hottok as string | undefined;
-
-    console.log("[Webhook] Headers recibidos:", {
-      "x-hotmart-token": hottokFromHeader ? "***" : "no recibido",
-      "authorization": hottokFromAuth ? "***" : "no recibido",
-      "x-hotmart-signature": req.headers["x-hotmart-signature"] ? "***" : "no recibido",
-    });
-
-    // Validar Hottok
-    if (!validateHotmartHottok(hottokFromHeader, hottokFromAuth, hottokFromBody)) {
-      console.error("[Webhook] Hottok inválido");
+    // Validar Hottok usando la función mejorada
+    if (!validateHotmartHottok(req)) {
+      console.error("[Webhook] 🚫 Solicitud rechazada: Hottok inválido");
       return res.status(401).json({
         error: "Invalid Hottok",
-        message: "Hottok validation failed",
+        message: "La validación del Hottok falló. Revisa los logs del servidor para más detalles.",
+        hint: "El header debe llamarse X-HOTMART-HOTTOK y contener el token exacto configurado en tu cuenta de Hotmart",
       });
     }
 
@@ -135,10 +232,10 @@ router.post("/hotmart", async (req: Request, res: Response) => {
     const rawPayload = JSON.stringify(req.body);
 
     if (!validateHotmartSignature(rawPayload, signature)) {
-      console.error("[Webhook] Firma HMAC inválida");
+      console.error("[Webhook] 🚫 Solicitud rechazada: Firma HMAC inválida");
       return res.status(401).json({
         error: "Invalid signature",
-        message: "HMAC signature validation failed",
+        message: "La validación de la firma HMAC falló",
       });
     }
 
@@ -155,14 +252,14 @@ router.post("/hotmart", async (req: Request, res: Response) => {
       payload.email;
 
     if (!eventType || !email) {
-      console.error("[Webhook] Faltan campos requeridos:", { eventType, email });
+      console.error("[Webhook] ⚠️ Faltan campos requeridos:", { eventType, email });
       return res.status(400).json({
         error: "Missing required fields",
         message: "event and email are required",
       });
     }
 
-    console.log("[Webhook] Procesando evento:", {
+    console.log("[Webhook] 📋 Procesando evento:", {
       eventType,
       email,
       productName: payload.data?.product?.name || "N/A",
@@ -215,7 +312,7 @@ router.post("/hotmart", async (req: Request, res: Response) => {
         await hotmartDb.markWebhookAsProcessed(webhook.id);
       }
 
-      console.log("[Webhook] ✓ Evento procesado exitosamente:", eventType);
+      console.log("[Webhook] ✅ Evento procesado exitosamente:", eventType);
       console.log("[Webhook] ═══════════════════════════════════════\n");
 
       return res.status(200).json({
@@ -225,7 +322,7 @@ router.post("/hotmart", async (req: Request, res: Response) => {
       });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
-      console.error(`[Webhook] ✗ Error procesando ${eventType}:`, errorMessage);
+      console.error(`[Webhook] ❌ Error procesando ${eventType}:`, errorMessage);
 
       // Marcar webhook como procesado con error
       const webhooks = await hotmartDb.getUnprocessedWebhooks();
@@ -245,7 +342,7 @@ router.post("/hotmart", async (req: Request, res: Response) => {
     }
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("[Webhook] Error general:", errorMessage);
+    console.error("[Webhook] ❌ Error general:", errorMessage);
 
     return res.status(500).json({
       error: "Internal server error",
@@ -267,6 +364,9 @@ router.get("/hotmart/status", (_req: Request, res: Response) => {
     webhookConfigured: hasSecret || hasHottok,
     hmacConfigured: hasSecret,
     hottokConfigured: hasHottok,
+    hottokLength: hasHottok ? HOTMART_HOTTOK.trim().length : 0,
+    hottokPreview: hasHottok ? HOTMART_HOTTOK.trim().substring(0, 10) + "..." : "N/A",
+    expectedHeader: "X-HOTMART-HOTTOK",
     supportedEvents: [
       "PURCHASE_APPROVED",
       "subscription_charge_success",
@@ -283,6 +383,36 @@ router.get("/hotmart/status", (_req: Request, res: Response) => {
       lifetime: "Pagos únicos",
     },
     timestamp: new Date().toISOString(),
+  });
+});
+
+/**
+ * POST /api/webhooks/hotmart/test
+ * Endpoint de prueba para verificar que el webhook funciona.
+ * Acepta cualquier payload y muestra los headers recibidos.
+ */
+router.post("/hotmart/test", (req: Request, res: Response) => {
+  console.log("\n[Webhook Test] ═══════════════════════════════════════");
+  console.log("[Webhook Test] 📨 Solicitud de prueba recibida:", new Date().toISOString());
+  console.log("[Webhook Test] 📋 Todos los headers:");
+  for (const [key, value] of Object.entries(req.headers)) {
+    console.log(`[Webhook Test]   → ${key}: ${String(value).substring(0, 50)}`);
+  }
+  console.log("[Webhook Test] 📦 Body:", JSON.stringify(req.body, null, 2).substring(0, 500));
+  console.log("[Webhook Test] ═══════════════════════════════════════\n");
+
+  return res.status(200).json({
+    success: true,
+    message: "Test endpoint - Revisa los logs del servidor para ver los headers y body recibidos",
+    receivedHeaders: {
+      "x-hotmart-hottok": req.headers["x-hotmart-hottok"] ? "presente" : "ausente",
+      "hottok": req.headers["hottok"] ? "presente" : "ausente",
+      "x-hotmart-token": req.headers["x-hotmart-token"] ? "presente" : "ausente",
+      "authorization": req.headers["authorization"] ? "presente" : "ausente",
+      "x-hotmart-signature": req.headers["x-hotmart-signature"] ? "presente" : "ausente",
+    },
+    bodyHasHottok: !!req.body?.hottok,
+    bodyKeys: Object.keys(req.body || {}),
   });
 });
 

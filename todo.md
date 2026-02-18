@@ -270,3 +270,12 @@
 - [x] Crear 21 tests unitarios para reset password (todos pasados)
 - [x] Vincular botón de login del banner del Dashboard a /auth/signin
 - [x] Verificar que el webhook busca Hottok en múltiples ubicaciones
+
+## Fix Crítico - Error 401 Webhook Hotmart
+- [x] Investigar formato exacto del Hottok de Hotmart (header vs body) → X-HOTMART-HOTTOK
+- [x] Reescribir validación con máxima flexibilidad (7 ubicaciones: header oficial, simplificado, alternativo, authorization, body, body.data, query)
+- [x] Agregar logs de diagnóstico que impriman token recibido vs esperado
+- [x] Implementar modo tolerante con .trim(), case-insensitive, sin espacios, sin comillas, sin caracteres de control
+- [x] Probar con curl simulando todos los formatos posibles
+- [x] Crear 23 tests unitarios para validación del webhook (todos pasados)
+- [x] Crear endpoint /api/webhooks/hotmart/test para debugging
