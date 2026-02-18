@@ -248,6 +248,35 @@ export const appRouter = router({
         return { success: true };
       }),
 
+    update: protectedProcedure
+      .input(z.object({
+        id: z.number(),
+        data: z.object({
+          tipo: z.enum(["arreglo", "confeccion", "personalizacion"]).optional(),
+          descripcion: z.string().min(1).optional(),
+          precioBase: z.string().optional(),
+          abonoInicial: z.string().optional(),
+          tipoPrenda: z.string().optional(),
+          nivelUrgencia: z.enum(["baja", "media", "alta"]).optional(),
+          tipoTela: z.string().optional(),
+          metrosRequeridos: z.string().optional(),
+          tipoPersonalizacion: z.string().optional(),
+          fechaEntrega: z.date().optional(),
+          notasVoz: z.string().optional(),
+        }),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        await db.updateTrabajo(input.id, ctx.user.id, input.data);
+        return { success: true };
+      }),
+
+    delete: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input, ctx }) => {
+        await db.deleteTrabajo(input.id, ctx.user.id);
+        return { success: true };
+      }),
+
     search: protectedProcedure
       .input(z.object({
         query: z.string().optional(),

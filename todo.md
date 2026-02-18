@@ -325,3 +325,23 @@
 - [x] Mostrar total, abonos y saldo pendiente
 - [x] Agregar botón en la interfaz para generar y descargar recibo (app/trabajo/[id].tsx)
 - [x] Probar generación de PDF end-to-end (recibo HTML generado correctamente)
+
+
+## Fix Crítico - Errores de Funcionalidad
+- [ ] Corregir cálculo: (Precio Base × Cantidad) + Agregados = Total
+- [ ] Actualizar Saldo pendiente en tiempo real al escribir Abono
+- [ ] Habilitar cambio de estados (Cortando, Cosiendo, Listo, Entregado)
+- [ ] Guardar cambio de estado en base de datos
+- [ ] Corregir endpoint /api/recibo/:id que da error
+- [ ] Implementar botón "Editar Trabajo" funcional
+- [ ] Probar flujo completo end-to-end
+
+
+## Corrección de Bugs Críticos (17 Feb 2026)
+- [x] Corregir imports faltantes en trabajo/[id].tsx (Text, View, ScrollView, etc.)
+- [x] Implementar endpoint tRPC trabajos.update para editar trabajos completos
+- [x] Implementar endpoint tRPC trabajos.delete para eliminar trabajos
+- [x] Corregir endpoint /api/recibo/:trabajoId - agregar consulta real a tabla agregados
+- [x] Agregar botón "Editar" en pantalla de detalle de trabajo
+- [x] Crear pantalla /app/editar-trabajo.tsx con formulario pre-cargado
+- [x] Verificar que cambio de estados funciona correctamente (endpoint ya existía)

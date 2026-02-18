@@ -1,4 +1,4 @@
-import { ScrollView, Text, View, TouchableOpacity, ActivityIndicator, Alert, Platform } from "react-native";
+import { Text, View, ScrollView, TouchableOpacity, ActivityIndicator, Alert, Platform } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import * as Haptics from "expo-haptics";
 
@@ -119,6 +119,16 @@ export default function TrabajoDetalleScreen() {
             <View className="flex-1">
               <Text className="text-2xl font-bold text-foreground">Detalle del trabajo</Text>
             </View>
+            <TouchableOpacity
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                router.push(`/editar-trabajo?id=${trabajoId}` as any);
+              }}
+              activeOpacity={0.7}
+              className="bg-surface rounded-xl px-4 py-2 border border-border"
+            >
+              <Text className="text-sm font-semibold" style={{ color: colors.primary }}>Editar</Text>
+            </TouchableOpacity>
           </View>
 
           {/* Estado actual */}

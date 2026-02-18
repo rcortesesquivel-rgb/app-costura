@@ -1,6 +1,6 @@
 import type { Express } from "express";
 import { getDb } from "./db";
-import { trabajos, clientes } from "../drizzle/schema";
+import { trabajos, clientes, agregados } from "../drizzle/schema";
 import { eq } from "drizzle-orm";
 
 /**
@@ -63,11 +63,16 @@ export function setupReciboRoutes(app: Express) {
       const precioBase = parseFloat(trabajo.precioBase) || 0;
       const abonoInicial = parseFloat(trabajo.abonoInicial) || 0;
       
-      // TODO: Obtener agregados de la BD cuando se implemente la tabla
-      const agregados: Array<{ concepto: string; precio: number; cantidad: number }> = [];
+      // Obtener agregados del trabajo
+      const agregadosData = await db
+        .select()
+        .from(agregados)
+        .where(eq(agregados.trabajoId, trabajoId));
       
-      const totalAgregados = agregados.reduce((sum, item) => {
-        return sum + (item.precio * item.cantidad);
+      const totalAgregados = agregadosData.reduce((sum: number, item: any) => {
+        const precio = typeof item.precio === 'string' ? parseFloat(item.precio) : item.precio;
+        const cantidad = typeof item.cantidad === 'string' ? parseFloat(item.cantidad) : (item.cantidad || 1);
+        return sum + (precio * cantidad);
       }, 0);
       
       const total = precioBase + totalAgregados;
@@ -294,7 +299,7 @@ export function setupReciboRoutes(app: Express) {
             <td class="text-right">${formatCurrency(precioBase)}</td>
             <td class="text-right">${formatCurrency(precioBase)}</td>
           </tr>
-          ${agregados.map(item => `
+          ${agregadosData.map((item: any) => `
           <tr>
             <td>${item.concepto}</td>
             <td class="text-right">${item.cantidad}</td>
