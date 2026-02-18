@@ -378,3 +378,12 @@
 - [x] Reemplazar "Agregados" por campos "Impuestos" y "Varios" que se sumen al Gran Total
 - [x] Botón "Eliminar Trabajo" con confirmación en lista y edición
 - [x] Todo sobre archivos existentes, sin crear archivos nuevos
+
+## Mejoras de Interfaz Final - 18 Feb 2026 (Ronda 3)
+- [x] Urgencia por colores: Rojo (hoy/mañana), Amarillo (3-4 días), Verde (5+ días) según fechaEntrega
+- [x] Urgencia manual: permitir cambiar urgencia manualmente
+- [x] Centro de Ayuda: renombrar Configuración, botón email a soporteviral@gmail.com
+- [x] Centro de Ayuda: botón WhatsApp con link de contacto
+- [x] Subcategorías: Bordado, Sublimado, Otros en búsqueda y formularios crear/editar
+- [x] Agregar campo categoría al schema BD
+- [x] Traducción 100% español en todas las etiquetas

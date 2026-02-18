@@ -23,6 +23,8 @@ export default function EditarTrabajoScreen() {
   const [varios, setVarios] = useState("");
   const [abonoInicial, setAbonoInicial] = useState("0");
   const [fechaEntrega, setFechaEntrega] = useState("");
+  const [categoria, setCategoria] = useState("otros");
+  const [urgencia, setUrgencia] = useState<string | undefined>(undefined);
 
   const { data: trabajo, isLoading: loadingTrabajo } = trpc.trabajos.getById.useQuery({ id: trabajoId });
 
@@ -70,6 +72,8 @@ export default function EditarTrabajoScreen() {
         const d = new Date(trabajo.fechaEntrega);
         setFechaEntrega(d.toISOString().split("T")[0]);
       }
+      setCategoria((trabajo as any).categoria || "otros");
+      setUrgencia((trabajo as any).urgencia || undefined);
     }
   }, [trabajo]);
 
@@ -105,6 +109,8 @@ export default function EditarTrabajoScreen() {
       impuestos: (parseFloat(impuestos) || 0).toFixed(2),
       varios: (parseFloat(varios) || 0).toFixed(2),
       abonoInicial: (parseFloat(abonoInicial) || 0).toFixed(2),
+      categoria: categoria,
+      urgencia: urgencia || undefined,
     };
 
     if (fechaEntrega) {
@@ -170,6 +176,57 @@ export default function EditarTrabajoScreen() {
             </TouchableOpacity>
             <View className="flex-1">
               <Text className="text-2xl font-bold text-foreground">Editar trabajo</Text>
+            </View>
+          </View>
+
+          {/* Categoría */}
+          <View className="gap-2">
+            <Text className="text-sm font-semibold text-foreground">Categoría</Text>
+            <View className="flex-row gap-2 flex-wrap">
+              {(["arreglo", "confeccion", "bordado", "sublimado", "otros"] as const).map((cat) => {
+                const labels: Record<string, string> = { arreglo: "Arreglo", confeccion: "Confección", bordado: "Bordado", sublimado: "Sublimado", otros: "Otros" };
+                const isActive = categoria === cat;
+                return (
+                  <TouchableOpacity
+                    key={cat}
+                    style={{
+                      backgroundColor: isActive ? colors.primary : "transparent",
+                      borderColor: isActive ? colors.primary : colors.border,
+                      borderWidth: 1, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 8,
+                    }}
+                    onPress={() => setCategoria(cat)}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={{ color: isActive ? "#FFFFFF" : colors.foreground, fontWeight: "600", fontSize: 13 }}>{labels[cat]}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+
+          {/* Urgencia manual */}
+          <View className="gap-2">
+            <Text className="text-sm font-semibold text-foreground">Urgencia (opcional)</Text>
+            <View className="flex-row gap-2">
+              {(["baja", "media", "alta"] as const).map((u) => {
+                const labels: Record<string, string> = { baja: "Baja", media: "Media", alta: "Urgente" };
+                const colores: Record<string, string> = { baja: "#34C759", media: "#FF9500", alta: "#FF3B30" };
+                const isActive = urgencia === u;
+                return (
+                  <TouchableOpacity
+                    key={u}
+                    style={{
+                      backgroundColor: isActive ? colores[u] : "transparent",
+                      borderColor: isActive ? colores[u] : colors.border,
+                      borderWidth: 1, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 8,
+                    }}
+                    onPress={() => setUrgencia(urgencia === u ? undefined : u)}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={{ color: isActive ? "#FFFFFF" : colors.foreground, fontWeight: "600", fontSize: 13 }}>{labels[u]}</Text>
+                  </TouchableOpacity>
+                );
+              })}
             </View>
           </View>
 

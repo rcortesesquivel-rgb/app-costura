@@ -209,6 +209,8 @@ export const appRouter = router({
         abonoInicial: z.string().optional(),
         impuestos: z.string().optional(),
         varios: z.string().optional(),
+        categoria: z.enum(["arreglo", "confeccion", "bordado", "sublimado", "otros"]).optional(),
+        urgencia: z.enum(["baja", "media", "alta"]).optional(),
         fechaEntrega: z.date().optional(),
       }))
       .mutation(async ({ input, ctx }) => {
@@ -252,6 +254,8 @@ export const appRouter = router({
           abonoInicial: z.string().optional(),
           impuestos: z.string().optional(),
           varios: z.string().optional(),
+          categoria: z.enum(["arreglo", "confeccion", "bordado", "sublimado", "otros"]).optional(),
+          urgencia: z.enum(["baja", "media", "alta"]).optional(),
           fechaEntrega: z.date().optional(),
         }),
       }))

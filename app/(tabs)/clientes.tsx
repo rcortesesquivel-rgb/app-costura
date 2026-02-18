@@ -1,4 +1,4 @@
-import { ScrollView, Text, View, TouchableOpacity, TextInput, ActivityIndicator } from "react-native";
+import { ScrollView, Text, View, TouchableOpacity, TextInput, ActivityIndicator, Platform } from "react-native";
 import { useState } from "react";
 import { useRouter } from "expo-router";
 import * as Haptics from "expo-haptics";
@@ -29,7 +29,9 @@ export default function ClientesScreen() {
   };
 
   const handleNuevoCliente = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
     router.push("/crear-cliente" as any);
   };
 
@@ -77,7 +79,9 @@ export default function ClientesScreen() {
                   key={cliente.id}
                   className="bg-surface rounded-2xl p-4 border border-border"
                   onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    if (Platform.OS !== "web") {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    }
                     router.push(`/cliente/${cliente.id}` as any);
                   }}
                   activeOpacity={0.7}

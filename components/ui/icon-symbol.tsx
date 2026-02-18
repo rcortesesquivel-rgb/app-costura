@@ -46,6 +46,8 @@ const MAPPING = {
   "bell.fill": "notifications",
   "info.circle.fill": "info",
   "arrow.left.circle.fill": "arrow-back",
+  "message.fill": "chat",
+  "questionmark.circle.fill": "help",
 } as IconMapping;
 
 /**

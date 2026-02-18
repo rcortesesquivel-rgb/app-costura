@@ -1,5 +1,5 @@
 import { ScrollView, Text, View, TouchableOpacity, ActivityIndicator, RefreshControl, Platform } from "react-native";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useRouter } from "expo-router";
 import * as Haptics from "expo-haptics";
 
@@ -18,7 +18,38 @@ const ESTADOS = [
   { value: "entregado", label: "Entregado" },
 ] as const;
 
-export default function DashboardScreen() {
+// Calcula urgencia automática basada en fechaEntrega
+function getUrgenciaAuto(fechaEntrega: string | Date | null | undefined): "alta" | "media" | "baja" | null {
+  if (!fechaEntrega) return null;
+  const hoy = new Date();
+  hoy.setHours(0, 0, 0, 0);
+  const entrega = new Date(fechaEntrega);
+  entrega.setHours(0, 0, 0, 0);
+  const diffDias = Math.ceil((entrega.getTime() - hoy.getTime()) / (1000 * 60 * 60 * 24));
+  if (diffDias <= 1) return "alta";     // Hoy o mañana → Rojo
+  if (diffDias <= 4) return "media";    // 2-4 días → Amarillo
+  return "baja";                         // 5+ días → Verde
+}
+
+function getUrgenciaColor(urgencia: "alta" | "media" | "baja" | null): string {
+  switch (urgencia) {
+    case "alta": return "#FF3B30";    // Rojo
+    case "media": return "#FF9500";   // Amarillo/Naranja
+    case "baja": return "#34C759";    // Verde
+    default: return "#8E8E93";        // Gris
+  }
+}
+
+function getUrgenciaLabel(urgencia: "alta" | "media" | "baja" | null): string {
+  switch (urgencia) {
+    case "alta": return "Urgente";
+    case "media": return "Media";
+    case "baja": return "Baja";
+    default: return "Sin fecha";
+  }
+}
+
+export default function MisTrabajosScreen() {
   const colors = useColors();
   const router = useRouter();
   const { isSignedIn, user } = useAuth();
@@ -35,13 +66,14 @@ export default function DashboardScreen() {
     setRefreshing(false);
   };
 
-  const trabajosPendientes = todosTrabajos?.filter(t => t.estado !== "entregado") || [];
-  const trabajosActivos = todosTrabajos?.filter(t => t.estado === "cortando" || t.estado === "cosiendo") || [];
+  const trabajosPendientes = useMemo(() => todosTrabajos?.filter(t => t.estado !== "entregado") || [], [todosTrabajos]);
+  const trabajosActivos = useMemo(() => todosTrabajos?.filter(t => t.estado === "cortando" || t.estado === "cosiendo") || [], [todosTrabajos]);
 
   // Filtrar trabajos según el estado seleccionado
-  const trabajosFiltrados = estadoFiltro === "todos"
-    ? trabajosPendientes
-    : (todosTrabajos || []).filter(t => t.estado === estadoFiltro);
+  const trabajosFiltrados = useMemo(() => {
+    if (estadoFiltro === "todos") return trabajosPendientes;
+    return (todosTrabajos || []).filter(t => t.estado === estadoFiltro);
+  }, [estadoFiltro, trabajosPendientes, todosTrabajos]);
 
   const getClienteNombre = (clienteId: number) => {
     const cliente = clientes?.find(c => c.id === clienteId);
@@ -70,6 +102,17 @@ export default function DashboardScreen() {
     }
   };
 
+  const getCategoriaLabel = (cat: string | null) => {
+    switch (cat) {
+      case "arreglo": return "Arreglo";
+      case "confeccion": return "Confección";
+      case "bordado": return "Bordado";
+      case "sublimado": return "Sublimado";
+      case "otros": return "Otros";
+      default: return "";
+    }
+  };
+
   const handleNuevoTrabajo = () => {
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -92,6 +135,80 @@ export default function DashboardScreen() {
     );
   }
 
+  const renderTrabajoCard = (trabajo: any) => {
+    // Urgencia: manual si existe, sino automática por fecha
+    const urgenciaManual = (trabajo as any).urgencia as "alta" | "media" | "baja" | null;
+    const urgenciaAuto = getUrgenciaAuto(trabajo.fechaEntrega);
+    const urgenciaFinal = urgenciaManual || urgenciaAuto;
+    const urgenciaColorBorder = getUrgenciaColor(urgenciaFinal);
+
+    return (
+      <TouchableOpacity
+        key={trabajo.id}
+        style={{
+          backgroundColor: colors.surface,
+          borderRadius: 16,
+          padding: 16,
+          borderWidth: 2,
+          borderColor: urgenciaColorBorder,
+          borderLeftWidth: 5,
+        }}
+        onPress={() => {
+          if (Platform.OS !== "web") {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          }
+          router.push(`/trabajo/${trabajo.id}` as any);
+        }}
+        activeOpacity={0.7}
+      >
+        <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 12 }}>
+          {/* Indicador de urgencia */}
+          <View style={{
+            width: 44, height: 44, borderRadius: 22,
+            backgroundColor: urgenciaColorBorder + "20",
+            alignItems: "center", justifyContent: "center",
+          }}>
+            <View style={{
+              width: 12, height: 12, borderRadius: 6,
+              backgroundColor: urgenciaColorBorder,
+            }} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text className="text-base font-semibold text-foreground" numberOfLines={1}>
+              {trabajo.descripcion || "Sin descripción"}
+            </Text>
+            <Text className="text-sm text-muted" style={{ marginTop: 2 }}>{getClienteNombre(trabajo.clienteId)}</Text>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginTop: 8, flexWrap: "wrap" }}>
+              {/* Badge de estado */}
+              <View style={{ backgroundColor: getEstadoBadgeColor(trabajo.estado), borderRadius: 12, paddingHorizontal: 10, paddingVertical: 3 }}>
+                <Text style={{ color: "#FFFFFF", fontSize: 11, fontWeight: "700" }}>{getEstadoLabel(trabajo.estado)}</Text>
+              </View>
+              {/* Badge de urgencia */}
+              <View style={{ backgroundColor: urgenciaColorBorder + "20", borderRadius: 12, paddingHorizontal: 10, paddingVertical: 3 }}>
+                <Text style={{ color: urgenciaColorBorder, fontSize: 11, fontWeight: "700" }}>{getUrgenciaLabel(urgenciaFinal)}</Text>
+              </View>
+              {/* Badge de categoría */}
+              {(trabajo as any).categoria && (
+                <View style={{ backgroundColor: colors.muted + "20", borderRadius: 12, paddingHorizontal: 10, paddingVertical: 3 }}>
+                  <Text style={{ color: colors.muted, fontSize: 11, fontWeight: "600" }}>{getCategoriaLabel((trabajo as any).categoria)}</Text>
+                </View>
+              )}
+              {/* Fecha de entrega */}
+              {trabajo.fechaEntrega && (
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+                  <IconSymbol name="calendar" size={12} color={urgenciaColorBorder} />
+                  <Text style={{ fontSize: 11, color: urgenciaColorBorder, fontWeight: "600" }}>
+                    {new Date(trabajo.fechaEntrega).toLocaleDateString("es-ES", { day: "numeric", month: "short" })}
+                  </Text>
+                </View>
+              )}
+            </View>
+          </View>
+        </View>
+      </TouchableOpacity>
+    );
+  };
+
   return (
     <ScreenContainer className="bg-background">
       <ScrollView
@@ -101,7 +218,7 @@ export default function DashboardScreen() {
         }
       >
         <View className="p-6 gap-6">
-          {/* Header */}
+          {/* Encabezado */}
           <View className="gap-2">
             <Text className="text-3xl font-bold text-foreground">Mis Trabajos</Text>
             <Text className="text-base text-muted">
@@ -127,65 +244,35 @@ export default function DashboardScreen() {
             </View>
           </View>
 
+          {/* Leyenda de colores de urgencia */}
+          <View style={{ flexDirection: "row", gap: 12, alignItems: "center" }}>
+            <Text style={{ fontSize: 12, color: colors.muted, fontWeight: "600" }}>Urgencia:</Text>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+              <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: "#FF3B30" }} />
+              <Text style={{ fontSize: 11, color: colors.muted }}>Hoy/Mañana</Text>
+            </View>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+              <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: "#FF9500" }} />
+              <Text style={{ fontSize: 11, color: colors.muted }}>3-4 días</Text>
+            </View>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+              <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: "#34C759" }} />
+              <Text style={{ fontSize: 11, color: colors.muted }}>5+ días</Text>
+            </View>
+          </View>
+
           {/* Trabajos que vencen hoy */}
-          <View className="gap-3">
-            <View className="flex-row items-center justify-between">
-              <Text className="text-xl font-semibold text-foreground">Listos para entrega</Text>
-              {trabajosVencenHoy && trabajosVencenHoy.length > 0 && (
+          {trabajosVencenHoy && trabajosVencenHoy.length > 0 && (
+            <View className="gap-3">
+              <View className="flex-row items-center justify-between">
+                <Text className="text-xl font-semibold text-foreground">Listos para entrega</Text>
                 <View className="bg-error rounded-full px-3 py-1">
                   <Text className="text-xs font-semibold text-white">{trabajosVencenHoy.length}</Text>
                 </View>
-              )}
-            </View>
-
-            {trabajosVencenHoy && trabajosVencenHoy.length > 0 ? (
-              trabajosVencenHoy.map((trabajo) => (
-                <TouchableOpacity
-                  key={trabajo.id}
-                  className="bg-surface rounded-2xl p-4 border border-border"
-                  onPress={() => {
-                    if (Platform.OS !== "web") {
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    }
-                    router.push(`/trabajo/${trabajo.id}` as any);
-                  }}
-                  activeOpacity={0.7}
-                >
-                  <View className="flex-row items-start gap-3">
-                    <View className="bg-primary/10 rounded-full p-3">
-                      <IconSymbol name="paperplane.fill" size={24} color={colors.primary} />
-                    </View>
-                    <View className="flex-1">
-                      <Text className="text-base font-semibold text-foreground" numberOfLines={1}>
-                        {trabajo.descripcion}
-                      </Text>
-                      <Text className="text-sm text-muted mt-1">{getClienteNombre(trabajo.clienteId)}</Text>
-                      <View className="flex-row items-center gap-2 mt-2">
-                        <View className="rounded-full px-3 py-1" style={{ backgroundColor: getEstadoBadgeColor(trabajo.estado) }}>
-                          <Text className="text-xs font-semibold text-white">{getEstadoLabel(trabajo.estado)}</Text>
-                        </View>
-                        {trabajo.fechaEntrega && (
-                          <View className="flex-row items-center gap-1">
-                            <IconSymbol name="clock.fill" size={14} color={colors.muted} />
-                            <Text className="text-xs text-muted">
-                              {new Date(trabajo.fechaEntrega).toLocaleDateString()}
-                            </Text>
-                          </View>
-                        )}
-                      </View>
-                    </View>
-                  </View>
-                </TouchableOpacity>
-              ))
-            ) : (
-              <View className="bg-surface rounded-2xl p-6 border border-border items-center">
-                <IconSymbol name="checkmark.circle.fill" size={48} color={colors.success} />
-                <Text className="text-base text-muted mt-3 text-center">
-                  No hay trabajos listos para entrega
-                </Text>
               </View>
-            )}
-          </View>
+              {trabajosVencenHoy.map(renderTrabajoCard)}
+            </View>
+          )}
 
           {/* Filtros de estado */}
           <View className="gap-3">
@@ -251,44 +338,7 @@ export default function DashboardScreen() {
           {/* Lista filtrada de trabajos */}
           <View className="gap-3">
             {trabajosFiltrados.length > 0 ? (
-              trabajosFiltrados.map((trabajo) => (
-                <TouchableOpacity
-                  key={trabajo.id}
-                  className="bg-surface rounded-2xl p-4 border border-border"
-                  onPress={() => {
-                    if (Platform.OS !== "web") {
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    }
-                    router.push(`/trabajo/${trabajo.id}` as any);
-                  }}
-                  activeOpacity={0.7}
-                >
-                  <View className="flex-row items-start gap-3">
-                    <View className="bg-primary/10 rounded-full p-3">
-                      <IconSymbol name="paperplane.fill" size={24} color={colors.primary} />
-                    </View>
-                    <View className="flex-1">
-                      <Text className="text-base font-semibold text-foreground" numberOfLines={1}>
-                        {trabajo.descripcion}
-                      </Text>
-                      <Text className="text-sm text-muted mt-1">{getClienteNombre(trabajo.clienteId)}</Text>
-                      <View className="flex-row items-center gap-2 mt-2 flex-wrap">
-                        <View className="rounded-full px-3 py-1" style={{ backgroundColor: getEstadoBadgeColor(trabajo.estado) }}>
-                          <Text className="text-xs font-semibold text-white">{getEstadoLabel(trabajo.estado)}</Text>
-                        </View>
-                        {trabajo.fechaEntrega && (
-                          <View className="flex-row items-center gap-1">
-                            <IconSymbol name="clock.fill" size={14} color={colors.muted} />
-                            <Text className="text-xs text-muted">
-                              {new Date(trabajo.fechaEntrega).toLocaleDateString()}
-                            </Text>
-                          </View>
-                        )}
-                      </View>
-                    </View>
-                  </View>
-                </TouchableOpacity>
-              ))
+              trabajosFiltrados.map(renderTrabajoCard)
             ) : (
               <View className="bg-surface rounded-2xl p-6 border border-border items-center">
                 <Text className="text-base text-muted text-center">

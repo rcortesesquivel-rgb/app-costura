@@ -55,8 +55,8 @@ export default function TabLayout() {
       <Tabs.Screen
         name="configuracion"
         options={{
-          title: "Configuración",
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="gearshape.fill" color={color} />,
+          title: "Ayuda",
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="questionmark.circle.fill" color={color} />,
         }}
       />
       {isAdmin && (

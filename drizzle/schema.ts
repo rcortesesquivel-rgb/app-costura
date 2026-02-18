@@ -78,6 +78,8 @@ export const trabajos = mysqlTable("trabajos", {
   abonoInicial: decimal("abonoInicial", { precision: 12, scale: 2 }).default("0.00"),
   impuestos: decimal("impuestos", { precision: 12, scale: 2 }).default("0.00"),
   varios: decimal("varios", { precision: 12, scale: 2 }).default("0.00"),
+  categoria: mysqlEnum("categoria", ["arreglo", "confeccion", "bordado", "sublimado", "otros"]).default("otros").notNull(),
+  urgencia: mysqlEnum("urgencia", ["baja", "media", "alta"]),
   estado: mysqlEnum("estado", ["en_espera", "cortando", "cosiendo", "listo", "entregado"]).default("en_espera").notNull(),
   fechaEntrega: timestamp("fechaEntrega"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),

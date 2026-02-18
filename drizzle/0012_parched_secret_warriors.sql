@@ -1,0 +1,2 @@
+ALTER TABLE `trabajos` ADD `categoria` enum('arreglo','confeccion','bordado','sublimado','otros') DEFAULT 'otros' NOT NULL;--> statement-breakpoint
+ALTER TABLE `trabajos` ADD `urgencia` enum('baja','media','alta');

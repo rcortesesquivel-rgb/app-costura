@@ -85,6 +85,13 @@
       "when": 1771437747644,
       "tag": "0011_wide_reptil",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "5",
+      "when": 1771438225438,
+      "tag": "0012_parched_secret_warriors",
+      "breakpoints": true
     }
   ]
 }
