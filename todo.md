@@ -261,3 +261,12 @@
 - [x] Agregar campos resetToken y resetTokenExpiry al schema
 - [x] Ejecutar migración de base de datos (pnpm db:push)
 - [x] Crear 17 tests unitarios para validar flujo (todos pasados)
+
+## Corrección de Webhook y Reset Password
+- [x] Corregir validación de Hottok en webhook (buscar en header x-hotmart-token)
+- [x] Agregar logging detallado para debugging de webhook
+- [x] Crear página /app/auth/reset-password.tsx
+- [x] Implementar formulario de reset password con validaciones
+- [x] Crear 21 tests unitarios para reset password (todos pasados)
+- [x] Vincular botón de login del banner del Dashboard a /auth/signin
+- [x] Verificar que el webhook busca Hottok en múltiples ubicaciones
