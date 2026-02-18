@@ -3,18 +3,18 @@ import * as Localization from "expo-localization";
 
 /**
  * Detect the user's locale and currency automatically.
- * Falls back to "es-DO" / "DOP" (Dominican Republic) as default.
+ * Falls back to "es-CR" / "CRC" (Costa Rica) as default.
  */
 function getUserLocale(): string {
   try {
     const locales = Localization.getLocales();
     if (locales && locales.length > 0) {
-      return locales[0].languageTag || "es-DO";
+      return locales[0].languageTag || "es-CR";
     }
   } catch {
     // fallback
   }
-  return "es-DO";
+  return "es-CR";
 }
 
 function getUserCurrency(): string {
@@ -26,7 +26,7 @@ function getUserCurrency(): string {
   } catch {
     // fallback
   }
-  return "DOP";
+  return "CRC";
 }
 
 /**

@@ -36,9 +36,10 @@ export default function CrearTrabajoScreen() {
   const [tipoPersonalizacion, setTipoPersonalizacion] = useState("");
   
   // Agregados
-  const [agregados, setAgregados] = useState<Array<{ concepto: string; precio: string }>>([]);
+  const [agregados, setAgregados] = useState<Array<{ concepto: string; precio: string; cantidad: string }>>([]);
   const [nuevoConcepto, setNuevoConcepto] = useState("");
   const [nuevoPrecio, setNuevoPrecio] = useState("");
+  const [nuevaCantidad, setNuevaCantidad] = useState("1");
 
   // Voz a texto
   const [grabando, setGrabando] = useState(false);
@@ -141,14 +142,15 @@ export default function CrearTrabajoScreen() {
   };
 
   const handleAgregarItem = () => {
-    if (!nuevoConcepto.trim() || !nuevoPrecio.trim()) {
-      Alert.alert("Error", "Completa el concepto y precio del agregado");
+    if (!nuevoConcepto.trim() || !nuevoPrecio.trim() || !nuevaCantidad.trim()) {
+      Alert.alert("Error", "Completa el concepto, precio y cantidad del agregado");
       return;
     }
 
-    setAgregados([...agregados, { concepto: nuevoConcepto.trim(), precio: nuevoPrecio.trim() }]);
+    setAgregados([...agregados, { concepto: nuevoConcepto.trim(), precio: nuevoPrecio.trim(), cantidad: nuevaCantidad.trim() }]);
     setNuevoConcepto("");
     setNuevoPrecio("");
+    setNuevaCantidad("1");
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   };
 
@@ -159,7 +161,11 @@ export default function CrearTrabajoScreen() {
 
   const calcularTotal = () => {
     const base = parseFloat(precioBase) || 0;
-    const totalAgregados = agregados.reduce((sum, item) => sum + (parseFloat(item.precio) || 0), 0);
+    const totalAgregados = agregados.reduce((sum, item) => {
+      const precio = parseFloat(item.precio) || 0;
+      const cantidad = parseFloat(item.cantidad) || 1;
+      return sum + (precio * cantidad);
+    }, 0);
     return base + totalAgregados;
   };
 
@@ -404,7 +410,9 @@ export default function CrearTrabajoScreen() {
                 <View key={index} className="bg-surface rounded-xl border border-border p-3 flex-row items-center justify-between">
                   <View className="flex-1">
                     <Text className="text-base text-foreground">{item.concepto}</Text>
-                    <Text className="text-sm text-muted mt-1">{formatCurrency(item.precio)}</Text>
+                    <Text className="text-sm text-muted mt-1">
+                      {formatCurrency(item.precio)} × {item.cantidad} = {formatCurrency((parseFloat(item.precio) || 0) * (parseFloat(item.cantidad) || 1))}
+                    </Text>
                   </View>
                   <TouchableOpacity onPress={() => handleEliminarItem(index)} activeOpacity={0.7}>
                     <IconSymbol name="trash.fill" size={20} color={colors.error} />
@@ -412,30 +420,40 @@ export default function CrearTrabajoScreen() {
                 </View>
               ))}
 
-              <View className="flex-row gap-2">
-                <TextInput
-                  className="flex-1 bg-surface rounded-xl border border-border px-4 py-3 text-base text-foreground"
-                  placeholder="Concepto"
-                  placeholderTextColor={colors.muted}
-                  value={nuevoConcepto}
-                  onChangeText={setNuevoConcepto}
-                />
-                <TextInput
-                  className="w-24 bg-surface rounded-xl border border-border px-4 py-3 text-base text-foreground"
-                  placeholder="Precio"
-                  placeholderTextColor={colors.muted}
-                  value={nuevoPrecio}
-                  onChangeText={setNuevoPrecio}
-                  keyboardType="numeric"
-                />
-                <TouchableOpacity
-                  className="rounded-xl p-3 items-center justify-center"
-                  style={{ backgroundColor: colors.primary }}
-                  onPress={handleAgregarItem}
-                  activeOpacity={0.8}
-                >
-                  <IconSymbol name="plus.circle.fill" size={24} color="#FFFFFF" />
-                </TouchableOpacity>
+              <View className="gap-2">
+                <View className="flex-row gap-2">
+                  <TextInput
+                    className="flex-1 bg-surface rounded-xl border border-border px-4 py-3 text-base text-foreground"
+                    placeholder="Concepto"
+                    placeholderTextColor={colors.muted}
+                    value={nuevoConcepto}
+                    onChangeText={setNuevoConcepto}
+                  />
+                  <TextInput
+                    className="w-20 bg-surface rounded-xl border border-border px-4 py-3 text-base text-foreground"
+                    placeholder="Cant."
+                    placeholderTextColor={colors.muted}
+                    value={nuevaCantidad}
+                    onChangeText={setNuevaCantidad}
+                    keyboardType="numeric"
+                  />
+                  <TextInput
+                    className="w-24 bg-surface rounded-xl border border-border px-4 py-3 text-base text-foreground"
+                    placeholder="Precio"
+                    placeholderTextColor={colors.muted}
+                    value={nuevoPrecio}
+                    onChangeText={setNuevoPrecio}
+                    keyboardType="numeric"
+                  />
+                  <TouchableOpacity
+                    className="rounded-xl p-3 items-center justify-center"
+                    style={{ backgroundColor: colors.primary }}
+                    onPress={handleAgregarItem}
+                    activeOpacity={0.8}
+                  >
+                    <IconSymbol name="plus.circle.fill" size={24} color="#FFFFFF" />
+                  </TouchableOpacity>
+                </View>
               </View>
             </View>
 
@@ -448,7 +466,11 @@ export default function CrearTrabajoScreen() {
               <View className="flex-row justify-between">
                 <Text className="text-sm text-muted">Agregados</Text>
                 <Text className="text-sm font-medium text-foreground">
-                  {formatCurrency(agregados.reduce((sum, item) => sum + (parseFloat(item.precio) || 0), 0))}
+                  {formatCurrency(agregados.reduce((sum, item) => {
+                    const precio = parseFloat(item.precio) || 0;
+                    const cantidad = parseFloat(item.cantidad) || 1;
+                    return sum + (precio * cantidad);
+                  }, 0))}
                 </Text>
               </View>
               <View className="h-px bg-border my-1" />

@@ -306,3 +306,13 @@
 - [x] Revisar logs de BD para diagnosticar errores (problema: sin cookie de sesión)
 - [x] Corregir: signin y signup ahora establecen cookie app_session_id
 - [x] Probar guardado exitoso: cliente id=1 guardado en BD con todos los campos
+
+
+## Fix - Módulo de Trabajos Incompleto
+- [x] Cambiar moneda de DOP a CRC (₡) en toda la app (format-currency.ts)
+- [x] Habilitar botón Guardar en formulario de trabajos (ya existía y funciona)
+- [x] Agregar campo Cantidad para cada ítem (valor por defecto "1")
+- [x] Implementar cálculo automático: (Precio × Cantidad) + Agregados = Total
+- [x] Corregir lógica de abonos: Saldo pendiente = Total - Abono inicial (ya funcionaba)
+- [x] Traducir formulario de trabajos al español (ya estaba en español)
+- [x] Probar creación de trabajo completo end-to-end (trabajo id=1 guardado en BD)

@@ -1,0 +1,20 @@
+{
+  "query": "SELECT id, clienteId, tipo, descripcion, precioBase, abonoInicial, tipoPrenda, nivelUrgencia FROM trabajos WHERE id = 1;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 37KVpxZeS2CVQbP.root --database NUhPjFzKcLyhLeGMAd6M8H --execute SELECT id, clienteId, tipo, descripcion, precioBase, abonoInicial, tipoPrenda, nivelUrgencia FROM trabajos WHERE id = 1;",
+  "rows": [
+    {
+      "id": "1",
+      "clienteId": "1",
+      "tipo": "arreglo",
+      "descripcion": "Arreglo de pantalón con dobladillo y ajuste de cintura",
+      "precioBase": "5000",
+      "abonoInicial": "2000",
+      "tipoPrenda": "Pantalón",
+      "nivelUrgencia": "media"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tclienteId\ttipo\tdescripcion\tprecioBase\tabonoInicial\ttipoPrenda\tnivelUrgencia\n1\t1\tarreglo\tArreglo de pantalón con dobladillo y ajuste de cintura\t5000\t2000\tPantalón\tmedia\n",
+  "stderr": "",
+  "execution_time_ms": 366
+}
