@@ -297,3 +297,12 @@
 - [x] Corregir: signin ahora lee datos reales de BD con getUserByOpenId
 - [x] Corregir: syncUser ya no sobreescribe name con null en cada login
 - [x] Probar técnicamente: login devuelve role=admin, name=Administrador (2 logins consecutivos verificados)
+
+
+## Fix - Creación de Clientes y Trabajos no guarda datos
+- [x] Revisar endpoints API de creación de clientes (routers.ts línea 80-93)
+- [x] Revisar endpoints API de creación de trabajos (mismo patrón)
+- [x] Verificar formularios envían campos requeridos (crear-cliente.tsx correcto)
+- [x] Revisar logs de BD para diagnosticar errores (problema: sin cookie de sesión)
+- [x] Corregir: signin y signup ahora establecen cookie app_session_id
+- [x] Probar guardado exitoso: cliente id=1 guardado en BD con todos los campos

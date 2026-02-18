@@ -206,6 +206,11 @@ export function registerOAuthRoutes(app: Express) {
       const savedUser = await getUserByOpenId(openId);
       const userResponse = savedUser || { openId, email, name, loginMethod: "email" };
 
+      // Create session token and set cookie for authentication
+      const sessionToken = await sdk.createSessionToken(openId, { name: name || undefined });
+      const cookieOptions = getSessionCookieOptions(req);
+      res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
+
       res.json({ success: true, user: buildUserResponse(userResponse) });
     } catch (error) {
       console.error("[Auth] /api/auth/signup failed:", error);
@@ -248,6 +253,11 @@ export function registerOAuthRoutes(app: Express) {
       }
 
       console.log(`[Auth] signin success: ${email}, role=${savedUser.role}, id=${savedUser.id}`);
+
+      // Create session token and set cookie for authentication
+      const sessionToken = await sdk.createSessionToken(savedUser.openId, { name: savedUser.name || undefined });
+      const cookieOptions = getSessionCookieOptions(req);
+      res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
 
       res.json({ success: true, user: buildUserResponse(savedUser) });
     } catch (error) {

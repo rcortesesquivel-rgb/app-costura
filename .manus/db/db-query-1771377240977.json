@@ -1,0 +1,18 @@
+{
+  "query": "SELECT id, nombreCompleto, telefono, direccion, redesSociales, userId FROM clientes WHERE id = 1;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 37KVpxZeS2CVQbP.root --database NUhPjFzKcLyhLeGMAd6M8H --execute SELECT id, nombreCompleto, telefono, direccion, redesSociales, userId FROM clientes WHERE id = 1;",
+  "rows": [
+    {
+      "id": "1",
+      "nombreCompleto": "Cliente de Prueba",
+      "telefono": "1234567890",
+      "direccion": "Calle Falsa 123",
+      "redesSociales": "{\"instagram\":\"@test\",\"facebook\":\"test.fb\"}",
+      "userId": "150001"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tnombreCompleto\ttelefono\tdireccion\tredesSociales\tuserId\n1\tCliente de Prueba\t1234567890\tCalle Falsa 123\t{\"instagram\":\"@test\",\"facebook\":\"test.fb\"}\t150001\n",
+  "stderr": "",
+  "execution_time_ms": 422
+}
