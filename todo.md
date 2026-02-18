@@ -288,3 +288,12 @@
 - [x] Crear interfaz visual de Reset Password en /app/auth/reset-password.tsx (ya existía completa)
 - [x] Botón 'Iniciar sesión' del Dashboard redirige a tab Mi Cuenta
 - [x] Traducir textos pendientes en login/registro al español (todos ya en español)
+
+## Fix Crítico - Rol ADMIN no se aplica correctamente
+- [x] Verificar valor real del rol en BD (admin confirmado en id=150001)
+- [x] Rastrear flujo signin → JWT → respuesta al cliente
+- [x] Identificar dónde se pierde o sobreescribe el rol (3 bugs encontrados)
+- [x] Corregir: buildUserResponse ahora incluye role e isActive
+- [x] Corregir: signin ahora lee datos reales de BD con getUserByOpenId
+- [x] Corregir: syncUser ya no sobreescribe name con null en cada login
+- [x] Probar técnicamente: login devuelve role=admin, name=Administrador (2 logins consecutivos verificados)

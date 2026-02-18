@@ -21,13 +21,18 @@ async function syncUser(userInfo: {
   }
 
   const lastSignedIn = new Date();
-  await upsertUser({
+  // Only include name in upsert if it was explicitly provided (not undefined)
+  // This prevents overwriting existing name with null on signin
+  const upsertData: any = {
     openId: userInfo.openId,
-    name: userInfo.name || null,
     email: userInfo.email ?? null,
     loginMethod: userInfo.loginMethod ?? userInfo.platform ?? null,
     lastSignedIn,
-  });
+  };
+  if (userInfo.name !== undefined) {
+    upsertData.name = userInfo.name || null;
+  }
+  await upsertUser(upsertData);
   const saved = await getUserByOpenId(userInfo.openId);
   return (
     saved ?? {
@@ -49,6 +54,8 @@ function buildUserResponse(
         email?: string | null;
         loginMethod?: string | null;
         lastSignedIn?: Date | null;
+        role?: string | null;
+        isActive?: string | null;
       },
 ) {
   return {
@@ -56,6 +63,8 @@ function buildUserResponse(
     openId: user?.openId ?? null,
     name: user?.name ?? null,
     email: user?.email ?? null,
+    role: (user as any)?.role ?? "user",
+    isActive: (user as any)?.isActive ?? "active",
     loginMethod: user?.loginMethod ?? null,
     lastSignedIn: (user?.lastSignedIn ?? new Date()).toISOString(),
   };
@@ -193,10 +202,11 @@ export function registerOAuthRoutes(app: Express) {
         loginMethod: "email",
       });
 
-      // Return user (no session cookie set - client will handle auth)
-      const user = { openId, email, name, loginMethod: "email" };
+      // Read the REAL user from database to get id, role, isActive
+      const savedUser = await getUserByOpenId(openId);
+      const userResponse = savedUser || { openId, email, name, loginMethod: "email" };
 
-      res.json({ success: true, user: buildUserResponse(user) });
+      res.json({ success: true, user: buildUserResponse(userResponse) });
     } catch (error) {
       console.error("[Auth] /api/auth/signup failed:", error);
       res.status(500).json({ error: "Sign up failed" });
@@ -216,17 +226,30 @@ export function registerOAuthRoutes(app: Express) {
       // Use email as openId for email/password authentication
       const openId = `email:${email}`;
 
-      // Create or update user in database (auto-create if doesn't exist)
+      // Update lastSignedIn only (don't overwrite name/role with null)
       await syncUser({
         openId,
         email,
         loginMethod: "email",
       });
 
-      // Return user (no session cookie set - client will handle auth)
-      const user = { openId, email, loginMethod: "email" };
+      // Read the REAL user from database to get id, name, role, isActive
+      const savedUser = await getUserByOpenId(openId);
 
-      res.json({ success: true, user: buildUserResponse(user) });
+      if (!savedUser) {
+        res.status(404).json({ error: "Usuario no encontrado" });
+        return;
+      }
+
+      // Check if account is inactive
+      if (savedUser.isActive === "inactive") {
+        res.status(403).json({ error: "ACCOUNT_INACTIVE" });
+        return;
+      }
+
+      console.log(`[Auth] signin success: ${email}, role=${savedUser.role}, id=${savedUser.id}`);
+
+      res.json({ success: true, user: buildUserResponse(savedUser) });
     } catch (error) {
       console.error("[Auth] /api/auth/signin failed:", error);
       res.status(500).json({ error: "Sign in failed" });

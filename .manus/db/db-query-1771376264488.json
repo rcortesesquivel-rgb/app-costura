@@ -1,0 +1,17 @@
+{
+  "query": "UPDATE users SET name = 'Administrador' WHERE openId = 'email:rcortesesquivel@gmail.com'; SELECT id, email, name, role, isActive FROM users WHERE openId = 'email:rcortesesquivel@gmail.com';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 37KVpxZeS2CVQbP.root --database NUhPjFzKcLyhLeGMAd6M8H --execute UPDATE users SET name = 'Administrador' WHERE openId = 'email:rcortesesquivel@gmail.com'; SELECT id, email, name, role, isActive FROM users WHERE openId = 'email:rcortesesquivel@gmail.com';",
+  "rows": [
+    {
+      "id": "150001",
+      "email": "rcortesesquivel@gmail.com",
+      "name": "Administrador",
+      "role": "admin",
+      "isActive": "active"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\temail\tname\trole\tisActive\n150001\trcortesesquivel@gmail.com\tAdministrador\tadmin\tactive\n",
+  "stderr": "",
+  "execution_time_ms": 415
+}

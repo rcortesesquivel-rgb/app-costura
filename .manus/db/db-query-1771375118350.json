@@ -1,0 +1,19 @@
+{
+  "query": "SELECT id, email, name, role, openId, isPriority, createdAt FROM users WHERE email = 'rcortesesquivel@gmail.com' LIMIT 1;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 37KVpxZeS2CVQbP.root --database NUhPjFzKcLyhLeGMAd6M8H --execute SELECT id, email, name, role, openId, isPriority, createdAt FROM users WHERE email = 'rcortesesquivel@gmail.com' LIMIT 1;",
+  "rows": [
+    {
+      "id": "150001",
+      "email": "rcortesesquivel@gmail.com",
+      "name": "Administrador",
+      "role": "admin",
+      "openId": "email:rcortesesquivel@gmail.com",
+      "isPriority": "1",
+      "createdAt": "2026-02-18 00:38:32"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\temail\tname\trole\topenId\tisPriority\tcreatedAt\n150001\trcortesesquivel@gmail.com\tAdministrador\tadmin\temail:rcortesesquivel@gmail.com\t1\t2026-02-18 00:38:32\n",
+  "stderr": "",
+  "execution_time_ms": 370
+}
