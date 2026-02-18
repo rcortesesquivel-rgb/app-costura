@@ -71,7 +71,7 @@ export default function DashboardScreen() {
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
-    router.push("/auth/signin" as any);
+    router.push("/(tabs)/mi-cuenta" as any);
   };
 
   if (loadingVencen || loadingTodos) {

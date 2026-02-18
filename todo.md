@@ -283,3 +283,8 @@
 ## Fix Rápido - Webhook siempre 200 OK
 - [x] Cambiar webhook para devolver 200 OK incluso si token falla
 - [x] Soportar evento SWITCH_PLAN
+
+## 3 Puntos Finales
+- [x] Crear interfaz visual de Reset Password en /app/auth/reset-password.tsx (ya existía completa)
+- [x] Botón 'Iniciar sesión' del Dashboard redirige a tab Mi Cuenta
+- [x] Traducir textos pendientes en login/registro al español (todos ya en español)
