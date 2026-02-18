@@ -61,22 +61,12 @@ export function setupReciboRoutes(app: Express) {
 
       // Calcular totales
       const precioBase = parseFloat(trabajo.precioBase || "0") || 0;
+      const impuestosVal = parseFloat(trabajo.impuestos || "0") || 0;
+      const variosVal = parseFloat(trabajo.varios || "0") || 0;
       const abonoInicial = parseFloat(trabajo.abonoInicial || "0") || 0;
       
-      // Obtener agregados del trabajo
-      const agregadosData = await db
-        .select()
-        .from(agregados)
-        .where(eq(agregados.trabajoId, trabajoId));
-      
-      const totalAgregados = agregadosData.reduce((sum: number, item: any) => {
-        const precio = typeof item.precio === 'string' ? parseFloat(item.precio) : item.precio;
-        const cantidad = typeof item.cantidad === 'string' ? parseFloat(item.cantidad) : (item.cantidad || 1);
-        return sum + (precio * cantidad);
-      }, 0);
-      
-      const total = precioBase + totalAgregados;
-      const saldo = total - abonoInicial;
+      const granTotal = precioBase + impuestosVal + variosVal;
+      const saldo = granTotal - abonoInicial;
 
       // Generar HTML del recibo
       const html = `
@@ -275,37 +265,30 @@ export function setupReciboRoutes(app: Express) {
         <thead>
           <tr>
             <th>Concepto</th>
-            <th class="text-right">Cantidad</th>
-            <th class="text-right">Precio Unit.</th>
-            <th class="text-right">Subtotal</th>
+            <th class="text-right">Monto</th>
           </tr>
         </thead>
         <tbody>
           <tr>
             <td>Precio base del trabajo</td>
-            <td class="text-right">1</td>
-            <td class="text-right">${formatCurrency(precioBase)}</td>
             <td class="text-right">${formatCurrency(precioBase)}</td>
           </tr>
-          ${agregadosData.map((item: any) => {
-            const precioUnit = parseFloat(item.precio || '0');
-            const cant = item.cantidad || 1;
-            return `
           <tr>
-            <td>${item.concepto}</td>
-            <td class="text-right">${cant}</td>
-            <td class="text-right">${formatCurrency(precioUnit)}</td>
-            <td class="text-right">${formatCurrency(precioUnit * cant)}</td>
-          </tr>`;
-          }).join('')}
+            <td>Impuestos</td>
+            <td class="text-right">${formatCurrency(impuestosVal)}</td>
+          </tr>
+          <tr>
+            <td>Varios</td>
+            <td class="text-right">${formatCurrency(variosVal)}</td>
+          </tr>
         </tbody>
       </table>
     </div>
     
     <div class="totales">
       <div class="total-row">
-        <span>Subtotal:</span>
-        <span>${formatCurrency(total)}</span>
+        <span>Gran Total:</span>
+        <span>${formatCurrency(granTotal)}</span>
       </div>
       <div class="total-row">
         <span>Abono inicial:</span>

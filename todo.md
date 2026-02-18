@@ -368,3 +368,13 @@
 - [x] Fecha de Entrega: Agregar selector de fecha en crear-trabajo.tsx
 - [x] Fecha de Entrega: Agregar selector de fecha en editar-trabajo.tsx
 - [x] Filtros de Estado: Activar filtros por estado en la lista principal (index.tsx)
+
+## Correcciones Críticas - 18 Feb 2026 (Ronda 2)
+- [x] Separación de Roles: Admin solo gestiona suscripciones, clientes de sastrería separados
+- [x] Cálculos: Cantidad × Precio = Total en tiempo real, campos numéricos decimal
+- [x] Eliminar botón "+" inútil en formulario de creación
+- [x] Estados funcionales: clic en estado actualiza BD inmediatamente
+- [x] Renombrar "Dashboard" por "Mis Trabajos"
+- [x] Reemplazar "Agregados" por campos "Impuestos" y "Varios" que se sumen al Gran Total
+- [x] Botón "Eliminar Trabajo" con confirmación en lista y edición
+- [x] Todo sobre archivos existentes, sin crear archivos nuevos

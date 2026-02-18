@@ -1,5 +1,5 @@
 import { Text, View, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, Alert, Platform } from "react-native";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import * as Haptics from "expo-haptics";
 
@@ -19,6 +19,8 @@ export default function EditarTrabajoScreen() {
   // Estado del formulario
   const [descripcion, setDescripcion] = useState("");
   const [precioBase, setPrecioBase] = useState("");
+  const [impuestos, setImpuestos] = useState("");
+  const [varios, setVarios] = useState("");
   const [abonoInicial, setAbonoInicial] = useState("0");
   const [fechaEntrega, setFechaEntrega] = useState("");
 
@@ -41,11 +43,28 @@ export default function EditarTrabajoScreen() {
     },
   });
 
+  const deleteMutation = trpc.trabajos.delete.useMutation({
+    onSuccess: async () => {
+      await utils.trabajos.list.invalidate();
+      if (Platform.OS !== "web") {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
+      Alert.alert("Eliminado", "El trabajo ha sido eliminado", [
+        { text: "OK", onPress: () => router.replace("/(tabs)") },
+      ]);
+    },
+    onError: (error) => {
+      Alert.alert("Error", "No se pudo eliminar: " + error.message);
+    },
+  });
+
   // Cargar datos del trabajo cuando se obtienen
   useEffect(() => {
     if (trabajo) {
       setDescripcion(trabajo.descripcion || "");
       setPrecioBase(trabajo.precioBase || "0");
+      setImpuestos(trabajo.impuestos || "0");
+      setVarios(trabajo.varios || "0");
       setAbonoInicial(trabajo.abonoInicial || "0");
       if (trabajo.fechaEntrega) {
         const d = new Date(trabajo.fechaEntrega);
@@ -54,9 +73,18 @@ export default function EditarTrabajoScreen() {
     }
   }, [trabajo]);
 
-  const calcularSaldo = () => {
-    return (parseFloat(precioBase || "0")) - (parseFloat(abonoInicial || "0"));
-  };
+  // Cálculos en tiempo real
+  const granTotal = useMemo(() => {
+    const base = parseFloat(precioBase) || 0;
+    const imp = parseFloat(impuestos) || 0;
+    const var_ = parseFloat(varios) || 0;
+    return base + imp + var_;
+  }, [precioBase, impuestos, varios]);
+
+  const saldoPendiente = useMemo(() => {
+    const abono = parseFloat(abonoInicial) || 0;
+    return granTotal - abono;
+  }, [granTotal, abonoInicial]);
 
   const handleGuardar = () => {
     if (!descripcion.trim()) {
@@ -73,8 +101,10 @@ export default function EditarTrabajoScreen() {
 
     const data: any = {
       descripcion: descripcion.trim(),
-      precioBase,
-      abonoInicial: abonoInicial || "0",
+      precioBase: (parseFloat(precioBase) || 0).toFixed(2),
+      impuestos: (parseFloat(impuestos) || 0).toFixed(2),
+      varios: (parseFloat(varios) || 0).toFixed(2),
+      abonoInicial: (parseFloat(abonoInicial) || 0).toFixed(2),
     };
 
     if (fechaEntrega) {
@@ -85,6 +115,24 @@ export default function EditarTrabajoScreen() {
     }
 
     updateMutation.mutate({ id: trabajoId, data });
+  };
+
+  const handleEliminar = () => {
+    if (Platform.OS !== "web") {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+    }
+    Alert.alert(
+      "Eliminar trabajo",
+      "¿Estás seguro de que deseas borrar este registro? Esta acción no se puede deshacer.",
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Eliminar",
+          style: "destructive",
+          onPress: () => deleteMutation.mutate({ id: trabajoId }),
+        },
+      ]
+    );
   };
 
   if (loadingTrabajo) {
@@ -128,7 +176,7 @@ export default function EditarTrabajoScreen() {
           {/* Descripción con dictado */}
           <View className="gap-2">
             <View className="flex-row items-center justify-between">
-              <Text className="text-base font-semibold text-foreground">Descripción</Text>
+              <Text className="text-sm font-semibold text-foreground">Descripción *</Text>
               <VoiceInput
                 mode="text"
                 onResult={(text) => setDescripcion((prev) => prev ? `${prev} ${text}` : text)}
@@ -136,8 +184,7 @@ export default function EditarTrabajoScreen() {
               />
             </View>
             <TextInput
-              className="bg-surface rounded-xl p-4 text-base border"
-              style={{ color: colors.foreground, borderColor: colors.border }}
+              className="bg-surface rounded-xl border border-border px-4 py-3 text-base text-foreground"
               placeholder="Describe el trabajo a realizar"
               placeholderTextColor={colors.muted}
               value={descripcion}
@@ -147,13 +194,12 @@ export default function EditarTrabajoScreen() {
             />
           </View>
 
-          {/* Precio base con dictado numérico */}
+          {/* Precio base */}
           <View className="gap-2">
-            <Text className="text-base font-semibold text-foreground">Precio base (₡)</Text>
+            <Text className="text-sm font-semibold text-foreground">Precio base (₡) *</Text>
             <View className="flex-row items-center gap-2">
               <TextInput
-                className="flex-1 bg-surface rounded-xl p-4 text-base border"
-                style={{ color: colors.foreground, borderColor: colors.border }}
+                className="flex-1 bg-surface rounded-xl border border-border px-4 py-3 text-base text-foreground"
                 placeholder="0.00"
                 placeholderTextColor={colors.muted}
                 value={precioBase}
@@ -164,13 +210,80 @@ export default function EditarTrabajoScreen() {
             </View>
           </View>
 
-          {/* Abono inicial con dictado numérico */}
+          {/* Impuestos */}
           <View className="gap-2">
-            <Text className="text-base font-semibold text-foreground">Abono inicial (₡)</Text>
+            <Text className="text-sm font-semibold text-foreground">Impuestos (₡)</Text>
             <View className="flex-row items-center gap-2">
               <TextInput
-                className="flex-1 bg-surface rounded-xl p-4 text-base border"
-                style={{ color: colors.foreground, borderColor: colors.border }}
+                className="flex-1 bg-surface rounded-xl border border-border px-4 py-3 text-base text-foreground"
+                placeholder="0.00"
+                placeholderTextColor={colors.muted}
+                value={impuestos}
+                onChangeText={setImpuestos}
+                keyboardType="decimal-pad"
+              />
+              <VoiceInput mode="numeric" onResult={setImpuestos} size={32} />
+            </View>
+          </View>
+
+          {/* Varios */}
+          <View className="gap-2">
+            <Text className="text-sm font-semibold text-foreground">Varios (₡)</Text>
+            <View className="flex-row items-center gap-2">
+              <TextInput
+                className="flex-1 bg-surface rounded-xl border border-border px-4 py-3 text-base text-foreground"
+                placeholder="0.00"
+                placeholderTextColor={colors.muted}
+                value={varios}
+                onChangeText={setVarios}
+                keyboardType="decimal-pad"
+              />
+              <VoiceInput mode="numeric" onResult={setVarios} size={32} />
+            </View>
+          </View>
+
+          {/* Fecha de entrega */}
+          <View className="gap-2">
+            <Text className="text-sm font-semibold text-foreground">Fecha de entrega</Text>
+            <TextInput
+              className="bg-surface rounded-xl border border-border px-4 py-3 text-base text-foreground"
+              placeholder="AAAA-MM-DD (ej: 2026-03-15)"
+              placeholderTextColor={colors.muted}
+              value={fechaEntrega}
+              onChangeText={setFechaEntrega}
+            />
+          </View>
+
+          {/* Resumen de totales en tiempo real */}
+          <View className="bg-surface rounded-2xl p-4 border border-border gap-2">
+            <Text className="text-sm font-semibold text-foreground mb-1">Resumen</Text>
+            <View className="flex-row justify-between">
+              <Text className="text-sm text-muted">Precio base</Text>
+              <Text className="text-sm font-medium text-foreground">{formatCurrency(precioBase || "0")}</Text>
+            </View>
+            <View className="flex-row justify-between">
+              <Text className="text-sm text-muted">Impuestos</Text>
+              <Text className="text-sm font-medium text-foreground">{formatCurrency(impuestos || "0")}</Text>
+            </View>
+            <View className="flex-row justify-between">
+              <Text className="text-sm text-muted">Varios</Text>
+              <Text className="text-sm font-medium text-foreground">{formatCurrency(varios || "0")}</Text>
+            </View>
+            <View className="h-px bg-border my-1" />
+            <View className="flex-row justify-between">
+              <Text className="text-base font-bold text-foreground">Gran Total</Text>
+              <Text className="text-base font-bold" style={{ color: colors.primary }}>
+                {formatCurrency(granTotal)}
+              </Text>
+            </View>
+          </View>
+
+          {/* Abono inicial */}
+          <View className="gap-2">
+            <Text className="text-sm font-semibold text-foreground">Abono inicial (₡)</Text>
+            <View className="flex-row items-center gap-2">
+              <TextInput
+                className="flex-1 bg-surface rounded-xl border border-border px-4 py-3 text-base text-foreground"
                 placeholder="0.00"
                 placeholderTextColor={colors.muted}
                 value={abonoInicial}
@@ -179,45 +292,53 @@ export default function EditarTrabajoScreen() {
               />
               <VoiceInput mode="numeric" onResult={setAbonoInicial} size={36} />
             </View>
-          </View>
-
-          {/* Fecha de entrega */}
-          <View className="gap-2">
-            <Text className="text-base font-semibold text-foreground">Fecha de entrega</Text>
-            <TextInput
-              className="bg-surface rounded-xl p-4 text-base border"
-              style={{ color: colors.foreground, borderColor: colors.border }}
-              placeholder="AAAA-MM-DD (ej: 2026-03-15)"
-              placeholderTextColor={colors.muted}
-              value={fechaEntrega}
-              onChangeText={setFechaEntrega}
-            />
-          </View>
-
-          {/* Saldo pendiente en tiempo real */}
-          <View className="bg-surface rounded-2xl p-4 border border-border">
-            <View className="flex-row justify-between">
-              <Text className="text-base font-semibold text-foreground">Saldo pendiente</Text>
-              <Text className="text-base font-bold" style={{ color: calcularSaldo() > 0 ? colors.error : colors.success }}>
-                {formatCurrency(calcularSaldo())}
+            <View className="flex-row justify-between mt-1">
+              <Text className="text-sm font-semibold text-foreground">Saldo pendiente:</Text>
+              <Text className="text-sm font-bold" style={{ color: saldoPendiente > 0 ? colors.error : colors.success }}>
+                {formatCurrency(Math.max(saldoPendiente, 0))}
               </Text>
             </View>
           </View>
 
-          {/* Botón guardar */}
-          <TouchableOpacity
-            className="rounded-xl py-4 items-center"
-            style={{ backgroundColor: colors.primary }}
-            onPress={handleGuardar}
-            disabled={updateMutation.isPending}
-            activeOpacity={0.8}
-          >
-            {updateMutation.isPending ? (
-              <ActivityIndicator color="#FFFFFF" />
-            ) : (
-              <Text className="text-base font-semibold text-white">Guardar cambios</Text>
-            )}
-          </TouchableOpacity>
+          {/* Botones */}
+          <View className="gap-3 mt-4">
+            <TouchableOpacity
+              className="rounded-xl py-4 items-center"
+              style={{ backgroundColor: colors.primary }}
+              onPress={handleGuardar}
+              disabled={updateMutation.isPending}
+              activeOpacity={0.8}
+            >
+              {updateMutation.isPending ? (
+                <ActivityIndicator color="#FFFFFF" />
+              ) : (
+                <Text className="text-base font-semibold text-white">Guardar cambios</Text>
+              )}
+            </TouchableOpacity>
+
+            {/* Botón eliminar */}
+            <TouchableOpacity
+              className="rounded-xl py-4 items-center flex-row justify-center gap-2"
+              style={{ backgroundColor: colors.error }}
+              onPress={handleEliminar}
+              disabled={deleteMutation.isPending}
+              activeOpacity={0.8}
+            >
+              <IconSymbol name="trash.fill" size={18} color="#FFFFFF" />
+              <Text className="text-base font-semibold text-white">
+                {deleteMutation.isPending ? "Eliminando..." : "Eliminar trabajo"}
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              className="rounded-xl py-4 items-center border border-border"
+              onPress={() => router.back()}
+              disabled={updateMutation.isPending}
+              activeOpacity={0.7}
+            >
+              <Text className="text-base font-semibold text-foreground">Cancelar</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </ScrollView>
     </ScreenContainer>

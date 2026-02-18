@@ -207,6 +207,8 @@ export const appRouter = router({
         descripcion: z.string().min(1),
         precioBase: z.string(),
         abonoInicial: z.string().optional(),
+        impuestos: z.string().optional(),
+        varios: z.string().optional(),
         fechaEntrega: z.date().optional(),
       }))
       .mutation(async ({ input, ctx }) => {
@@ -248,6 +250,8 @@ export const appRouter = router({
           descripcion: z.string().min(1).optional(),
           precioBase: z.string().optional(),
           abonoInicial: z.string().optional(),
+          impuestos: z.string().optional(),
+          varios: z.string().optional(),
           fechaEntrega: z.date().optional(),
         }),
       }))

@@ -19,15 +19,33 @@ export default function TrabajoDetalleScreen() {
     { id: trabajo?.clienteId || 0 },
     { enabled: !!trabajo }
   );
-  const { data: agregados } = trpc.agregados.getByTrabajoId.useQuery({ trabajoId });
-  const { data: totales } = trpc.trabajos.calcularTotal.useQuery({ trabajoId });
 
   const utils = trpc.useUtils();
   const updateEstadoMutation = trpc.trabajos.updateEstado.useMutation({
     onSuccess: () => {
       refetch();
       utils.trabajos.list.invalidate();
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      if (Platform.OS !== "web") {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
+    },
+    onError: (error) => {
+      Alert.alert("Error", "No se pudo cambiar el estado: " + error.message);
+    },
+  });
+
+  const deleteMutation = trpc.trabajos.delete.useMutation({
+    onSuccess: async () => {
+      await utils.trabajos.list.invalidate();
+      if (Platform.OS !== "web") {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
+      Alert.alert("Eliminado", "El trabajo ha sido eliminado", [
+        { text: "OK", onPress: () => router.replace("/(tabs)") },
+      ]);
+    },
+    onError: (error) => {
+      Alert.alert("Error", "No se pudo eliminar: " + error.message);
     },
   });
 
@@ -53,17 +71,10 @@ export default function TrabajoDetalleScreen() {
     }
   };
 
-  const getTipoLabel = (tipo: string) => {
-    switch (tipo) {
-      case "arreglo": return "Arreglo";
-      case "confeccion": return "Confección";
-      case "personalizacion": return "Personalización";
-      default: return tipo;
-    }
-  };
-
   const handleCambiarEstado = (nuevoEstado: string) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
     Alert.alert(
       "Cambiar estado",
       `¿Cambiar el estado a "${getEstadoLabel(nuevoEstado)}"?`,
@@ -78,6 +89,24 @@ export default function TrabajoDetalleScreen() {
               estadoNuevo: nuevoEstado,
             });
           },
+        },
+      ]
+    );
+  };
+
+  const handleEliminar = () => {
+    if (Platform.OS !== "web") {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+    }
+    Alert.alert(
+      "Eliminar trabajo",
+      "¿Estás seguro de que deseas borrar este registro? Esta acción no se puede deshacer.",
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Eliminar",
+          style: "destructive",
+          onPress: () => deleteMutation.mutate({ id: trabajoId }),
         },
       ]
     );
@@ -99,6 +128,14 @@ export default function TrabajoDetalleScreen() {
     );
   }
 
+  // Calcular totales desde los datos del trabajo
+  const precioBase = parseFloat(trabajo.precioBase || "0");
+  const impuestosVal = parseFloat(trabajo.impuestos || "0");
+  const variosVal = parseFloat(trabajo.varios || "0");
+  const granTotal = precioBase + impuestosVal + variosVal;
+  const abonoInicial = parseFloat(trabajo.abonoInicial || "0");
+  const saldoPendiente = granTotal - abonoInicial;
+
   const estados = ["en_espera", "cortando", "cosiendo", "listo", "entregado"];
 
   return (
@@ -109,7 +146,9 @@ export default function TrabajoDetalleScreen() {
           <View className="flex-row items-center gap-4">
             <TouchableOpacity
               onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                if (Platform.OS !== "web") {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                }
                 router.back();
               }}
               activeOpacity={0.7}
@@ -121,7 +160,9 @@ export default function TrabajoDetalleScreen() {
             </View>
             <TouchableOpacity
               onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                if (Platform.OS !== "web") {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                }
                 router.push(`/editar-trabajo?id=${trabajoId}` as any);
               }}
               activeOpacity={0.7}
@@ -146,7 +187,9 @@ export default function TrabajoDetalleScreen() {
               <TouchableOpacity
                 className="bg-surface rounded-2xl p-4 border border-border"
                 onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  if (Platform.OS !== "web") {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  }
                   router.push(`/cliente/${cliente.id}` as any);
                 }}
                 activeOpacity={0.7}
@@ -190,40 +233,37 @@ export default function TrabajoDetalleScreen() {
             <View className="bg-surface rounded-2xl p-4 border border-border gap-3">
               <View className="flex-row justify-between">
                 <Text className="text-sm text-muted">Precio base</Text>
-                <Text className="text-sm font-medium text-foreground">{formatCurrency(trabajo.precioBase)}</Text>
+                <Text className="text-sm font-medium text-foreground">{formatCurrency(precioBase)}</Text>
               </View>
 
-              {agregados && agregados.length > 0 && (
-                <>
-                  <View className="h-px bg-border" />
-                  <Text className="text-xs font-semibold text-muted uppercase">Agregados</Text>
-                  {agregados.map((agregado) => (
-                    <View key={agregado.id} className="flex-row justify-between">
-                      <Text className="text-sm text-muted">{agregado.concepto}</Text>
-                      <Text className="text-sm font-medium text-foreground">{formatCurrency(agregado.precio)}</Text>
-                    </View>
-                  ))}
-                </>
-              )}
+              <View className="flex-row justify-between">
+                <Text className="text-sm text-muted">Impuestos</Text>
+                <Text className="text-sm font-medium text-foreground">{formatCurrency(impuestosVal)}</Text>
+              </View>
+
+              <View className="flex-row justify-between">
+                <Text className="text-sm text-muted">Varios</Text>
+                <Text className="text-sm font-medium text-foreground">{formatCurrency(variosVal)}</Text>
+              </View>
 
               <View className="h-px bg-border" />
 
               <View className="flex-row justify-between">
-                <Text className="text-base font-semibold text-foreground">Total</Text>
+                <Text className="text-base font-bold text-foreground">Gran Total</Text>
                 <Text className="text-base font-bold" style={{ color: colors.primary }}>
-                  {formatCurrency(totales?.total)}
+                  {formatCurrency(granTotal)}
                 </Text>
               </View>
 
               <View className="flex-row justify-between">
                 <Text className="text-sm text-muted">Abono inicial</Text>
-                <Text className="text-sm font-medium text-foreground">{formatCurrency(trabajo.abonoInicial)}</Text>
+                <Text className="text-sm font-medium text-foreground">{formatCurrency(abonoInicial)}</Text>
               </View>
 
               <View className="flex-row justify-between">
                 <Text className="text-base font-semibold text-foreground">Saldo pendiente</Text>
-                <Text className="text-base font-bold" style={{ color: colors.error }}>
-                  {formatCurrency(totales?.saldo)}
+                <Text className="text-base font-bold" style={{ color: saldoPendiente > 0 ? colors.error : colors.success }}>
+                  {formatCurrency(Math.max(saldoPendiente, 0))}
                 </Text>
               </View>
             </View>
@@ -234,7 +274,9 @@ export default function TrabajoDetalleScreen() {
             className="rounded-xl py-4 items-center flex-row justify-center gap-2"
             style={{ backgroundColor: colors.primary }}
             onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              if (Platform.OS !== "web") {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              }
               if (Platform.OS === "web") {
                 const url = `${process.env.EXPO_PUBLIC_API_URL || "http://127.0.0.1:3000"}/api/recibo/${trabajoId}`;
                 window.open(url, "_blank");
@@ -263,6 +305,7 @@ export default function TrabajoDetalleScreen() {
                   style={{
                     backgroundColor: trabajo.estado === estado ? getEstadoBadgeColor(estado) + "20" : "transparent",
                     borderColor: trabajo.estado === estado ? getEstadoBadgeColor(estado) : colors.border,
+                    opacity: updateEstadoMutation.isPending ? 0.6 : 1,
                   }}
                   onPress={() => handleCambiarEstado(estado)}
                   disabled={trabajo.estado === estado || updateEstadoMutation.isPending}
@@ -283,6 +326,20 @@ export default function TrabajoDetalleScreen() {
               ))}
             </View>
           </View>
+
+          {/* Botón eliminar */}
+          <TouchableOpacity
+            className="rounded-xl py-4 items-center flex-row justify-center gap-2 mt-4"
+            style={{ backgroundColor: colors.error }}
+            onPress={handleEliminar}
+            disabled={deleteMutation.isPending}
+            activeOpacity={0.8}
+          >
+            <IconSymbol name="trash.fill" size={18} color="#FFFFFF" />
+            <Text className="text-base font-semibold text-white">
+              {deleteMutation.isPending ? "Eliminando..." : "Eliminar trabajo"}
+            </Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
     </ScreenContainer>

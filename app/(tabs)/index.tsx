@@ -103,7 +103,7 @@ export default function DashboardScreen() {
         <View className="p-6 gap-6">
           {/* Header */}
           <View className="gap-2">
-            <Text className="text-3xl font-bold text-foreground">Dashboard</Text>
+            <Text className="text-3xl font-bold text-foreground">Mis Trabajos</Text>
             <Text className="text-base text-muted">
               {isSignedIn && user?.name
                 ? `Bienvenido/a, ${user.name}`

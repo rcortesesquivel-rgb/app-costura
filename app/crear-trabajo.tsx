@@ -1,5 +1,5 @@
 import { ScrollView, Text, View, TextInput, TouchableOpacity, Alert, KeyboardAvoidingView, Platform, ActivityIndicator } from "react-native";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useRouter } from "expo-router";
 import * as Haptics from "expo-haptics";
 
@@ -18,29 +18,17 @@ export default function CrearTrabajoScreen() {
   const [clienteId, setClienteId] = useState("");
   const [descripcion, setDescripcion] = useState("");
   const [precioBase, setPrecioBase] = useState("");
-  const [abonoInicial, setAbonoInicial] = useState("0");
+  const [cantidad, setCantidad] = useState("1");
+  const [impuestos, setImpuestos] = useState("");
+  const [varios, setVarios] = useState("");
+  const [abonoInicial, setAbonoInicial] = useState("");
   const [fechaEntrega, setFechaEntrega] = useState("");
-
-  // Agregados
-  const [agregados, setAgregados] = useState<Array<{ concepto: string; precio: string; cantidad: string }>>([]);
-  const [nuevoConcepto, setNuevoConcepto] = useState("");
-  const [nuevoPrecio, setNuevoPrecio] = useState("");
-  const [nuevaCantidad, setNuevaCantidad] = useState("1");
 
   const { data: clientes, isLoading: loadingClientes } = trpc.clientes.list.useQuery();
 
   const utils = trpc.useUtils();
   const createMutation = trpc.trabajos.create.useMutation({
-    onSuccess: async (data) => {
-      for (const agregado of agregados) {
-        await utils.client.agregados.create.mutate({
-          trabajoId: data.id,
-          concepto: agregado.concepto,
-          precio: agregado.precio,
-          cantidad: parseInt(agregado.cantidad) || 1,
-        });
-      }
-
+    onSuccess: async () => {
       await utils.trabajos.list.invalidate();
       if (Platform.OS !== "web") {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -54,40 +42,24 @@ export default function CrearTrabajoScreen() {
     },
   });
 
-  const handleAgregarItem = () => {
-    if (!nuevoConcepto.trim() || !nuevoPrecio.trim() || !nuevaCantidad.trim()) {
-      Alert.alert("Error", "Completa el concepto, precio y cantidad del agregado");
-      return;
-    }
-    setAgregados([...agregados, { concepto: nuevoConcepto.trim(), precio: nuevoPrecio.trim(), cantidad: nuevaCantidad.trim() }]);
-    setNuevoConcepto("");
-    setNuevoPrecio("");
-    setNuevaCantidad("1");
-    if (Platform.OS !== "web") {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
-  };
-
-  const handleEliminarItem = (index: number) => {
-    setAgregados(agregados.filter((_, i) => i !== index));
-    if (Platform.OS !== "web") {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
-  };
-
-  const calcularTotal = () => {
+  // Cálculos en tiempo real con useMemo
+  const subtotal = useMemo(() => {
     const base = parseFloat(precioBase) || 0;
-    const totalAgregados = agregados.reduce((sum, item) => {
-      const precio = parseFloat(item.precio) || 0;
-      const cantidad = parseFloat(item.cantidad) || 1;
-      return sum + (precio * cantidad);
-    }, 0);
-    return base + totalAgregados;
-  };
+    const cant = parseFloat(cantidad) || 1;
+    return base * cant;
+  }, [precioBase, cantidad]);
 
-  const calcularSaldo = () => {
-    return calcularTotal() - (parseFloat(abonoInicial) || 0);
-  };
+  const totalImpuestos = useMemo(() => parseFloat(impuestos) || 0, [impuestos]);
+  const totalVarios = useMemo(() => parseFloat(varios) || 0, [varios]);
+
+  const granTotal = useMemo(() => {
+    return subtotal + totalImpuestos + totalVarios;
+  }, [subtotal, totalImpuestos, totalVarios]);
+
+  const saldoPendiente = useMemo(() => {
+    const abono = parseFloat(abonoInicial) || 0;
+    return granTotal - abono;
+  }, [granTotal, abonoInicial]);
 
   const handleGuardar = () => {
     if (!clienteId || !descripcion.trim() || !precioBase) {
@@ -101,8 +73,10 @@ export default function CrearTrabajoScreen() {
     const data: any = {
       clienteId: parseInt(clienteId),
       descripcion: descripcion.trim(),
-      precioBase: precioBase.trim(),
-      abonoInicial: abonoInicial.trim() || "0",
+      precioBase: subtotal.toFixed(2),
+      abonoInicial: (parseFloat(abonoInicial) || 0).toFixed(2),
+      impuestos: totalImpuestos.toFixed(2),
+      varios: totalVarios.toFixed(2),
     };
 
     if (fechaEntrega) {
@@ -186,19 +160,74 @@ export default function CrearTrabajoScreen() {
               />
             </View>
 
-            {/* Precio base con dictado numérico */}
+            {/* Precio base y Cantidad en la misma fila */}
             <View className="gap-2">
-              <Text className="text-sm font-semibold text-foreground">Precio base (₡) *</Text>
+              <Text className="text-sm font-semibold text-foreground">Precio y Cantidad *</Text>
+              <View className="flex-row gap-3">
+                <View className="flex-1 gap-1">
+                  <Text className="text-xs text-muted">Precio unitario (₡)</Text>
+                  <View className="flex-row items-center gap-1">
+                    <TextInput
+                      className="flex-1 bg-surface rounded-xl border border-border px-4 py-3 text-base text-foreground"
+                      placeholder="0.00"
+                      placeholderTextColor={colors.muted}
+                      value={precioBase}
+                      onChangeText={setPrecioBase}
+                      keyboardType="decimal-pad"
+                    />
+                    <VoiceInput mode="numeric" onResult={setPrecioBase} size={28} />
+                  </View>
+                </View>
+                <View className="w-24 gap-1">
+                  <Text className="text-xs text-muted">Cantidad</Text>
+                  <View className="flex-row items-center gap-1">
+                    <TextInput
+                      className="flex-1 bg-surface rounded-xl border border-border px-4 py-3 text-base text-foreground"
+                      placeholder="1"
+                      placeholderTextColor={colors.muted}
+                      value={cantidad}
+                      onChangeText={setCantidad}
+                      keyboardType="numeric"
+                    />
+                  </View>
+                </View>
+              </View>
+              {/* Subtotal en tiempo real */}
+              <View className="flex-row justify-between mt-1">
+                <Text className="text-sm text-muted">Subtotal (Precio × Cantidad)</Text>
+                <Text className="text-sm font-semibold text-foreground">{formatCurrency(subtotal)}</Text>
+              </View>
+            </View>
+
+            {/* Impuestos */}
+            <View className="gap-2">
+              <Text className="text-sm font-semibold text-foreground">Impuestos (₡)</Text>
               <View className="flex-row items-center gap-2">
                 <TextInput
                   className="flex-1 bg-surface rounded-xl border border-border px-4 py-3 text-base text-foreground"
                   placeholder="0.00"
                   placeholderTextColor={colors.muted}
-                  value={precioBase}
-                  onChangeText={setPrecioBase}
+                  value={impuestos}
+                  onChangeText={setImpuestos}
                   keyboardType="decimal-pad"
                 />
-                <VoiceInput mode="numeric" onResult={setPrecioBase} size={36} />
+                <VoiceInput mode="numeric" onResult={setImpuestos} size={32} />
+              </View>
+            </View>
+
+            {/* Varios */}
+            <View className="gap-2">
+              <Text className="text-sm font-semibold text-foreground">Varios (₡)</Text>
+              <View className="flex-row items-center gap-2">
+                <TextInput
+                  className="flex-1 bg-surface rounded-xl border border-border px-4 py-3 text-base text-foreground"
+                  placeholder="0.00"
+                  placeholderTextColor={colors.muted}
+                  value={varios}
+                  onChangeText={setVarios}
+                  keyboardType="decimal-pad"
+                />
+                <VoiceInput mode="numeric" onResult={setVarios} size={32} />
               </View>
             </View>
 
@@ -214,94 +243,31 @@ export default function CrearTrabajoScreen() {
               />
             </View>
 
-            {/* Agregados dinámicos */}
-            <View className="gap-3">
-              <Text className="text-sm font-semibold text-foreground">Agregados</Text>
-
-              {agregados.map((item, index) => (
-                <View key={index} className="bg-surface rounded-xl border border-border p-3 flex-row items-center justify-between">
-                  <View className="flex-1">
-                    <Text className="text-base text-foreground">{item.concepto}</Text>
-                    <Text className="text-sm text-muted mt-1">
-                      {formatCurrency(item.precio)} x {item.cantidad} = {formatCurrency((parseFloat(item.precio) || 0) * (parseFloat(item.cantidad) || 1))}
-                    </Text>
-                  </View>
-                  <TouchableOpacity onPress={() => handleEliminarItem(index)} activeOpacity={0.7}>
-                    <IconSymbol name="trash.fill" size={20} color={colors.error} />
-                  </TouchableOpacity>
-                </View>
-              ))}
-
-              <View className="gap-2">
-                {/* Concepto con dictado texto */}
-                <View className="flex-row gap-2 items-center">
-                  <TextInput
-                    className="flex-1 bg-surface rounded-xl border border-border px-4 py-3 text-base text-foreground"
-                    placeholder="Concepto"
-                    placeholderTextColor={colors.muted}
-                    value={nuevoConcepto}
-                    onChangeText={setNuevoConcepto}
-                  />
-                  <VoiceInput mode="text" onResult={setNuevoConcepto} size={32} />
-                </View>
-                {/* Cantidad y precio con dictado numérico */}
-                <View className="flex-row gap-2 items-center">
-                  <TextInput
-                    className="w-20 bg-surface rounded-xl border border-border px-4 py-3 text-base text-foreground"
-                    placeholder="Cant."
-                    placeholderTextColor={colors.muted}
-                    value={nuevaCantidad}
-                    onChangeText={setNuevaCantidad}
-                    keyboardType="numeric"
-                  />
-                  <VoiceInput mode="numeric" onResult={setNuevaCantidad} size={28} />
-                  <TextInput
-                    className="flex-1 bg-surface rounded-xl border border-border px-4 py-3 text-base text-foreground"
-                    placeholder="Precio"
-                    placeholderTextColor={colors.muted}
-                    value={nuevoPrecio}
-                    onChangeText={setNuevoPrecio}
-                    keyboardType="decimal-pad"
-                  />
-                  <VoiceInput mode="numeric" onResult={setNuevoPrecio} size={28} />
-                  <TouchableOpacity
-                    className="rounded-xl p-3 items-center justify-center"
-                    style={{ backgroundColor: colors.primary }}
-                    onPress={handleAgregarItem}
-                    activeOpacity={0.8}
-                  >
-                    <IconSymbol name="plus.circle.fill" size={24} color="#FFFFFF" />
-                  </TouchableOpacity>
-                </View>
-              </View>
-            </View>
-
-            {/* Resumen de precios */}
+            {/* Resumen de totales en tiempo real */}
             <View className="bg-surface rounded-2xl p-4 border border-border gap-2">
+              <Text className="text-sm font-semibold text-foreground mb-1">Resumen</Text>
               <View className="flex-row justify-between">
-                <Text className="text-sm text-muted">Precio base</Text>
-                <Text className="text-sm font-medium text-foreground">{formatCurrency(precioBase || "0")}</Text>
+                <Text className="text-sm text-muted">Subtotal (Precio × Cantidad)</Text>
+                <Text className="text-sm font-medium text-foreground">{formatCurrency(subtotal)}</Text>
               </View>
               <View className="flex-row justify-between">
-                <Text className="text-sm text-muted">Agregados</Text>
-                <Text className="text-sm font-medium text-foreground">
-                  {formatCurrency(agregados.reduce((sum, item) => {
-                    const precio = parseFloat(item.precio) || 0;
-                    const cantidad = parseFloat(item.cantidad) || 1;
-                    return sum + (precio * cantidad);
-                  }, 0))}
-                </Text>
+                <Text className="text-sm text-muted">Impuestos</Text>
+                <Text className="text-sm font-medium text-foreground">{formatCurrency(totalImpuestos)}</Text>
+              </View>
+              <View className="flex-row justify-between">
+                <Text className="text-sm text-muted">Varios</Text>
+                <Text className="text-sm font-medium text-foreground">{formatCurrency(totalVarios)}</Text>
               </View>
               <View className="h-px bg-border my-1" />
               <View className="flex-row justify-between">
-                <Text className="text-base font-semibold text-foreground">Total</Text>
+                <Text className="text-base font-bold text-foreground">Gran Total</Text>
                 <Text className="text-base font-bold" style={{ color: colors.primary }}>
-                  {formatCurrency(calcularTotal())}
+                  {formatCurrency(granTotal)}
                 </Text>
               </View>
             </View>
 
-            {/* Abono inicial con dictado numérico */}
+            {/* Abono inicial */}
             <View className="gap-2">
               <Text className="text-sm font-semibold text-foreground">Abono inicial (₡)</Text>
               <View className="flex-row items-center gap-2">
@@ -317,8 +283,8 @@ export default function CrearTrabajoScreen() {
               </View>
               <View className="flex-row justify-between mt-1">
                 <Text className="text-sm font-semibold text-foreground">Saldo pendiente:</Text>
-                <Text className="text-sm font-bold" style={{ color: calcularSaldo() > 0 ? colors.error : colors.success }}>
-                  {formatCurrency(calcularSaldo())}
+                <Text className="text-sm font-bold" style={{ color: saldoPendiente > 0 ? colors.error : colors.success }}>
+                  {formatCurrency(Math.max(saldoPendiente, 0))}
                 </Text>
               </View>
             </View>
