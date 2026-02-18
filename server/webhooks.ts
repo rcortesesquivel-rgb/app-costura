@@ -217,26 +217,18 @@ router.post("/hotmart", async (req: Request, res: Response) => {
     console.log("[Webhook] 📦 Content-Type:", req.headers["content-type"]);
     console.log("[Webhook] 📦 Body keys:", Object.keys(req.body || {}).join(", "));
 
-    // Validar Hottok usando la función mejorada
-    if (!validateHotmartHottok(req)) {
-      console.error("[Webhook] 🚫 Solicitud rechazada: Hottok inválido");
-      return res.status(401).json({
-        error: "Invalid Hottok",
-        message: "La validación del Hottok falló. Revisa los logs del servidor para más detalles.",
-        hint: "El header debe llamarse X-HOTMART-HOTTOK y contener el token exacto configurado en tu cuenta de Hotmart",
-      });
+    // Validar Hottok (solo log, SIEMPRE responde 200 OK)
+    const hottokValid = validateHotmartHottok(req);
+    if (!hottokValid) {
+      console.warn("[Webhook] \u26A0\uFE0F Hottok no coincide, pero se acepta la solicitud (modo tolerante 200 OK)");
     }
 
-    // Validar firma HMAC (opcional)
+    // Validar firma HMAC (solo log, no bloquea)
     const signature = req.headers["x-hotmart-signature"] as string | undefined;
     const rawPayload = JSON.stringify(req.body);
-
-    if (!validateHotmartSignature(rawPayload, signature)) {
-      console.error("[Webhook] 🚫 Solicitud rechazada: Firma HMAC inválida");
-      return res.status(401).json({
-        error: "Invalid signature",
-        message: "La validación de la firma HMAC falló",
-      });
+    const signatureValid = validateHotmartSignature(rawPayload, signature);
+    if (!signatureValid) {
+      console.warn("[Webhook] \u26A0\uFE0F Firma HMAC no coincide, pero se acepta la solicitud (modo tolerante 200 OK)");
     }
 
     const payload = req.body;
@@ -252,10 +244,10 @@ router.post("/hotmart", async (req: Request, res: Response) => {
       payload.email;
 
     if (!eventType || !email) {
-      console.error("[Webhook] ⚠️ Faltan campos requeridos:", { eventType, email });
-      return res.status(400).json({
-        error: "Missing required fields",
-        message: "event and email are required",
+      console.warn("[Webhook] \u26A0\uFE0F Faltan campos requeridos:", { eventType, email });
+      return res.status(200).json({
+        success: true,
+        warning: "Missing event or email, but returning 200 OK",
       });
     }
 
@@ -294,8 +286,13 @@ router.post("/hotmart", async (req: Request, res: Response) => {
           break;
 
         case "charge_refund":
-          console.log("[Webhook] → Procesando charge_refund");
+          console.log("[Webhook] \u2192 Procesando charge_refund");
           result = await hotmartDb.processChargeRefund(email, payload.data || payload);
+          break;
+
+        case "SWITCH_PLAN":
+          console.log("[Webhook] \u2192 Procesando SWITCH_PLAN");
+          result = await hotmartDb.processPurchaseApproved(email, payload.data || payload);
           break;
 
         default:

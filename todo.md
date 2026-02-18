@@ -279,3 +279,7 @@
 - [x] Probar con curl simulando todos los formatos posibles
 - [x] Crear 23 tests unitarios para validación del webhook (todos pasados)
 - [x] Crear endpoint /api/webhooks/hotmart/test para debugging
+
+## Fix Rápido - Webhook siempre 200 OK
+- [x] Cambiar webhook para devolver 200 OK incluso si token falla
+- [x] Soportar evento SWITCH_PLAN
