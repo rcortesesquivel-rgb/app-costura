@@ -138,6 +138,17 @@ export default function TrabajoDetalleScreen() {
 
   const estados = ["en_espera", "cortando", "cosiendo", "listo", "entregado"];
 
+  // Calcular días restantes
+  const diasRestantes = trabajo.fechaEntrega ? (() => {
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    const entrega = new Date(trabajo.fechaEntrega);
+    entrega.setHours(0, 0, 0, 0);
+    const diffMs = entrega.getTime() - hoy.getTime();
+    const diffDias = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+    return diffDias;
+  })() : null;
+
   return (
     <ScreenContainer className="bg-background">
       <ScrollView contentContainerStyle={{ flexGrow: 1, paddingBottom: 20 }}>
@@ -222,6 +233,11 @@ export default function TrabajoDetalleScreen() {
                   <Text className="text-base text-foreground mt-1">
                     {new Date(trabajo.fechaEntrega).toLocaleDateString()}
                   </Text>
+                  {diasRestantes !== null && (
+                    <Text className="text-sm font-semibold mt-1" style={{ color: diasRestantes <= 1 ? colors.error : diasRestantes <= 4 ? colors.warning : colors.success }}>
+                      {diasRestantes === 0 ? "Entrega hoy" : diasRestantes === 1 ? "Entrega mañana" : `Entrega en ${diasRestantes} días`}
+                    </Text>
+                  )}
                 </View>
               )}
             </View>

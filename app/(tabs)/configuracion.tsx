@@ -8,7 +8,7 @@ import { useColors } from "@/hooks/use-colors";
 import { useAuth } from "@/lib/auth-context";
 
 const SOPORTE_EMAIL = "soporteviral@gmail.com";
-const WHATSAPP_LINK = "https://wa.me/message/YOURLINK"; // Reemplazar con link real
+const WHATSAPP_LINK = "https://wa.me/50686419894";
 
 export default function CentroAyudaScreen() {
   const colors = useColors();

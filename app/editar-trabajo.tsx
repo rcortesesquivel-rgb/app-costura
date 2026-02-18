@@ -302,13 +302,30 @@ export default function EditarTrabajoScreen() {
           {/* Fecha de entrega */}
           <View className="gap-2">
             <Text className="text-sm font-semibold text-foreground">Fecha de entrega</Text>
-            <TextInput
-              className="bg-surface rounded-xl border border-border px-4 py-3 text-base text-foreground"
-              placeholder="AAAA-MM-DD (ej: 2026-03-15)"
-              placeholderTextColor={colors.muted}
-              value={fechaEntrega}
-              onChangeText={setFechaEntrega}
-            />
+            {Platform.OS === "web" ? (
+              <input
+                type="date"
+                value={fechaEntrega}
+                onChange={(e) => setFechaEntrega(e.target.value)}
+                style={{
+                  backgroundColor: colors.surface,
+                  borderColor: colors.border,
+                  borderWidth: 1,
+                  borderRadius: 12,
+                  padding: 12,
+                  fontSize: 16,
+                  color: colors.foreground,
+                }}
+              />
+            ) : (
+              <TextInput
+                className="bg-surface rounded-xl border border-border px-4 py-3 text-base text-foreground"
+                placeholder="AAAA-MM-DD (ej: 2026-03-15)"
+                placeholderTextColor={colors.muted}
+                value={fechaEntrega}
+                onChangeText={setFechaEntrega}
+              />
+            )}
           </View>
 
           {/* Resumen de totales en tiempo real */}

@@ -387,3 +387,10 @@
 - [x] Subcategorías: Bordado, Sublimado, Otros en búsqueda y formularios crear/editar
 - [x] Agregar campo categoría al schema BD
 - [x] Traducción 100% español en todas las etiquetas
+
+## Ajustes Finales de Usabilidad - 18 Feb 2026 (Ronda 4)
+- [x] WhatsApp real: actualizar enlace a https://wa.me/50686419894
+- [x] Selector de fecha nativo HTML en crear-trabajo y editar-trabajo
+- [x] Formato moneda: todos los totales con 2 decimales y símbolo
+- [x] Días restantes en detalle de trabajo ("Entrega en X días")
+- [x] Verificar que dictado por voz y login obligatorio no se rompieron
