@@ -45,13 +45,7 @@ export function getApiBaseUrl(): string {
     }
   }
 
-  // On native (iOS/Android), use localhost with port 3000 for development
-  // In production, this should be set via EXPO_PUBLIC_API_BASE_URL env var
-  if (ReactNative.Platform.OS !== "web") {
-    return "http://localhost:3000";
-  }
-
-  // Fallback to empty (will use relative URL)
+  // Fallback to empty (will use relative URL on web)
   return "";
 }
 

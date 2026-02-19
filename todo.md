@@ -400,3 +400,8 @@
 - [ ] Revisar código de autenticación para credenciales admin por defecto
 - [ ] Verificar configuración de BD y conexión de login
 - [ ] Crear/confirmar usuario admin con email del propietario
+
+## Fix Backend URL - 19 Feb 2026
+- [x] Configurar EXPO_PUBLIC_API_BASE_URL con URL pública real del backend
+- [x] Eliminar fallback a localhost en getApiBaseUrl()
+- [x] Generar build v1.0.3
