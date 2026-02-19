@@ -28,10 +28,10 @@ const HOTMART_HOTTOK = process.env.HOTMART_HOTTOK || "";
  * 7. Query string: hottok
  */
 function validateHotmartHottok(req: Request): boolean {
-  // Si no hay Hottok configurado, aceptar todo (modo desarrollo)
+  // Si no hay Hottok configurado, RECHAZAR
   if (!HOTMART_HOTTOK) {
-    console.warn("[Webhook] ⚠️ HOTMART_HOTTOK no configurado — aceptando solicitud en modo desarrollo");
-    return true;
+    console.error("[Webhook] ❌ HOTMART_HOTTOK no configurado — RECHAZANDO solicitud");
+    return false;
   }
 
   const configuredHottok = HOTMART_HOTTOK.trim();
