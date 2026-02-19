@@ -51,6 +51,9 @@ const MAPPING = {
   "person.badge.shield.checkmark.fill": "admin-panel-settings",
   "person.3.fill": "groups",
   "power": "power-settings-new",
+  "chart.bar.fill": "bar-chart",
+  "doc.fill": "description",
+  "person.circle.fill": "account-circle",
 } as IconMapping;
 
 /**

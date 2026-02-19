@@ -1,0 +1,9 @@
+{
+  "query": "UPDATE trabajos SET estado = 'recibido' WHERE estado = 'en_espera'; ALTER TABLE trabajos MODIFY COLUMN estado enum('recibido','cortando','cosiendo','bordado_personalizado','listo','entregado') NOT NULL DEFAULT 'recibido'; ALTER TABLE trabajos ADD COLUMN IF NOT EXISTS cantidad int DEFAULT 1 NOT NULL; ALTER TABLE users ADD COLUMN IF NOT EXISTS sinpeTelefono varchar(20);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 37KVpxZeS2CVQbP.root --database NUhPjFzKcLyhLeGMAd6M8H --execute UPDATE trabajos SET estado = 'recibido' WHERE estado = 'en_espera'; ALTER TABLE trabajos MODIFY COLUMN estado enum('recibido','cortando','cosiendo','bordado_personalizado','listo','entregado') NOT NULL DEFAULT 'recibido'; ALTER TABLE trabajos ADD COLUMN IF NOT EXISTS cantidad int DEFAULT 1 NOT NULL; ALTER TABLE users ADD COLUMN IF NOT EXISTS sinpeTelefono varchar(20);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1246
+}

@@ -76,6 +76,7 @@ export default function CrearTrabajoScreen() {
       clienteId: parseInt(clienteId),
       descripcion: descripcion.trim(),
       precioBase: subtotal.toFixed(2),
+      cantidad: parseInt(cantidad) || 1,
       abonoInicial: (parseFloat(abonoInicial) || 0).toFixed(2),
       impuestos: totalImpuestos.toFixed(2),
       varios: totalVarios.toFixed(2),
@@ -104,7 +105,7 @@ export default function CrearTrabajoScreen() {
   return (
     <ScreenContainer className="bg-background">
       <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1 }}>
-        <ScrollView contentContainerStyle={{ flexGrow: 1, paddingBottom: 20 }}>
+        <ScrollView contentContainerStyle={{ flexGrow: 1, paddingBottom: 100 }}>
           <View className="p-6 gap-6">
             {/* Header */}
             <View className="flex-row items-center gap-4">
@@ -398,6 +399,22 @@ export default function CrearTrabajoScreen() {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      {/* Footer fijo: Ir Atrás */}
+      <View
+        className="border-t border-border px-6 py-3"
+        style={{ backgroundColor: colors.background }}
+      >
+        <TouchableOpacity
+          className="rounded-xl py-3 items-center flex-row justify-center gap-2"
+          style={{ backgroundColor: colors.surface, borderColor: colors.border, borderWidth: 1 }}
+          onPress={() => router.back()}
+          activeOpacity={0.7}
+        >
+          <IconSymbol name="chevron.right" size={18} color={colors.foreground} style={{ transform: [{ rotate: "180deg" }] }} />
+          <Text className="text-base font-semibold text-foreground">Ir Atrás</Text>
+        </TouchableOpacity>
+      </View>
     </ScreenContainer>
   );
 }

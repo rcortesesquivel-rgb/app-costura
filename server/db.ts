@@ -396,3 +396,51 @@ export async function createHistorialEstado(data: InsertHistorialEstado) {
   const result = await db.insert(historialEstados).values(data);
   return Number(result[0].insertId);
 }
+
+
+// ============ MIS ESTADÍSTICAS ============
+export async function getMisEstadisticas(userId: number) {
+  const db = await getDb();
+  if (!db) return { totalClientes: 0, totalTrabajos: 0, trabajosPorEstado: {}, trabajosPorUrgencia: {}, ingresosTotales: 0 };
+
+  const misClientes = await db.select().from(clientes).where(eq(clientes.userId, userId));
+  const misTrabajos = await db.select().from(trabajos).where(eq(trabajos.userId, userId));
+
+  const trabajosPorEstado: Record<string, number> = {};
+  const trabajosPorUrgencia: Record<string, number> = {};
+  let ingresosTotales = 0;
+  const now = new Date();
+
+  for (const t of misTrabajos) {
+    const estado = t.estado || "recibido";
+    trabajosPorEstado[estado] = (trabajosPorEstado[estado] || 0) + 1;
+
+    // Calcular urgencia basada en fechaEntrega (no en campo manual)
+    if (estado !== "entregado") {
+      let urgencia = "baja"; // verde: 5+ días
+      if (t.fechaEntrega) {
+        const diffMs = new Date(t.fechaEntrega).getTime() - now.getTime();
+        const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+        if (diffDays <= 1) urgencia = "alta";       // rojo: hoy o mañana
+        else if (diffDays <= 4) urgencia = "media";  // amarillo: 2-4 días
+      }
+      trabajosPorUrgencia[urgencia] = (trabajosPorUrgencia[urgencia] || 0) + 1;
+    }
+
+    if (estado === "entregado") {
+      const precio = parseFloat(t.precioBase || "0");
+      const cant = t.cantidad || 1;
+      const imp = parseFloat(t.impuestos || "0");
+      const var_ = parseFloat(t.varios || "0");
+      ingresosTotales += (precio * cant) + imp + var_;
+    }
+  }
+
+  return {
+    totalClientes: misClientes.length,
+    totalTrabajos: misTrabajos.length,
+    trabajosPorEstado,
+    trabajosPorUrgencia,
+    ingresosTotales,
+  };
+}

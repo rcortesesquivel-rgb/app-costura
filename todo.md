@@ -415,3 +415,16 @@
 - [x] Moneda: Colones (₡) por defecto con detección de país (ya implementado en format-currency.ts)
 - [x] Clientes: input de banderas en teléfono + campo WhatsApp con botón copiar
 - [x] Reporte técnico: tier de BD, capacidad, previsión +1000 usuarios
+
+## Módulo 2: Funciones Críticas - 19 Feb 2026
+- [x] Cantidad numérica estricta en crear-trabajo con campo descripción + audio
+- [x] Botón grabar audio funcional (30s, compresión, máx 5 por trabajo, guardar en DB)
+- [x] Dividir trabajo: si Cantidad>1, botón para separar cantidad y crear nuevo registro
+- [x] Estados lógicos: Recibido→Cortando→Cosiendo→Bordado/Personalizado→Listo→Entregado
+- [x] Cambio de estado con confirmación y actualización inmediata en DB
+- [x] WhatsApp dinámico: mensajes con Nombre y Categoría según estado (Recibido/Listo/Entregado)
+- [x] Campo SINPE Móvil en perfil de cliente para mensaje de Listo
+- [x] Reparar recibo: vista HTML con Folio, Cantidad, Cliente, Total + compartir WhatsApp
+- [x] Pestaña Mis Estadísticas: Total Clientes, Trabajos por Urgencia/Estado, Ingresos Totales
+- [x] Reparar borrado de clientes y trabajos con confirmación
+- [x] Botón Ir Atrás fijo en footer sin quitar el superior

@@ -99,6 +99,13 @@
       "when": 1771516774491,
       "tag": "0013_big_sentinels",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "5",
+      "when": 1771520677711,
+      "tag": "0014_bright_vulture",
+      "breakpoints": true
     }
   ]
 }

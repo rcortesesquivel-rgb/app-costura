@@ -1,320 +1,121 @@
 import type { Express } from "express";
 import { getDb } from "./db";
-import { trabajos, clientes, agregados } from "../drizzle/schema";
+import { trabajos, clientes } from "../drizzle/schema";
 import { eq } from "drizzle-orm";
 
-/**
- * Formatea un número como moneda CRC (Colones costarricenses)
- */
 function formatCurrency(amount: number | string): string {
-  const num = typeof amount === 'string' ? parseFloat(amount) : amount;
-  if (isNaN(num)) return '₡0.00';
-  
-  return new Intl.NumberFormat('es-CR', {
-    style: 'currency',
-    currency: 'CRC',
+  const num = typeof amount === "string" ? parseFloat(amount) : amount;
+  if (isNaN(num)) return "₡0.00";
+  return new Intl.NumberFormat("es-CR", {
+    style: "currency",
+    currency: "CRC",
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(num);
 }
 
-/**
- * Genera un recibo en PDF para un trabajo específico
- */
 export function setupReciboRoutes(app: Express) {
   app.get("/api/recibo/:trabajoId", async (req, res) => {
     try {
       const trabajoId = parseInt(req.params.trabajoId);
-      
-      if (isNaN(trabajoId)) {
-        res.status(400).json({ error: "ID de trabajo inválido" });
-        return;
-      }
+      if (isNaN(trabajoId)) { res.status(400).json({ error: "ID inválido" }); return; }
 
       const db = await getDb();
-      
-      if (!db) {
-        res.status(500).json({ error: "Error de base de datos" });
-        return;
-      }
-      
-      // Obtener trabajo con cliente
-      const [trabajo] = await db
-        .select()
-        .from(trabajos)
-        .where(eq(trabajos.id, trabajoId));
+      if (!db) { res.status(500).json({ error: "Error de BD" }); return; }
 
-      if (!trabajo) {
-        res.status(404).json({ error: "Trabajo no encontrado" });
-        return;
-      }
+      const [trabajo] = await db.select().from(trabajos).where(eq(trabajos.id, trabajoId));
+      if (!trabajo) { res.status(404).json({ error: "Trabajo no encontrado" }); return; }
 
-      const [cliente] = await db
-        .select()
-        .from(clientes)
-        .where(eq(clientes.id, trabajo.clienteId));
+      const [cliente] = await db.select().from(clientes).where(eq(clientes.id, trabajo.clienteId));
+      if (!cliente) { res.status(404).json({ error: "Cliente no encontrado" }); return; }
 
-      if (!cliente) {
-        res.status(404).json({ error: "Cliente no encontrado" });
-        return;
-      }
-
-      // Calcular totales
-      const precioBase = parseFloat(trabajo.precioBase || "0") || 0;
-      const impuestosVal = parseFloat(trabajo.impuestos || "0") || 0;
-      const variosVal = parseFloat(trabajo.varios || "0") || 0;
-      const abonoInicial = parseFloat(trabajo.abonoInicial || "0") || 0;
-      
+      const precioBase = parseFloat(trabajo.precioBase || "0");
+      const impuestosVal = parseFloat(trabajo.impuestos || "0");
+      const variosVal = parseFloat(trabajo.varios || "0");
+      const abonoInicial = parseFloat(trabajo.abonoInicial || "0");
+      const cantidad = trabajo.cantidad ?? 1;
       const granTotal = precioBase + impuestosVal + variosVal;
       const saldo = granTotal - abonoInicial;
+      const folio = `TC-${String(trabajo.id).padStart(5, "0")}`;
+      const fecha = new Date().toLocaleDateString("es-CR", { year: "numeric", month: "long", day: "numeric" });
+      const categoriaLabels: Record<string, string> = { arreglo: "Arreglo", confeccion: "Confección", bordado: "Bordado", sublimado: "Sublimado", otros: "Otros" };
+      const estadoLabels: Record<string, string> = { recibido: "Recibido", cortando: "Cortando", cosiendo: "Cosiendo", bordado_personalizado: "Bordado/Personalizado", listo: "Listo", entregado: "Entregado", en_espera: "En espera" };
 
-      // Generar HTML del recibo
-      const html = `
-<!DOCTYPE html>
+      const html = `<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Recibo - Trabajo #${trabajo.id}</title>
+  <title>Recibo ${folio}</title>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-    
-    body {
-      font-family: 'Arial', sans-serif;
-      padding: 40px;
-      color: #333;
-      line-height: 1.6;
-    }
-    
-    .recibo {
-      max-width: 800px;
-      margin: 0 auto;
-      border: 2px solid #0a7ea4;
-      border-radius: 12px;
-      padding: 30px;
-    }
-    
-    .header {
-      text-align: center;
-      border-bottom: 3px solid #0a7ea4;
-      padding-bottom: 20px;
-      margin-bottom: 30px;
-    }
-    
-    .header h1 {
-      color: #0a7ea4;
-      font-size: 32px;
-      margin-bottom: 8px;
-    }
-    
-    .header p {
-      color: #687076;
-      font-size: 14px;
-    }
-    
-    .info-section {
-      margin-bottom: 25px;
-    }
-    
-    .info-section h2 {
-      color: #0a7ea4;
-      font-size: 18px;
-      margin-bottom: 12px;
-      border-bottom: 1px solid #E5E7EB;
-      padding-bottom: 6px;
-    }
-    
-    .info-row {
-      display: flex;
-      justify-content: space-between;
-      padding: 8px 0;
-      border-bottom: 1px dotted #E5E7EB;
-    }
-    
-    .info-row:last-child {
-      border-bottom: none;
-    }
-    
-    .info-label {
-      font-weight: 600;
-      color: #687076;
-    }
-    
-    .info-value {
-      color: #11181C;
-    }
-    
-    .desglose-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin: 15px 0;
-    }
-    
-    .desglose-table th {
-      background-color: #f5f5f5;
-      color: #11181C;
-      font-weight: 600;
-      padding: 12px;
-      text-align: left;
-      border-bottom: 2px solid #0a7ea4;
-    }
-    
-    .desglose-table td {
-      padding: 10px 12px;
-      border-bottom: 1px solid #E5E7EB;
-    }
-    
-    .desglose-table tr:last-child td {
-      border-bottom: none;
-    }
-    
-    .text-right {
-      text-align: right;
-    }
-    
-    .totales {
-      margin-top: 25px;
-      padding: 20px;
-      background-color: #f5f5f5;
-      border-radius: 8px;
-    }
-    
-    .total-row {
-      display: flex;
-      justify-content: space-between;
-      padding: 8px 0;
-      font-size: 16px;
-    }
-    
-    .total-row.final {
-      font-size: 20px;
-      font-weight: bold;
-      color: #0a7ea4;
-      border-top: 2px solid #0a7ea4;
-      padding-top: 12px;
-      margin-top: 8px;
-    }
-    
-    .saldo-pendiente {
-      color: #EF4444;
-    }
-    
-    .footer {
-      margin-top: 40px;
-      text-align: center;
-      color: #687076;
-      font-size: 12px;
-      border-top: 1px solid #E5E7EB;
-      padding-top: 20px;
-    }
-    
-    @media print {
-      body {
-        padding: 20px;
-      }
-      
-      .recibo {
-        border: none;
-      }
-    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: Arial, sans-serif; padding: 30px; color: #333; line-height: 1.5; background: #f8f9fa; -webkit-user-select: none; user-select: none; }
+    .recibo { max-width: 600px; margin: 0 auto; background: #fff; border: 2px solid #0a7ea4; border-radius: 12px; padding: 24px; }
+    .header { text-align: center; border-bottom: 3px solid #0a7ea4; padding-bottom: 16px; margin-bottom: 20px; }
+    .header h1 { color: #0a7ea4; font-size: 26px; margin-bottom: 4px; }
+    .header .folio { font-size: 18px; font-weight: bold; color: #333; }
+    .header .fecha { color: #687076; font-size: 13px; margin-top: 4px; }
+    .section { margin-bottom: 18px; }
+    .section h2 { color: #0a7ea4; font-size: 15px; margin-bottom: 8px; border-bottom: 1px solid #E5E7EB; padding-bottom: 4px; }
+    .row { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px dotted #E5E7EB; }
+    .row:last-child { border-bottom: none; }
+    .label { font-weight: 600; color: #687076; font-size: 13px; }
+    .value { color: #11181C; font-size: 13px; }
+    .totales { margin-top: 16px; padding: 16px; background: #f5f5f5; border-radius: 8px; }
+    .total-row { display: flex; justify-content: space-between; padding: 5px 0; font-size: 14px; }
+    .total-row.final { font-size: 18px; font-weight: bold; color: #0a7ea4; border-top: 2px solid #0a7ea4; padding-top: 10px; margin-top: 6px; }
+    .saldo { color: #EF4444; }
+    .footer { margin-top: 24px; text-align: center; color: #687076; font-size: 11px; border-top: 1px solid #E5E7EB; padding-top: 14px; }
+    .no-print { margin: 20px auto; max-width: 600px; text-align: center; }
+    .btn { display: inline-block; padding: 12px 24px; border-radius: 8px; font-size: 14px; font-weight: 600; text-decoration: none; cursor: pointer; border: none; margin: 4px; }
+    .btn-wa { background: #25D366; color: #fff; }
+    .btn-print { background: #0a7ea4; color: #fff; }
+    @media print { .no-print { display: none; } body { padding: 10px; background: #fff; } .recibo { border: none; } }
   </style>
 </head>
 <body>
   <div class="recibo">
     <div class="header">
       <h1>Taller de Costura</h1>
-      <p>Recibo de Trabajo #${trabajo.id}</p>
-      <p>Fecha: ${new Date().toLocaleDateString('es-CR', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+      <div class="folio">Folio: ${folio}</div>
+      <div class="fecha">${fecha}</div>
     </div>
-    
-    <div class="info-section">
-      <h2>Información del Cliente</h2>
-      <div class="info-row">
-        <span class="info-label">Nombre:</span>
-        <span class="info-value">${cliente.nombreCompleto}</span>
-      </div>
-      <div class="info-row">
-        <span class="info-label">Teléfono:</span>
-        <span class="info-value">${cliente.telefono || 'No especificado'}</span>
-      </div>
-      <div class="info-row">
-        <span class="info-label">Dirección:</span>
-        <span class="info-value">${cliente.direccion || 'No especificada'}</span>
-      </div>
+    <div class="section">
+      <h2>Cliente</h2>
+      <div class="row"><span class="label">Nombre:</span><span class="value">${cliente.nombreCompleto}</span></div>
+      <div class="row"><span class="label">Teléfono:</span><span class="value">${cliente.telefono || "N/A"}</span></div>
     </div>
-    
-    <div class="info-section">
-      <h2>Detalles del Trabajo</h2>
-      <div class="info-row">
-        <span class="info-label">Descripción:</span>
-        <span class="info-value">${trabajo.descripcion || 'Sin descripción'}</span>
-      </div>
-      <div class="info-row">
-        <span class="info-label">Estado:</span>
-        <span class="info-value">${trabajo.estado.replace('_', ' ').charAt(0).toUpperCase() + trabajo.estado.replace('_', ' ').slice(1)}</span>
-      </div>
+    <div class="section">
+      <h2>Trabajo</h2>
+      <div class="row"><span class="label">Categoría:</span><span class="value">${categoriaLabels[trabajo.categoria || "otros"] || "Otros"}</span></div>
+      <div class="row"><span class="label">Cantidad:</span><span class="value">${cantidad}</span></div>
+      <div class="row"><span class="label">Descripción:</span><span class="value">${trabajo.descripcion || "Sin descripción"}</span></div>
+      <div class="row"><span class="label">Estado:</span><span class="value">${estadoLabels[trabajo.estado] || trabajo.estado}</span></div>
+      ${trabajo.fechaEntrega ? `<div class="row"><span class="label">Fecha entrega:</span><span class="value">${new Date(trabajo.fechaEntrega).toLocaleDateString("es-CR")}</span></div>` : ""}
     </div>
-    
-    <div class="info-section">
-      <h2>Desglose de Costos</h2>
-      <table class="desglose-table">
-        <thead>
-          <tr>
-            <th>Concepto</th>
-            <th class="text-right">Monto</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>Precio base del trabajo</td>
-            <td class="text-right">${formatCurrency(precioBase)}</td>
-          </tr>
-          <tr>
-            <td>Impuestos</td>
-            <td class="text-right">${formatCurrency(impuestosVal)}</td>
-          </tr>
-          <tr>
-            <td>Varios</td>
-            <td class="text-right">${formatCurrency(variosVal)}</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-    
     <div class="totales">
-      <div class="total-row">
-        <span>Gran Total:</span>
-        <span>${formatCurrency(granTotal)}</span>
-      </div>
-      <div class="total-row">
-        <span>Abono inicial:</span>
-        <span>-${formatCurrency(abonoInicial)}</span>
-      </div>
-      <div class="total-row final">
-        <span class="${saldo > 0 ? 'saldo-pendiente' : ''}">Saldo pendiente:</span>
-        <span class="${saldo > 0 ? 'saldo-pendiente' : ''}">${formatCurrency(saldo)}</span>
-      </div>
+      <div class="total-row"><span>Precio base:</span><span>${formatCurrency(precioBase)}</span></div>
+      <div class="total-row"><span>Impuestos:</span><span>${formatCurrency(impuestosVal)}</span></div>
+      <div class="total-row"><span>Varios:</span><span>${formatCurrency(variosVal)}</span></div>
+      <div class="total-row final"><span>Gran Total:</span><span>${formatCurrency(granTotal)}</span></div>
+      <div class="total-row"><span>Abono inicial:</span><span>-${formatCurrency(abonoInicial)}</span></div>
+      <div class="total-row final"><span class="${saldo > 0 ? "saldo" : ""}">Saldo pendiente:</span><span class="${saldo > 0 ? "saldo" : ""}">${formatCurrency(saldo)}</span></div>
     </div>
-    
     <div class="footer">
       <p>Gracias por confiar en nuestro taller</p>
       <p>Este recibo es un comprobante de los servicios acordados</p>
     </div>
   </div>
+  <div class="no-print">
+    <button class="btn btn-print" onclick="window.print()">Imprimir</button>
+  </div>
 </body>
-</html>
-      `;
+</html>`;
 
-      // Enviar HTML como respuesta
-      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      res.setHeader("Content-Type", "text/html; charset=utf-8");
       res.send(html);
-      
     } catch (error) {
-      console.error("[Recibo] Error generando recibo:", error);
+      console.error("[Recibo] Error:", error);
       res.status(500).json({ error: "Error generando recibo" });
     }
   });

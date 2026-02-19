@@ -1,4 +1,4 @@
-import { ScrollView, Text, View, TouchableOpacity, ActivityIndicator, TextInput, Alert } from "react-native";
+import { ScrollView, Text, View, TouchableOpacity, ActivityIndicator, TextInput, Alert, Platform } from "react-native";
 import { useState } from "react";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import * as Haptics from "expo-haptics";
@@ -36,11 +36,23 @@ export default function ClienteDetalleScreen() {
   const { data: trabajos } = trpc.trabajos.getByClienteId.useQuery({ clienteId });
 
   const utils = trpc.useUtils();
+
+  const deleteClienteMutation = trpc.clientes.delete.useMutation({
+    onSuccess: async () => {
+      await utils.clientes.list.invalidate();
+      if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      Alert.alert("Eliminado", "El cliente ha sido eliminado", [
+        { text: "OK", onPress: () => router.replace("/(tabs)/clientes" as any) },
+      ]);
+    },
+    onError: (error) => Alert.alert("Error", "No se pudo eliminar: " + error.message),
+  });
+
   const createMedidasMutation = trpc.medidas.create.useMutation({
     onSuccess: () => {
       refetchMedidas();
       setEditandoMedidas(false);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       Alert.alert("Éxito", "Medidas guardadas correctamente");
     },
   });
@@ -49,7 +61,7 @@ export default function ClienteDetalleScreen() {
     onSuccess: () => {
       refetchMedidas();
       setEditandoMedidas(false);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       Alert.alert("Éxito", "Medidas actualizadas correctamente");
     },
   });
@@ -109,13 +121,13 @@ export default function ClienteDetalleScreen() {
 
   return (
     <ScreenContainer className="bg-background">
-      <ScrollView contentContainerStyle={{ flexGrow: 1, paddingBottom: 20 }}>
+      <ScrollView contentContainerStyle={{ flexGrow: 1, paddingBottom: 100 }}>
         <View className="p-6 gap-6">
           {/* Header */}
           <View className="flex-row items-center gap-4">
             <TouchableOpacity
               onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 router.back();
               }}
               activeOpacity={0.7}
@@ -241,7 +253,7 @@ export default function ClienteDetalleScreen() {
                   key={trabajo.id}
                   className="bg-surface rounded-2xl p-4 border border-border"
                   onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                     router.push(`/trabajo/${trabajo.id}` as any);
                   }}
                   activeOpacity={0.7}
@@ -260,8 +272,48 @@ export default function ClienteDetalleScreen() {
               </View>
             )}
           </View>
+
+          {/* Eliminar cliente */}
+          <TouchableOpacity
+            className="rounded-xl py-4 items-center flex-row justify-center gap-2 mt-2"
+            style={{ backgroundColor: colors.error }}
+            onPress={() => {
+              if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+              Alert.alert(
+                "Eliminar cliente",
+                "¿Estás seguro de que deseas borrar este cliente y todos sus datos? Esta acción no se puede deshacer.",
+                [
+                  { text: "Cancelar", style: "cancel" },
+                  { text: "Eliminar", style: "destructive", onPress: () => deleteClienteMutation.mutate({ id: clienteId }) },
+                ]
+              );
+            }}
+            disabled={deleteClienteMutation.isPending}
+            activeOpacity={0.8}
+          >
+            <IconSymbol name="trash.fill" size={18} color="#FFFFFF" />
+            <Text className="text-base font-semibold text-white">
+              {deleteClienteMutation.isPending ? "Eliminando..." : "Eliminar cliente"}
+            </Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
+
+      {/* Footer fijo: Ir Atrás */}
+      <View
+        className="border-t border-border px-6 py-3"
+        style={{ backgroundColor: colors.background }}
+      >
+        <TouchableOpacity
+          className="rounded-xl py-3 items-center flex-row justify-center gap-2"
+          style={{ backgroundColor: colors.surface, borderColor: colors.border, borderWidth: 1 }}
+          onPress={() => router.back()}
+          activeOpacity={0.7}
+        >
+          <IconSymbol name="chevron.right" size={18} color={colors.foreground} style={{ transform: [{ rotate: "180deg" }] }} />
+          <Text className="text-base font-semibold text-foreground">Ir Atrás</Text>
+        </TouchableOpacity>
+      </View>
     </ScreenContainer>
   );
 }

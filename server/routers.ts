@@ -210,6 +210,7 @@ export const appRouter = router({
         clienteId: z.number(),
         descripcion: z.string().min(1),
         precioBase: z.string(),
+        cantidad: z.number().int().min(1).optional(),
         abonoInicial: z.string().optional(),
         impuestos: z.string().optional(),
         varios: z.string().optional(),
@@ -221,7 +222,7 @@ export const appRouter = router({
         const id = await db.createTrabajo({
           ...input,
           userId: ctx.user.id,
-          estado: "en_espera",
+          estado: "recibido",
         });
         return { id };
       }),
@@ -249,12 +250,46 @@ export const appRouter = router({
         return { success: true };
       }),
 
+    dividir: protectedProcedure
+      .input(z.object({
+        id: z.number(),
+        cantidadSeparar: z.number().int().min(1),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const trabajo = await db.getTrabajoById(input.id, ctx.user.id);
+        if (!trabajo) throw new Error("Trabajo no encontrado");
+        const cantidadActual = trabajo.cantidad ?? 1;
+        if (input.cantidadSeparar >= cantidadActual) throw new Error("La cantidad a separar debe ser menor a la actual");
+        // Restar del original
+        await db.updateTrabajo(input.id, ctx.user.id, { cantidad: cantidadActual - input.cantidadSeparar } as any);
+        // Crear nuevo con cantidad separada en estado recibido
+        const precioUnitario = parseFloat(trabajo.precioBase || "0") / cantidadActual;
+        const nuevoId = await db.createTrabajo({
+          userId: ctx.user.id,
+          clienteId: trabajo.clienteId,
+          descripcion: trabajo.descripcion || "",
+          precioBase: (precioUnitario * input.cantidadSeparar).toFixed(2),
+          cantidad: input.cantidadSeparar,
+          abonoInicial: "0.00",
+          impuestos: "0.00",
+          varios: "0.00",
+          categoria: trabajo.categoria,
+          urgencia: trabajo.urgencia,
+          estado: "recibido",
+          fechaEntrega: trabajo.fechaEntrega,
+        });
+        // Ajustar precio del original
+        await db.updateTrabajo(input.id, ctx.user.id, { precioBase: (precioUnitario * (cantidadActual - input.cantidadSeparar)).toFixed(2) } as any);
+        return { nuevoId, cantidadOriginal: cantidadActual - input.cantidadSeparar };
+      }),
+
     update: protectedProcedure
       .input(z.object({
         id: z.number(),
         data: z.object({
           descripcion: z.string().min(1).optional(),
           precioBase: z.string().optional(),
+          cantidad: z.number().int().min(1).optional(),
           abonoInicial: z.string().optional(),
           impuestos: z.string().optional(),
           varios: z.string().optional(),
@@ -292,6 +327,10 @@ export const appRouter = router({
       .query(({ input, ctx }) => {
         return db.calcularTotalTrabajo(input.trabajoId, ctx.user.id);
       }),
+
+    misEstadisticas: protectedProcedure.query(async ({ ctx }) => {
+      return db.getMisEstadisticas(ctx.user.id);
+    }),
   }),
 
   // ============ AGREGADOS ============
