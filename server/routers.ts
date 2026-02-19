@@ -8,6 +8,7 @@ import * as db from "./db";
 import * as adminDb from "./admin-db";
 import * as superAdminDb from "./superadmin-db";
 import * as notificationsDb from "./notifications-db";
+import { storagePut } from "./storage";
 
 // Procedimiento protegido que requiere autenticación
 const protectedProcedure = publicProcedure.use(async (opts) => {
@@ -247,6 +248,13 @@ export const appRouter = router({
           });
         }
 
+        return { success: true };
+      }),
+
+    togglePagado: protectedProcedure
+      .input(z.object({ id: z.number(), pagado: z.number().min(0).max(1) }))
+      .mutation(async ({ input, ctx }) => {
+        await db.updateTrabajo(input.id, ctx.user.id, { pagado: input.pagado } as any);
         return { success: true };
       }),
 
@@ -517,22 +525,29 @@ export const appRouter = router({
         .input(z.object({ trabajoId: z.number() }))
         .query(({ input, ctx }) => db.getAudiosByTrabajoId(input.trabajoId, ctx.user.id)),
 
-      create: protectedProcedure
+      upload: protectedProcedure
         .input(z.object({
           trabajoId: z.number(),
-          url: z.string().url(),
+          base64: z.string(),
           duracion: z.number().int().min(0).max(30),
           descripcion: z.string().optional(),
+          mimeType: z.string().default("audio/webm"),
         }))
         .mutation(async ({ input, ctx }) => {
+          // Subir audio a S3
+          const buffer = Buffer.from(input.base64, "base64");
+          const ext = input.mimeType.includes("webm") ? "webm" : "mp3";
+          const key = `audios/${ctx.user.id}/${input.trabajoId}/${Date.now()}.${ext}`;
+          const { url } = await storagePut(key, buffer, input.mimeType);
+          // Guardar en DB (con validación de límite 5)
           const audioId = await db.createAudio({
             userId: ctx.user.id,
             trabajoId: input.trabajoId,
-            url: input.url,
+            url,
             duracion: input.duracion,
             descripcion: input.descripcion,
           });
-          return { id: audioId };
+          return { id: audioId, url };
         }),
 
       delete: protectedProcedure

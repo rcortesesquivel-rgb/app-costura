@@ -32,6 +32,7 @@ const MAPPING = {
   "trash.fill": "delete",
   "camera.fill": "camera-alt",
   "mic.fill": "mic",
+  "play.fill": "play-arrow",
   "phone.fill": "phone",
   "location.fill": "location-on",
   "calendar": "event",

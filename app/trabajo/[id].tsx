@@ -1,4 +1,4 @@
-import { Text, View, ScrollView, TouchableOpacity, ActivityIndicator, Alert, Platform, TextInput, Linking } from "react-native";
+import { Text, View, ScrollView, TouchableOpacity, ActivityIndicator, Alert, Platform, TextInput, Linking, Switch } from "react-native";
 import { useState } from "react";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import * as Haptics from "expo-haptics";
@@ -10,6 +10,8 @@ import { useColors } from "@/hooks/use-colors";
 import { formatCurrency } from "@/lib/format-currency";
 import { getApiBaseUrl } from "@/constants/oauth";
 import { confirmAction, confirmDestructive, showAlert } from "@/lib/confirm";
+import { AudioRecorderWidget } from "@/components/audio-recorder";
+import { useAuth } from "@/lib/auth-context";
 
 const ESTADOS_ORDEN = ["recibido", "cortando", "cosiendo", "bordado_personalizado", "listo", "entregado"] as const;
 
@@ -44,6 +46,7 @@ const CATEGORIA_LABELS: Record<string, string> = {
 export default function TrabajoDetalleScreen() {
   const colors = useColors();
   const router = useRouter();
+  const { user } = useAuth();
   const { id } = useLocalSearchParams();
   const trabajoId = parseInt(id as string);
   const [showDividir, setShowDividir] = useState(false);
@@ -87,16 +90,39 @@ export default function TrabajoDetalleScreen() {
     onError: (error) => showAlert("Error", "No se pudo eliminar: " + error.message),
   });
 
+  const togglePagadoMutation = trpc.trabajos.togglePagado.useMutation({
+    onSuccess: () => {
+      refetch();
+      utils.trabajos.list.invalidate();
+      if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    },
+    onError: (error) => showAlert("Error", "No se pudo actualizar: " + error.message),
+  });
+
   const handleCambiarEstado = (nuevoEstado: string) => {
     if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    confirmAction(
-      "Cambiar estado",
-      `¿Estás seguro de cambiar a ${ESTADO_LABELS[nuevoEstado] || nuevoEstado}?`,
-      () => updateEstadoMutation.mutate({
+    const doUpdate = () => {
+      updateEstadoMutation.mutate({
         id: trabajoId,
         estadoAnterior: trabajo?.estado,
         estadoNuevo: nuevoEstado,
-      })
+      });
+    };
+    confirmAction(
+      "Cambiar estado",
+      `¿Estás seguro de cambiar a ${ESTADO_LABELS[nuevoEstado] || nuevoEstado}?`,
+      () => {
+        doUpdate();
+        if (nuevoEstado === "listo" && cliente) {
+          setTimeout(() => {
+            confirmAction(
+              "Enviar WhatsApp",
+              `¿Deseas enviar el mensaje de cobro por WhatsApp a ${cliente.nombreCompleto}?`,
+              () => enviarWhatsApp("listo")
+            );
+          }, 500);
+        }
+      }
     );
   };
 
@@ -136,7 +162,7 @@ export default function TrabajoDetalleScreen() {
     if (tipo === "recibido") {
       mensaje = `Hola ${nombre}, hemos recibido su trabajo de ${cat}. Y necesito preguntarle`;
     } else if (tipo === "listo") {
-      const sinpe = (trabajo as any)?.sinpeTelefono || "";
+      const sinpe = (user as any)?.sinpeTelefono || "";
       const sinpeTexto = sinpe ? ` Si el pago es por SINPE Móvil al número: ${sinpe}.` : "";
       mensaje = `Hola ${nombre}, su trabajo de ${cat} está LISTO.${sinpeTexto} Gracias.`;
     } else if (tipo === "entregado") {
@@ -322,6 +348,26 @@ export default function TrabajoDetalleScreen() {
               )}
             </View>
           )}
+
+          {/* Audios */}
+          <AudioRecorderWidget trabajoId={trabajoId} />
+
+          {/* Pagado */}
+          <View className="bg-surface rounded-2xl p-4 border border-border">
+            <View className="flex-row items-center justify-between">
+              <View>
+                <Text className="text-base font-semibold text-foreground">¿Pagado?</Text>
+                <Text className="text-xs text-muted">{(trabajo as any)?.pagado ? "Sí" : "No"}</Text>
+              </View>
+              <Switch
+                value={!!((trabajo as any)?.pagado)}
+                onValueChange={(val) => togglePagadoMutation.mutate({ id: trabajoId, pagado: val ? 1 : 0 })}
+                trackColor={{ false: colors.border, true: colors.success }}
+                thumbColor={"#FFFFFF"}
+                disabled={togglePagadoMutation.isPending}
+              />
+            </View>
+          </View>
 
           {/* Precios */}
           <View className="gap-2">

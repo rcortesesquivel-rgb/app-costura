@@ -442,3 +442,11 @@
 - [x] Verificar handlers reales de borrado (onClick → mutation → DB)
 - [x] Reiniciar servidor desde cero
 - [x] Entregar link PWA funcional
+
+## Ajustes Finales Lógica Financiera - 19 Feb 2026
+- [x] Switch ¿Pagado? en detalle trabajo (default No, campo en DB)
+- [x] Renombrar pestaña Estadísticas a Reportes
+- [x] Ingresos Totales solo suma trabajos con Pagado=Sí
+- [x] Sección Cuentas por Cobrar (Entregado + Pagado=No)
+- [x] Conectar VoiceInput al backend de audios (límite 5)
+- [x] WhatsApp al pasar a Listo: preguntar si enviar mensaje de cobro

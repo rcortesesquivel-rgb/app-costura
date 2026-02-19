@@ -86,6 +86,7 @@ export const trabajos = mysqlTable("trabajos", {
   cantidad: int("cantidad").default(1).notNull(),
   estado: mysqlEnum("estado", ["recibido", "cortando", "cosiendo", "bordado_personalizado", "listo", "entregado"]).default("recibido").notNull(),
   fechaEntrega: timestamp("fechaEntrega"),
+  pagado: int("pagado").default(0).notNull(), // 0 = No, 1 = Sí
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });

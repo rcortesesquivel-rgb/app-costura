@@ -52,7 +52,7 @@ export default function EstadisticasScreen() {
     <ScreenContainer className="p-6">
       <ScrollView contentContainerStyle={{ flexGrow: 1, paddingBottom: 40 }}>
         <View className="gap-6">
-          <Text className="text-2xl font-bold text-foreground">Mis Estadísticas</Text>
+          <Text className="text-2xl font-bold text-foreground">Reportes</Text>
 
           {/* Resumen general */}
           <View className="flex-row gap-3">
@@ -127,11 +127,17 @@ export default function EstadisticasScreen() {
           <View className="gap-3">
             <Text className="text-lg font-semibold text-foreground">Ingresos totales</Text>
             <View className="bg-surface rounded-2xl p-6 border border-border items-center">
-              <Text className="text-xs text-muted mb-2">Suma de trabajos entregados</Text>
+              <Text className="text-xs text-muted mb-2">Suma de trabajos marcados como pagados</Text>
               <Text className="text-3xl font-bold" style={{ color: colors.success }}>{formatCurrency(stats?.ingresosTotales ?? 0)}</Text>
-              <Text className="text-xs text-muted mt-2">
-                {(stats?.trabajosPorEstado as Record<string, number>)?.entregado ?? 0} trabajos entregados
-              </Text>
+            </View>
+          </View>
+
+          {/* Cuentas por cobrar */}
+          <View className="gap-3">
+            <Text className="text-lg font-semibold text-foreground">Cuentas por cobrar</Text>
+            <View className="bg-surface rounded-2xl p-6 border border-border items-center">
+              <Text className="text-xs text-muted mb-2">Trabajos entregados sin pagar</Text>
+              <Text className="text-3xl font-bold" style={{ color: colors.error }}>{formatCurrency((stats as any)?.cuentasPorCobrar ?? 0)}</Text>
             </View>
           </View>
         </View>

@@ -403,7 +403,7 @@ export async function createHistorialEstado(data: InsertHistorialEstado) {
 // ============ MIS ESTADÍSTICAS ============
 export async function getMisEstadisticas(userId: number) {
   const db = await getDb();
-  if (!db) return { totalClientes: 0, totalTrabajos: 0, trabajosPorEstado: {}, trabajosPorUrgencia: {}, ingresosTotales: 0 };
+  if (!db) return { totalClientes: 0, totalTrabajos: 0, trabajosPorEstado: {}, trabajosPorUrgencia: {}, ingresosTotales: 0, cuentasPorCobrar: 0 };
 
   const misClientes = await db.select().from(clientes).where(eq(clientes.userId, userId));
   const misTrabajos = await db.select().from(trabajos).where(eq(trabajos.userId, userId));
@@ -411,6 +411,7 @@ export async function getMisEstadisticas(userId: number) {
   const trabajosPorEstado: Record<string, number> = {};
   const trabajosPorUrgencia: Record<string, number> = {};
   let ingresosTotales = 0;
+  let cuentasPorCobrar = 0;
   const now = new Date();
 
   for (const t of misTrabajos) {
@@ -429,12 +430,20 @@ export async function getMisEstadisticas(userId: number) {
       trabajosPorUrgencia[urgencia] = (trabajosPorUrgencia[urgencia] || 0) + 1;
     }
 
-    if (estado === "entregado") {
-      const precio = parseFloat(t.precioBase || "0");
-      const cant = t.cantidad || 1;
-      const imp = parseFloat(t.impuestos || "0");
-      const var_ = parseFloat(t.varios || "0");
-      ingresosTotales += (precio * cant) + imp + var_;
+    const precio = parseFloat(t.precioBase || "0");
+    const cant = t.cantidad || 1;
+    const imp = parseFloat(t.impuestos || "0");
+    const var_ = parseFloat(t.varios || "0");
+    const totalTrabajo = (precio * cant) + imp + var_;
+
+    // Ingresos: solo trabajos marcados como pagado
+    if ((t as any).pagado === 1) {
+      ingresosTotales += totalTrabajo;
+    }
+
+    // Cuentas por cobrar: entregado pero no pagado
+    if (estado === "entregado" && (t as any).pagado !== 1) {
+      cuentasPorCobrar += totalTrabajo;
     }
   }
 
@@ -444,6 +453,7 @@ export async function getMisEstadisticas(userId: number) {
     trabajosPorEstado,
     trabajosPorUrgencia,
     ingresosTotales,
+    cuentasPorCobrar,
   };
 }
 

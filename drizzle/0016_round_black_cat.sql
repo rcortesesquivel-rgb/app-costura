@@ -1,0 +1,1 @@
+ALTER TABLE `trabajos` ADD `pagado` int DEFAULT 0 NOT NULL;
