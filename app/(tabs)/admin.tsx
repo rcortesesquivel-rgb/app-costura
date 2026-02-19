@@ -1,6 +1,7 @@
 import { ScrollView, Text, View, TouchableOpacity, Alert, ActivityIndicator, RefreshControl, Platform } from "react-native";
 import * as Haptics from "expo-haptics";
 import { useState } from "react";
+import { confirmAction, confirmDestructive, showAlert } from "@/lib/confirm";
 
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
@@ -106,23 +107,24 @@ function UserCard({ userData, currentUserId, onRefresh, colors }: { userData: an
   const isActive = userData.isActive === "active";
   const isSelf = userData.id === currentUserId;
 
-  const confirmAction = (title: string, message: string, action: () => Promise<void>, destructive = false) => {
+  const doConfirmAction = (title: string, message: string, action: () => Promise<void>, destructive = false) => {
     if (Platform.OS === "web") {
       if (window.confirm(`${title}\n\n${message}`)) {
         action();
       }
     } else {
-      Alert.alert(title, message, [
-        { text: "Cancelar", style: "cancel" },
-        { text: "Confirmar", onPress: action, style: destructive ? "destructive" : "default" },
-      ]);
+      if (destructive) {
+        confirmDestructive(title, message, action);
+      } else {
+        confirmAction(title, message, action);
+      }
     }
   };
 
   const handleToggle = () => {
     const newStatus = isActive ? "inactive" : "active";
     const label = isActive ? "desactivar" : "activar";
-    confirmAction(
+    doConfirmAction(
       `${label.charAt(0).toUpperCase() + label.slice(1)} usuario`,
       `¿Estás seguro de que deseas ${label} a ${userData.name || userData.email}?`,
       async () => {
@@ -133,14 +135,14 @@ function UserCard({ userData, currentUserId, onRefresh, colors }: { userData: an
           onRefresh();
         } catch { 
           if (Platform.OS === "web") window.alert("Error al actualizar estado");
-          else Alert.alert("Error", "No se pudo actualizar el estado");
+          else showAlert("Error", "No se pudo actualizar el estado");
         } finally { setBusy(false); }
       }
     );
   };
 
   const handleDelete = () => {
-    confirmAction(
+    doConfirmAction(
       "Eliminar usuario",
       `¿Estás seguro de que deseas borrar este registro?\n\n${userData.name || userData.email}\n\nEsta acción no se puede deshacer.`,
       async () => {
@@ -151,7 +153,7 @@ function UserCard({ userData, currentUserId, onRefresh, colors }: { userData: an
           onRefresh();
         } catch {
           if (Platform.OS === "web") window.alert("Error al eliminar usuario");
-          else Alert.alert("Error", "No se pudo eliminar el usuario");
+          else showAlert("Error", "No se pudo eliminar el usuario");
         } finally { setBusy(false); }
       },
       true

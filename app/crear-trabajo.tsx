@@ -2,6 +2,7 @@ import { ScrollView, Text, View, TextInput, TouchableOpacity, Alert, KeyboardAvo
 import { useState, useMemo } from "react";
 import { useRouter } from "expo-router";
 import * as Haptics from "expo-haptics";
+import { confirmAction, confirmDestructive, showAlert } from "@/lib/confirm";
 
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
@@ -35,12 +36,10 @@ export default function CrearTrabajoScreen() {
       if (Platform.OS !== "web") {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
-      Alert.alert("Éxito", "Trabajo creado correctamente", [
-        { text: "OK", onPress: () => router.back() },
-      ]);
+      showAlert("Éxito", "Trabajo creado correctamente", () => router.back());
     },
     onError: (error) => {
-      Alert.alert("Error", "No se pudo crear el trabajo: " + error.message);
+      showAlert("Error", "No se pudo crear el trabajo: " + error.message);
     },
   });
 
@@ -65,7 +64,7 @@ export default function CrearTrabajoScreen() {
 
   const handleGuardar = () => {
     if (!clienteId || !descripcion.trim() || !precioBase) {
-      Alert.alert("Error", "Completa los campos obligatorios: cliente, descripción y precio base");
+      showAlert("Error", "Completa los campos obligatorios: cliente, descripción y precio base");
       return;
     }
     if (Platform.OS !== "web") {

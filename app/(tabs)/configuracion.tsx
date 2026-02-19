@@ -1,6 +1,7 @@
 import { ScrollView, Text, View, TouchableOpacity, Alert, Platform, Linking } from "react-native";
 import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
+import { confirmAction, confirmDestructive, showAlert } from "@/lib/confirm";
 
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
@@ -26,7 +27,7 @@ export default function CentroAyudaScreen() {
       if (Platform.OS === "web") {
         window.alert(`No se pudo abrir el correo. Escribe directamente a: ${SOPORTE_EMAIL}`);
       } else {
-        Alert.alert("Error", `No se pudo abrir el correo. Escribe directamente a: ${SOPORTE_EMAIL}`);
+        showAlert("Error", `No se pudo abrir el correo. Escribe directamente a: ${SOPORTE_EMAIL}`);
       }
     });
   };
@@ -39,7 +40,7 @@ export default function CentroAyudaScreen() {
       if (Platform.OS === "web") {
         window.alert("No se pudo abrir WhatsApp. Intenta de nuevo.");
       } else {
-        Alert.alert("Error", "No se pudo abrir WhatsApp. Intenta de nuevo.");
+        showAlert("Error", "No se pudo abrir WhatsApp. Intenta de nuevo.");
       }
     });
   };
@@ -52,7 +53,7 @@ export default function CentroAyudaScreen() {
     if (Platform.OS === "web") {
       window.alert(msg);
     } else {
-      Alert.alert("Acerca de", msg, [{ text: "Aceptar" }]);
+      showAlert("Acerca de", msg);
     }
   };
 
@@ -68,7 +69,7 @@ export default function CentroAyudaScreen() {
         if (Platform.OS === "web") {
           window.alert("No se pudo cerrar sesión");
         } else {
-          Alert.alert("Error", "No se pudo cerrar sesión");
+          showAlert("Error", "No se pudo cerrar sesión");
         }
       }
     };
@@ -78,13 +79,11 @@ export default function CentroAyudaScreen() {
         await doLogout();
       }
     } else {
-      Alert.alert(
+      confirmDestructive(
         "Cerrar sesión",
         "¿Estás seguro de que deseas cerrar sesión?",
-        [
-          { text: "Cancelar", style: "cancel" },
-          { text: "Cerrar sesión", onPress: doLogout, style: "destructive" },
-        ]
+        doLogout,
+        "Cerrar sesión"
       );
     }
   };

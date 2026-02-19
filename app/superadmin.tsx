@@ -7,10 +7,12 @@ import {
   ActivityIndicator,
   Alert,
   RefreshControl,
+  Platform,
 } from "react-native";
 import * as Haptics from "expo-haptics";
 import { useState } from "react";
 import { useRouter } from "expo-router";
+import { confirmAction, confirmDestructive, showAlert } from "@/lib/confirm";
 
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
@@ -298,31 +300,24 @@ function UserManagementCard({ user, onStatusChange, onPlanChange, colors }: User
     const newStatus = user.isActive === "active" ? "inactive" : "active";
     const action = newStatus === "active" ? "activar" : "desactivar";
 
-    Alert.alert(
+    confirmAction(
       `${action.charAt(0).toUpperCase() + action.slice(1)} usuario`,
       `¿Estás seguro de que deseas ${action} a ${user.email}?`,
-      [
-        { text: "Cancelar", onPress: () => {}, style: "cancel" },
-        {
-          text: action.charAt(0).toUpperCase() + action.slice(1),
-          onPress: async () => {
-            try {
-              setIsLoadingStatus(true);
-              await updateStatusMutation.mutateAsync({
-                id: user.id,
-                isActive: newStatus,
-              });
-              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-              onStatusChange();
-            } catch (error) {
-              Alert.alert("Error", "No se pudo actualizar el estado del usuario");
-            } finally {
-              setIsLoadingStatus(false);
-            }
-          },
-          style: newStatus === "inactive" ? "destructive" : "default",
-        },
-      ]
+      async () => {
+        try {
+          setIsLoadingStatus(true);
+          await updateStatusMutation.mutateAsync({
+            id: user.id,
+            isActive: newStatus,
+          });
+          if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          onStatusChange();
+        } catch (error) {
+          showAlert("Error", "No se pudo actualizar el estado del usuario");
+        } finally {
+          setIsLoadingStatus(false);
+        }
+      }
     );
   };
 
@@ -333,30 +328,24 @@ function UserManagementCard({ user, onStatusChange, onPlanChange, colors }: User
     const planLabels: Record<string, string> = { basic: "Básico ($12)", vip: "VIP ($14)", lifetime: "Lifetime" };
     const planLabel = planLabels[newPlan] || "Desconocido";
 
-    Alert.alert(
+    confirmAction(
       "Cambiar Plan",
       `¿Cambiar plan de ${user.email} a ${planLabel}?`,
-      [
-        { text: "Cancelar", onPress: () => {}, style: "cancel" },
-        {
-          text: "Cambiar",
-          onPress: async () => {
-            try {
-              setIsLoadingPlan(true);
-              await updatePlanMutation.mutateAsync({
-                id: user.id,
-                plan: newPlan,
-              });
-              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-              onPlanChange();
-            } catch (error) {
-              Alert.alert("Error", "No se pudo cambiar el plan del usuario");
-            } finally {
-              setIsLoadingPlan(false);
-            }
-          },
-        },
-      ]
+      async () => {
+        try {
+          setIsLoadingPlan(true);
+          await updatePlanMutation.mutateAsync({
+            id: user.id,
+            plan: newPlan,
+          });
+          if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          onPlanChange();
+        } catch (error) {
+          showAlert("Error", "No se pudo cambiar el plan del usuario");
+        } finally {
+          setIsLoadingPlan(false);
+        }
+      }
     );
   };
 

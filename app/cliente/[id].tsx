@@ -7,6 +7,7 @@ import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { trpc } from "@/lib/trpc";
 import { useColors } from "@/hooks/use-colors";
+import { confirmDestructive, showAlert } from "@/lib/confirm";
 
 export default function ClienteDetalleScreen() {
   const colors = useColors();
@@ -41,11 +42,9 @@ export default function ClienteDetalleScreen() {
     onSuccess: async () => {
       await utils.clientes.list.invalidate();
       if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      Alert.alert("Eliminado", "El cliente ha sido eliminado", [
-        { text: "OK", onPress: () => router.replace("/(tabs)/clientes" as any) },
-      ]);
+      showAlert("Eliminado", "El cliente ha sido eliminado", () => router.replace("/(tabs)/clientes" as any));
     },
-    onError: (error) => Alert.alert("Error", "No se pudo eliminar: " + error.message),
+    onError: (error) => showAlert("Error", "No se pudo eliminar: " + error.message),
   });
 
   const createMedidasMutation = trpc.medidas.create.useMutation({
@@ -53,7 +52,7 @@ export default function ClienteDetalleScreen() {
       refetchMedidas();
       setEditandoMedidas(false);
       if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      Alert.alert("Éxito", "Medidas guardadas correctamente");
+      showAlert("Éxito", "Medidas guardadas correctamente");
     },
   });
 
@@ -62,7 +61,7 @@ export default function ClienteDetalleScreen() {
       refetchMedidas();
       setEditandoMedidas(false);
       if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      Alert.alert("Éxito", "Medidas actualizadas correctamente");
+      showAlert("Éxito", "Medidas actualizadas correctamente");
     },
   });
 
@@ -279,13 +278,10 @@ export default function ClienteDetalleScreen() {
             style={{ backgroundColor: colors.error }}
             onPress={() => {
               if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-              Alert.alert(
+              confirmDestructive(
                 "Eliminar cliente",
                 "¿Estás seguro de que deseas borrar este cliente y todos sus datos? Esta acción no se puede deshacer.",
-                [
-                  { text: "Cancelar", style: "cancel" },
-                  { text: "Eliminar", style: "destructive", onPress: () => deleteClienteMutation.mutate({ id: clienteId }) },
-                ]
+                () => deleteClienteMutation.mutate({ id: clienteId })
               );
             }}
             disabled={deleteClienteMutation.isPending}

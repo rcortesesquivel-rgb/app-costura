@@ -2,6 +2,7 @@ import { ScrollView, Text, View, TextInput, TouchableOpacity, Alert, KeyboardAvo
 import { useState } from "react";
 import { useRouter } from "expo-router";
 import * as Haptics from "expo-haptics";
+import { confirmAction, confirmDestructive, showAlert } from "@/lib/confirm";
 
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
@@ -51,16 +52,14 @@ export default function CrearClienteScreen() {
         window.alert("Cliente creado correctamente");
         router.back();
       } else {
-        Alert.alert("Éxito", "Cliente creado correctamente", [
-          { text: "OK", onPress: () => router.back() },
-        ]);
+        showAlert("Éxito", "Cliente creado correctamente", () => router.back());
       }
     },
     onError: (error) => {
       if (Platform.OS === "web") {
         window.alert("No se pudo crear el cliente: " + error.message);
       } else {
-        Alert.alert("Error", "No se pudo crear el cliente: " + error.message);
+        showAlert("Error", "No se pudo crear el cliente: " + error.message);
       }
     },
   });
@@ -77,7 +76,7 @@ export default function CrearClienteScreen() {
       if (Platform.OS === "web") {
         window.alert("El nombre completo es obligatorio");
       } else {
-        Alert.alert("Error", "El nombre completo es obligatorio");
+        showAlert("Error", "El nombre completo es obligatorio");
       }
       return;
     }

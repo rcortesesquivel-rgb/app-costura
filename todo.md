@@ -435,3 +435,10 @@
 - [x] Control de audios: tabla creada, límite de 5 audios por trabajo forzado en validación
 - [x] Confirmación de borrado: endpoints delete activos, funcionalidad real en interfaz
 - [x] 23/23 tests pasados, 0 errores TypeScript
+
+## Hard Refresh - 19 Feb 2026
+- [x] Limpiar caché y build completo
+- [x] Verificar handlers reales de estados (onClick → mutation → DB)
+- [x] Verificar handlers reales de borrado (onClick → mutation → DB)
+- [x] Reiniciar servidor desde cero
+- [x] Entregar link PWA funcional

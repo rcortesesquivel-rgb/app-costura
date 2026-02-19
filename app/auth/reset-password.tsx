@@ -3,6 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert } from "reac
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { ScreenContainer } from "@/components/screen-container";
 import { useColors } from "@/hooks/use-colors";
+import { confirmAction, confirmDestructive, showAlert } from "@/lib/confirm";
 
 export default function ResetPasswordScreen() {
   const router = useRouter();
@@ -17,22 +18,22 @@ export default function ResetPasswordScreen() {
   const handleResetPassword = async () => {
     // Validaciones
     if (!token) {
-      Alert.alert("Error", "Token de recuperación no válido");
+      showAlert("Error", "Token de recuperación no válido");
       return;
     }
 
     if (!newPassword || !confirmPassword) {
-      Alert.alert("Error", "Por favor completa todos los campos");
+      showAlert("Error", "Por favor completa todos los campos");
       return;
     }
 
     if (newPassword.length < 6) {
-      Alert.alert("Error", "La contraseña debe tener al menos 6 caracteres");
+      showAlert("Error", "La contraseña debe tener al menos 6 caracteres");
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      Alert.alert("Error", "Las contraseñas no coinciden");
+      showAlert("Error", "Las contraseñas no coinciden");
       return;
     }
 
@@ -53,23 +54,18 @@ export default function ResetPasswordScreen() {
       const data = await response.json();
 
       if (!response.ok) {
-        Alert.alert("Error", data.error || "No se pudo restablecer la contraseña");
+        showAlert("Error", data.error || "No se pudo restablecer la contraseña");
         return;
       }
 
-      Alert.alert(
+      showAlert(
         "Éxito",
         "Tu contraseña ha sido restablecida correctamente. Por favor inicia sesión con tu nueva contraseña.",
-        [
-          {
-            text: "Ir a inicio de sesión",
-            onPress: () => router.push("/auth/signin"),
-          },
-        ]
+        () => router.push("/auth/signin")
       );
     } catch (error) {
       console.error("Error resetting password:", error);
-      Alert.alert("Error", "Ocurrió un error al restablecer la contraseña");
+      showAlert("Error", "Ocurrió un error al restablecer la contraseña");
     } finally {
       setIsLoading(false);
     }

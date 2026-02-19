@@ -7,6 +7,7 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useAuth } from "@/lib/auth-context";
 import { useColors } from "@/hooks/use-colors";
 import { getApiBaseUrl } from "@/constants/oauth";
+import { confirmAction, confirmDestructive, showAlert } from "@/lib/confirm";
 
 export default function MiCuentaScreen() {
   const { user, isSignedIn, signOut } = useAuth();
@@ -24,20 +25,14 @@ export default function MiCuentaScreen() {
         router.replace("/(tabs)");
       }
     } else {
-      Alert.alert(
+      confirmDestructive(
         "Cerrar sesión",
         "¿Estás seguro de que deseas cerrar sesión?",
-        [
-          { text: "Cancelar", onPress: () => {}, style: "cancel" },
-          {
-            text: "Cerrar sesión",
-            onPress: async () => {
-              await signOut();
-              router.replace("/(tabs)");
-            },
-            style: "destructive",
-          },
-        ]
+        async () => {
+          await signOut();
+          router.replace("/(tabs)");
+        },
+        "Cerrar sesión"
       );
     }
   };
@@ -58,7 +53,7 @@ export default function MiCuentaScreen() {
 
   const handleForgotPassword = async () => {
     if (!forgotEmail.trim()) {
-      Alert.alert("Error", "Por favor ingresa tu email");
+      showAlert("Error", "Por favor ingresa tu email");
       return;
     }
 
@@ -89,7 +84,7 @@ export default function MiCuentaScreen() {
       }, 3000);
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : "Error desconocido";
-      Alert.alert("Error", errorMsg);
+      showAlert("Error", errorMsg);
     } finally {
       setIsLoadingReset(false);
     }

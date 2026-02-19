@@ -2,6 +2,7 @@ import { Text, View, ScrollView, TouchableOpacity, TextInput, ActivityIndicator,
 import { useState, useEffect, useMemo } from "react";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import * as Haptics from "expo-haptics";
+import { confirmAction, confirmDestructive, showAlert } from "@/lib/confirm";
 
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
@@ -36,12 +37,10 @@ export default function EditarTrabajoScreen() {
       if (Platform.OS !== "web") {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
-      Alert.alert("Éxito", "Trabajo actualizado correctamente", [
-        { text: "OK", onPress: () => router.back() },
-      ]);
+      showAlert("Éxito", "Trabajo actualizado correctamente", () => router.back());
     },
     onError: (error) => {
-      Alert.alert("Error", "No se pudo actualizar el trabajo: " + error.message);
+      showAlert("Error", "No se pudo actualizar el trabajo: " + error.message);
     },
   });
 
@@ -51,12 +50,10 @@ export default function EditarTrabajoScreen() {
       if (Platform.OS !== "web") {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
-      Alert.alert("Eliminado", "El trabajo ha sido eliminado", [
-        { text: "OK", onPress: () => router.replace("/(tabs)") },
-      ]);
+      showAlert("Eliminado", "El trabajo ha sido eliminado", () => router.replace("/(tabs)"));
     },
     onError: (error) => {
-      Alert.alert("Error", "No se pudo eliminar: " + error.message);
+      showAlert("Error", "No se pudo eliminar: " + error.message);
     },
   });
 
@@ -92,11 +89,11 @@ export default function EditarTrabajoScreen() {
 
   const handleGuardar = () => {
     if (!descripcion.trim()) {
-      Alert.alert("Error", "La descripción es obligatoria");
+      showAlert("Error", "La descripción es obligatoria");
       return;
     }
     if (!precioBase || parseFloat(precioBase) <= 0) {
-      Alert.alert("Error", "El precio base debe ser mayor a 0");
+      showAlert("Error", "El precio base debe ser mayor a 0");
       return;
     }
     if (Platform.OS !== "web") {
@@ -127,17 +124,10 @@ export default function EditarTrabajoScreen() {
     if (Platform.OS !== "web") {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
     }
-    Alert.alert(
+    confirmDestructive(
       "Eliminar trabajo",
       "¿Estás seguro de que deseas borrar este registro? Esta acción no se puede deshacer.",
-      [
-        { text: "Cancelar", style: "cancel" },
-        {
-          text: "Eliminar",
-          style: "destructive",
-          onPress: () => deleteMutation.mutate({ id: trabajoId }),
-        },
-      ]
+      () => deleteMutation.mutate({ id: trabajoId })
     );
   };
 

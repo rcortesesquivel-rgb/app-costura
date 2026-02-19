@@ -9,6 +9,7 @@ import { trpc } from "@/lib/trpc";
 import { useColors } from "@/hooks/use-colors";
 import { formatCurrency } from "@/lib/format-currency";
 import { getApiBaseUrl } from "@/constants/oauth";
+import { confirmAction, confirmDestructive, showAlert } from "@/lib/confirm";
 
 const ESTADOS_ORDEN = ["recibido", "cortando", "cosiendo", "bordado_personalizado", "listo", "entregado"] as const;
 
@@ -62,7 +63,7 @@ export default function TrabajoDetalleScreen() {
       utils.trabajos.list.invalidate();
       if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     },
-    onError: (error) => Alert.alert("Error", "No se pudo cambiar el estado: " + error.message),
+    onError: (error) => showAlert("Error", "No se pudo cambiar el estado: " + error.message),
   });
 
   const dividirMutation = trpc.trabajos.dividir.useMutation({
@@ -72,67 +73,55 @@ export default function TrabajoDetalleScreen() {
       setShowDividir(false);
       setCantidadDividir("");
       if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      Alert.alert("Dividido", `Se creó un nuevo trabajo con la cantidad separada. Nuevo ID: #${data.nuevoId}`);
+      showAlert("Dividido", `Se creó un nuevo trabajo con la cantidad separada. Nuevo ID: #${data.nuevoId}`);
     },
-    onError: (error) => Alert.alert("Error", error.message),
+    onError: (error) => showAlert("Error", error.message),
   });
 
   const deleteMutation = trpc.trabajos.delete.useMutation({
     onSuccess: async () => {
       await utils.trabajos.list.invalidate();
       if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      Alert.alert("Eliminado", "El trabajo ha sido eliminado", [
-        { text: "OK", onPress: () => router.replace("/(tabs)") },
-      ]);
+      showAlert("Eliminado", "El trabajo ha sido eliminado", () => router.replace("/(tabs)"));
     },
-    onError: (error) => Alert.alert("Error", "No se pudo eliminar: " + error.message),
+    onError: (error) => showAlert("Error", "No se pudo eliminar: " + error.message),
   });
 
   const handleCambiarEstado = (nuevoEstado: string) => {
     if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    Alert.alert(
+    confirmAction(
       "Cambiar estado",
       `¿Estás seguro de cambiar a ${ESTADO_LABELS[nuevoEstado] || nuevoEstado}?`,
-      [
-        { text: "Cancelar", style: "cancel" },
-        {
-          text: "Confirmar",
-          onPress: () => updateEstadoMutation.mutate({
-            id: trabajoId,
-            estadoAnterior: trabajo?.estado,
-            estadoNuevo: nuevoEstado,
-          }),
-        },
-      ]
+      () => updateEstadoMutation.mutate({
+        id: trabajoId,
+        estadoAnterior: trabajo?.estado,
+        estadoNuevo: nuevoEstado,
+      })
     );
   };
 
   const handleDividir = () => {
     const cant = parseInt(cantidadDividir);
     if (!cant || cant < 1) {
-      Alert.alert("Error", "Ingresa una cantidad válida");
+      showAlert("Error", "Ingresa una cantidad válida");
       return;
     }
     const cantidadActual = (trabajo as any)?.cantidad ?? 1;
     if (cant >= cantidadActual) {
-      Alert.alert("Error", `La cantidad a separar debe ser menor a ${cantidadActual}`);
+      showAlert("Error", `La cantidad a separar debe ser menor a ${cantidadActual}`);
       return;
     }
-    Alert.alert("Dividir trabajo", `¿Separar ${cant} unidades del trabajo actual?`, [
-      { text: "Cancelar", style: "cancel" },
-      { text: "Dividir", onPress: () => dividirMutation.mutate({ id: trabajoId, cantidadSeparar: cant }) },
-    ]);
+    confirmAction("Dividir trabajo", `¿Separar ${cant} unidades del trabajo actual?`, () =>
+      dividirMutation.mutate({ id: trabajoId, cantidadSeparar: cant })
+    );
   };
 
   const handleEliminar = () => {
     if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-    Alert.alert(
+    confirmDestructive(
       "Eliminar trabajo",
       "¿Estás seguro de que deseas borrar este registro? Esta acción no se puede deshacer.",
-      [
-        { text: "Cancelar", style: "cancel" },
-        { text: "Eliminar", style: "destructive", onPress: () => deleteMutation.mutate({ id: trabajoId }) },
-      ]
+      () => deleteMutation.mutate({ id: trabajoId })
     );
   };
 
