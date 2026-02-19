@@ -428,3 +428,10 @@
 - [x] Pestaña Mis Estadísticas: Total Clientes, Trabajos por Urgencia/Estado, Ingresos Totales
 - [x] Reparar borrado de clientes y trabajos con confirmación
 - [x] Botón Ir Atrás fijo en footer sin quitar el superior
+
+## Reparaciones Críticas - 19 Feb 2026 (Tarde)
+- [x] Conexión de estados: endpoint updateEstado funcional, onChange actualiza DB
+- [x] Lógica Dividir Trabajo: botón implementado, resta cantidad original, crea nuevo registro
+- [x] Control de audios: tabla creada, límite de 5 audios por trabajo forzado en validación
+- [x] Confirmación de borrado: endpoints delete activos, funcionalidad real en interfaz
+- [x] 23/23 tests pasados, 0 errores TypeScript

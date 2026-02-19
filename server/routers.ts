@@ -510,6 +510,38 @@ export const appRouter = router({
 
     // Notificaciones
     notifications: notificationsRouter,
+
+    // Audios
+    audios: router({
+      getByTrabajoId: protectedProcedure
+        .input(z.object({ trabajoId: z.number() }))
+        .query(({ input, ctx }) => db.getAudiosByTrabajoId(input.trabajoId, ctx.user.id)),
+
+      create: protectedProcedure
+        .input(z.object({
+          trabajoId: z.number(),
+          url: z.string().url(),
+          duracion: z.number().int().min(0).max(30),
+          descripcion: z.string().optional(),
+        }))
+        .mutation(async ({ input, ctx }) => {
+          const audioId = await db.createAudio({
+            userId: ctx.user.id,
+            trabajoId: input.trabajoId,
+            url: input.url,
+            duracion: input.duracion,
+            descripcion: input.descripcion,
+          });
+          return { id: audioId };
+        }),
+
+      delete: protectedProcedure
+        .input(z.object({ id: z.number() }))
+        .mutation(async ({ input, ctx }) => {
+          await db.deleteAudio(input.id, ctx.user.id);
+          return { success: true };
+        }),
+    }),
   }),
 });
 

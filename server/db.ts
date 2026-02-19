@@ -9,12 +9,14 @@ import {
   agregados, 
   imagenes,
   historialEstados,
+  audios,
   InsertCliente,
   InsertMedida,
   InsertTrabajo,
   InsertAgregado,
   InsertImagen,
-  InsertHistorialEstado
+  InsertHistorialEstado,
+  InsertAudio
 } from "../drizzle/schema";
 import { ENV } from "./_core/env";
 
@@ -443,4 +445,41 @@ export async function getMisEstadisticas(userId: number) {
     trabajosPorUrgencia,
     ingresosTotales,
   };
+}
+
+// ============ AUDIOS ============
+export async function createAudio(data: InsertAudio): Promise<number> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  // Validar que no haya mas de 5 audios por trabajo
+  const existingAudios = await db.select().from(audios).where(eq(audios.trabajoId, data.trabajoId as any));
+  if (existingAudios.length >= 5) {
+    throw new Error("Maximo 5 audios por trabajo");
+  }
+
+  const result = await db.insert(audios).values(data);
+  return result[0].insertId;
+}
+
+export async function getAudiosByTrabajoId(trabajoId: number, userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  // Verificar que el trabajo pertenezca al usuario
+  const trabajo = await db.select().from(trabajos).where(and(eq(trabajos.id, trabajoId), eq(trabajos.userId, userId)));
+  if (!trabajo.length) throw new Error("Trabajo no encontrado");
+
+  return db.select().from(audios).where(eq(audios.trabajoId, trabajoId));
+}
+
+export async function deleteAudio(audioId: number, userId: number): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  // Verificar que el audio pertenezca al usuario
+  const audio = await db.select().from(audios).where(and(eq(audios.id, audioId), eq(audios.userId, userId)));
+  if (!audio.length) throw new Error("Audio no encontrado");
+
+  await db.delete(audios).where(eq(audios.id, audioId));
 }

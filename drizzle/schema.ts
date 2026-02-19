@@ -171,6 +171,17 @@ export const notifications = mysqlTable("notifications", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
+// Audios adjuntos a trabajos
+export const audios = mysqlTable("audios", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  trabajoId: int("trabajoId").notNull(),
+  url: text("url").notNull(), // URL del audio en S3
+  duracion: int("duracion").default(0).notNull(), // Duracion en segundos
+  descripcion: text("descripcion"), // Descripcion del audio
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
 // Tabla de preferencias de notificaciones
 export const notificationPreferences = mysqlTable("notificationPreferences", {
   id: int("id").autoincrement().primaryKey(),
@@ -206,3 +217,5 @@ export type Notification = typeof notifications.$inferSelect;
 export type InsertNotification = typeof notifications.$inferInsert;
 export type NotificationPreference = typeof notificationPreferences.$inferSelect;
 export type InsertNotificationPreference = typeof notificationPreferences.$inferInsert;
+export type Audio = typeof audios.$inferSelect;
+export type InsertAudio = typeof audios.$inferInsert;
