@@ -1,4 +1,4 @@
-import { ScrollView, Text, View, TouchableOpacity, Alert, ActivityIndicator, RefreshControl } from "react-native";
+import { ScrollView, Text, View, TouchableOpacity, Alert, ActivityIndicator, RefreshControl, Platform } from "react-native";
 import * as Haptics from "expo-haptics";
 import { useState } from "react";
 
@@ -13,14 +13,11 @@ export default function AdminScreen() {
   const { user } = useAuth();
   const [refreshing, setRefreshing] = useState(false);
 
-  // Verificar si es admin
   if (!user || user.role !== "admin") {
     return (
       <ScreenContainer className="items-center justify-center">
         <View className="gap-4 items-center">
-          <View className="bg-error/10 rounded-full p-4">
-            <IconSymbol name="exclamationmark.triangle.fill" size={48} color={colors.error} />
-          </View>
+          <IconSymbol name="shield.fill" size={48} color={colors.error} />
           <Text className="text-xl font-bold text-foreground">Acceso Denegado</Text>
           <Text className="text-sm text-muted text-center px-4">
             Solo los administradores pueden acceder a esta sección.
@@ -30,42 +27,16 @@ export default function AdminScreen() {
     );
   }
 
-  // Queries
-  const { data: users, isLoading: loadingUsers, refetch: refetchUsers } = trpc.admin.users.list.useQuery();
-  const { data: stats, isLoading: loadingStats, refetch: refetchStats } = trpc.admin.stats.overview.useQuery();
-  const { data: trabajosByEstado } = trpc.admin.stats.trabajosByEstado.useQuery();
-  const { data: trabajosByTipo } = trpc.admin.stats.trabajosByTipo.useQuery();
+  const { data: users, isLoading, refetch } = trpc.admin.users.list.useQuery();
+  const { data: stats, refetch: refetchStats } = trpc.admin.stats.overview.useQuery();
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await Promise.all([refetchUsers(), refetchStats()]);
+    await Promise.all([refetch(), refetchStats()]);
     setRefreshing(false);
   };
 
-  const getEstadoLabel = (estado: string) => {
-    switch (estado) {
-      case "en_espera": return "En espera";
-      case "cortando": return "Cortando";
-      case "cosiendo": return "Cosiendo";
-      case "listo": return "Listo";
-      case "entregado": return "Entregado";
-      default: return estado;
-    }
-  };
-
-  const getTipoLabel = (tipo: string) => {
-    switch (tipo) {
-      case "arreglo": return "Arreglos";
-      case "confeccion": return "Confección";
-      case "personalizacion": return "Personalización";
-      default: return tipo;
-    }
-  };
-
-  const maxTrabajosEstado = trabajosByEstado ? Math.max(...trabajosByEstado.map(t => t.count), 1) : 1;
-  const maxTrabajosTipo = trabajosByTipo ? Math.max(...trabajosByTipo.map(t => t.count), 1) : 1;
-
-  if (loadingUsers || loadingStats) {
+  if (isLoading) {
     return (
       <ScreenContainer className="items-center justify-center">
         <ActivityIndicator size="large" color={colors.primary} />
@@ -73,10 +44,14 @@ export default function AdminScreen() {
     );
   }
 
+  const totalUsers = stats?.totalUsers ?? 0;
+  const activeUsers = stats?.activeUsers ?? 0;
+  const inactiveUsers = totalUsers - activeUsers;
+
   return (
     <ScreenContainer className="bg-background">
       <ScrollView
-        contentContainerStyle={{ flexGrow: 1, paddingBottom: 20 }}
+        contentContainerStyle={{ flexGrow: 1, paddingBottom: 80 }}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
         }
@@ -84,106 +59,33 @@ export default function AdminScreen() {
         <View className="p-6 gap-6">
           {/* Header */}
           <View className="gap-2">
-            <Text className="text-3xl font-bold text-foreground">Administración</Text>
-            <Text className="text-base text-muted">Gestión de usuarios y estadísticas</Text>
+            <Text className="text-3xl font-bold text-foreground">Gestión de Usuarios</Text>
+            <Text className="text-base text-muted">Administra suscripciones y accesos</Text>
           </View>
 
-          {/* Estadísticas Rápidas */}
-          {stats && (
-            <View className="gap-3">
-              <Text className="text-sm font-semibold text-muted uppercase tracking-wide">Estadísticas Generales</Text>
-              
-              <View className="flex-row gap-3">
-                <View className="flex-1 bg-surface rounded-2xl p-4 border border-border">
-                  <Text className="text-2xl font-bold text-foreground">{stats.totalUsers}</Text>
-                  <Text className="text-sm text-muted mt-1">Usuarios Totales</Text>
-                </View>
-                <View className="flex-1 bg-surface rounded-2xl p-4 border border-border">
-                  <Text className="text-2xl font-bold" style={{ color: colors.success }}>
-                    {stats.activeUsers}
-                  </Text>
-                  <Text className="text-sm text-muted mt-1">Activos</Text>
-                </View>
-                <View className="flex-1 bg-surface rounded-2xl p-4 border border-border">
-                  <Text className="text-2xl font-bold" style={{ color: colors.warning }}>
-                    {stats.inactiveUsers}
-                  </Text>
-                  <Text className="text-sm text-muted mt-1">Inactivos</Text>
-                </View>
-              </View>
-
-              <View className="flex-row gap-3">
-                <View className="flex-1 bg-surface rounded-2xl p-4 border border-border">
-                  <Text className="text-2xl font-bold text-foreground">{stats.totalTrabajos}</Text>
-                  <Text className="text-sm text-muted mt-1">Trabajos Totales</Text>
-                </View>
-                <View className="flex-1 bg-surface rounded-2xl p-4 border border-border">
-                  <Text className="text-2xl font-bold text-foreground">{stats.totalClientes}</Text>
-                  <Text className="text-sm text-muted mt-1">Clientes Totales</Text>
-                </View>
-              </View>
+          {/* Resumen */}
+          <View className="flex-row gap-3">
+            <View className="flex-1 bg-surface rounded-2xl p-4 border border-border items-center">
+              <Text className="text-2xl font-bold text-foreground">{totalUsers}</Text>
+              <Text className="text-xs text-muted mt-1">Total</Text>
             </View>
-          )}
-
-          {/* Estadísticas de Trabajos */}
-          {trabajosByEstado && trabajosByEstado.length > 0 && (
-            <View className="gap-3">
-              <Text className="text-sm font-semibold text-muted uppercase tracking-wide">Trabajos por Estado</Text>
-              <View className="bg-surface rounded-2xl p-4 border border-border gap-3">
-                {trabajosByEstado.map((item) => (
-                  <View key={item.estado} className="gap-2">
-                    <View className="flex-row items-center justify-between">
-                      <Text className="text-sm text-foreground font-medium">{getEstadoLabel(item.estado)}</Text>
-                      <Text className="text-sm font-semibold text-primary">{item.count}</Text>
-                    </View>
-                    <View className="h-2 bg-surface rounded-full overflow-hidden border border-border">
-                      <View
-                        className="h-full bg-primary rounded-full"
-                        style={{
-                          width: `${(item.count / maxTrabajosEstado) * 100}%`,
-                        }}
-                      />
-                    </View>
-                  </View>
-                ))}
-              </View>
+            <View className="flex-1 bg-surface rounded-2xl p-4 border border-border items-center">
+              <Text className="text-2xl font-bold" style={{ color: colors.success }}>{activeUsers}</Text>
+              <Text className="text-xs text-muted mt-1">Activos</Text>
             </View>
-          )}
-
-          {trabajosByTipo && trabajosByTipo.length > 0 && (
-            <View className="gap-3">
-              <Text className="text-sm font-semibold text-muted uppercase tracking-wide">Trabajos por Tipo</Text>
-              <View className="bg-surface rounded-2xl p-4 border border-border gap-3">
-                {trabajosByTipo.map((item) => (
-                  <View key={item.tipo} className="gap-2">
-                    <View className="flex-row items-center justify-between">
-                      <Text className="text-sm text-foreground font-medium">{getTipoLabel(item.tipo)}</Text>
-                      <Text className="text-sm font-semibold text-primary">{item.count}</Text>
-                    </View>
-                    <View className="h-2 bg-surface rounded-full overflow-hidden border border-border">
-                      <View
-                        className="h-full bg-primary rounded-full"
-                        style={{
-                          width: `${(item.count / maxTrabajosTipo) * 100}%`,
-                        }}
-                      />
-                    </View>
-                  </View>
-                ))}
-              </View>
+            <View className="flex-1 bg-surface rounded-2xl p-4 border border-border items-center">
+              <Text className="text-2xl font-bold" style={{ color: colors.error }}>{inactiveUsers}</Text>
+              <Text className="text-xs text-muted mt-1">Inactivos</Text>
             </View>
-          )}
+          </View>
 
           {/* Lista de Usuarios */}
           <View className="gap-3">
             <Text className="text-sm font-semibold text-muted uppercase tracking-wide">Usuarios Registrados</Text>
-            
             {users && users.length > 0 ? (
-              <View className="gap-2">
-                {users.map((u) => (
-                  <UserCard key={u.id} user={u} onStatusChange={refetchUsers} colors={colors} />
-                ))}
-              </View>
+              users.map((u) => (
+                <UserCard key={u.id} userData={u} currentUserId={user.id} onRefresh={onRefresh} colors={colors} />
+              ))
             ) : (
               <View className="bg-surface rounded-2xl p-6 border border-border items-center">
                 <Text className="text-base text-muted">No hay usuarios registrados</Text>
@@ -196,119 +98,138 @@ export default function AdminScreen() {
   );
 }
 
-interface UserCardProps {
-  user: any;
-  onStatusChange: () => void;
-  colors: any;
-}
+function UserCard({ userData, currentUserId, onRefresh, colors }: { userData: any; currentUserId: number; onRefresh: () => void; colors: any }) {
+  const [busy, setBusy] = useState(false);
+  const updateStatus = trpc.admin.users.updateStatus.useMutation();
+  const deleteUser = trpc.admin.users.delete.useMutation();
 
-function UserCard({ user, onStatusChange, colors }: UserCardProps) {
-  const [isLoading, setIsLoading] = useState(false);
-  const updateStatusMutation = trpc.admin.users.updateStatus.useMutation();
+  const isActive = userData.isActive === "active";
+  const isSelf = userData.id === currentUserId;
 
-  const handleToggleStatus = () => {
-    const newStatus = user.isActive === "active" ? "inactive" : "active";
-    const action = newStatus === "active" ? "activar" : "desactivar";
+  const confirmAction = (title: string, message: string, action: () => Promise<void>, destructive = false) => {
+    if (Platform.OS === "web") {
+      if (window.confirm(`${title}\n\n${message}`)) {
+        action();
+      }
+    } else {
+      Alert.alert(title, message, [
+        { text: "Cancelar", style: "cancel" },
+        { text: "Confirmar", onPress: action, style: destructive ? "destructive" : "default" },
+      ]);
+    }
+  };
 
-    Alert.alert(
-      `${action.charAt(0).toUpperCase() + action.slice(1)} usuario`,
-      `¿Estás seguro de que deseas ${action} a ${user.email}?`,
-      [
-        { text: "Cancelar", onPress: () => {}, style: "cancel" },
-        {
-          text: action.charAt(0).toUpperCase() + action.slice(1),
-          onPress: async () => {
-            try {
-              setIsLoading(true);
-              await updateStatusMutation.mutateAsync({
-                id: user.id,
-                isActive: newStatus,
-              });
-              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-              onStatusChange();
-            } catch (error) {
-              Alert.alert("Error", "No se pudo actualizar el estado del usuario");
-            } finally {
-              setIsLoading(false);
-            }
-          },
-          style: newStatus === "inactive" ? "destructive" : "default",
-        },
-      ]
+  const handleToggle = () => {
+    const newStatus = isActive ? "inactive" : "active";
+    const label = isActive ? "desactivar" : "activar";
+    confirmAction(
+      `${label.charAt(0).toUpperCase() + label.slice(1)} usuario`,
+      `¿Estás seguro de que deseas ${label} a ${userData.name || userData.email}?`,
+      async () => {
+        try {
+          setBusy(true);
+          await updateStatus.mutateAsync({ id: userData.id, isActive: newStatus });
+          if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          onRefresh();
+        } catch { 
+          if (Platform.OS === "web") window.alert("Error al actualizar estado");
+          else Alert.alert("Error", "No se pudo actualizar el estado");
+        } finally { setBusy(false); }
+      }
     );
   };
 
-  const isActive = user.isActive === "active";
-  const statusColor = isActive ? colors.success : colors.error;
-  const statusLabel = isActive ? "Activo" : "Inactivo";
+  const handleDelete = () => {
+    confirmAction(
+      "Eliminar usuario",
+      `¿Estás seguro de que deseas borrar este registro?\n\n${userData.name || userData.email}\n\nEsta acción no se puede deshacer.`,
+      async () => {
+        try {
+          setBusy(true);
+          await deleteUser.mutateAsync({ id: userData.id });
+          if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          onRefresh();
+        } catch {
+          if (Platform.OS === "web") window.alert("Error al eliminar usuario");
+          else Alert.alert("Error", "No se pudo eliminar el usuario");
+        } finally { setBusy(false); }
+      },
+      true
+    );
+  };
 
   return (
     <View className="bg-surface rounded-2xl p-4 border border-border">
-      <View className="flex-row items-start justify-between gap-3">
-        <View className="flex-1 gap-2">
-          <View className="flex-row items-center gap-2">
-            <Text className="text-base font-semibold text-foreground flex-1">{user.email}</Text>
-            <View className="rounded-full px-3 py-1" style={{ backgroundColor: statusColor }}>
-              <Text className="text-xs font-semibold text-white">{statusLabel}</Text>
-            </View>
-          </View>
-          
-          {user.name && (
-            <Text className="text-sm text-muted">{user.name}</Text>
-          )}
-          
-          {/* Plan y Prioridad */}
-          <View className="flex-row items-center gap-2 mt-2">
-            <View className="flex-row items-center gap-1 flex-1">
-              <IconSymbol name="creditcard.fill" size={14} color={colors.primary} />
-              <Text className="text-xs font-medium text-primary">
-                {user.plan === "monthly" ? "Mensual" : "Lifetime"}
-              </Text>
-            </View>
-            {user.isPriority === 1 && (
-              <View className="flex-row items-center gap-1 bg-warning/10 rounded-full px-2 py-1">
-                <Text style={{ fontSize: 12 }}>⭐</Text>
-                <Text className="text-xs font-semibold text-warning">Prioridad</Text>
-              </View>
-            )}
-          </View>
-          
-          <View className="flex-row items-center gap-2 mt-1">
-            <View className="flex-row items-center gap-1 flex-1">
-              <IconSymbol name="person.fill" size={14} color={colors.muted} />
-              <Text className="text-xs text-muted">
-                {user.role === "admin" ? "Administrador" : "Usuario"}
-              </Text>
-            </View>
-            <View className="flex-row items-center gap-1">
-              <IconSymbol name="clock.fill" size={14} color={colors.muted} />
-              <Text className="text-xs text-muted">
-                {new Date(user.createdAt).toLocaleDateString()}
-              </Text>
-            </View>
-          </View>
+      <View className="flex-row items-center gap-3">
+        {/* Avatar */}
+        <View style={{ backgroundColor: isActive ? `${colors.success}20` : `${colors.error}20`, borderRadius: 999, padding: 10 }}>
+          <IconSymbol name="person.fill" size={24} color={isActive ? colors.success : colors.error} />
         </View>
 
-        <TouchableOpacity
-          onPress={handleToggleStatus}
-          disabled={isLoading}
-          style={{
-            opacity: isLoading ? 0.5 : 1,
-          }}
-        >
-          {isLoading ? (
-            <ActivityIndicator size="small" color={colors.primary} />
-          ) : (
-            <View className="bg-primary/10 rounded-full p-2">
-              <IconSymbol
-                name={isActive ? "checkmark.circle.fill" : "xmark.circle.fill"}
-                size={24}
-                color={isActive ? colors.success : colors.error}
-              />
+        {/* Info */}
+        <View className="flex-1">
+          <View className="flex-row items-center gap-2">
+            <Text className="text-base font-semibold text-foreground flex-1" numberOfLines={1}>
+              {userData.name || "Sin nombre"}
+            </Text>
+            <View style={{ backgroundColor: isActive ? colors.success : colors.error, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 2 }}>
+              <Text style={{ color: "#FFF", fontSize: 11, fontWeight: "700" }}>{isActive ? "Activo" : "Inactivo"}</Text>
             </View>
-          )}
-        </TouchableOpacity>
+          </View>
+          <Text className="text-sm text-muted" numberOfLines={1}>{userData.email}</Text>
+          <View className="flex-row items-center gap-3 mt-1">
+            <Text className="text-xs text-muted">
+              {userData.role === "admin" ? "Admin" : "Usuario"}
+            </Text>
+            <Text className="text-xs text-muted">
+              Registro: {userData.createdAt ? new Date(userData.createdAt).toLocaleDateString() : "N/A"}
+            </Text>
+          </View>
+        </View>
       </View>
+
+      {/* Botones de acción */}
+      {!isSelf && (
+        <View className="flex-row gap-2 mt-3" style={{ justifyContent: "flex-end" }}>
+          <TouchableOpacity
+            onPress={handleToggle}
+            disabled={busy}
+            style={{
+              flexDirection: "row", alignItems: "center", gap: 4,
+              backgroundColor: isActive ? `${colors.warning}15` : `${colors.success}15`,
+              borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8,
+              opacity: busy ? 0.5 : 1,
+            }}
+            activeOpacity={0.7}
+          >
+            <IconSymbol name={isActive ? "xmark.circle.fill" : "checkmark.circle.fill"} size={16} color={isActive ? colors.warning : colors.success} />
+            <Text style={{ fontSize: 13, fontWeight: "600", color: isActive ? colors.warning : colors.success }}>
+              {isActive ? "Desactivar" : "Activar"}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={handleDelete}
+            disabled={busy}
+            style={{
+              flexDirection: "row", alignItems: "center", gap: 4,
+              backgroundColor: `${colors.error}15`,
+              borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8,
+              opacity: busy ? 0.5 : 1,
+            }}
+            activeOpacity={0.7}
+          >
+            <IconSymbol name="trash.fill" size={16} color={colors.error} />
+            <Text style={{ fontSize: 13, fontWeight: "600", color: colors.error }}>Borrar</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {isSelf && (
+        <View className="mt-2" style={{ alignItems: "flex-end" }}>
+          <Text className="text-xs text-muted" style={{ fontStyle: "italic" }}>Tu cuenta (no editable)</Text>
+        </View>
+      )}
     </View>
   );
 }

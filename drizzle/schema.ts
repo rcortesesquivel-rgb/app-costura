@@ -40,6 +40,8 @@ export const clientes = mysqlTable("clientes", {
   userId: int("userId").notNull(), // Foreign key to users table
   nombreCompleto: varchar("nombreCompleto", { length: 255 }).notNull(),
   telefono: varchar("telefono", { length: 20 }),
+  codigoPais: varchar("codigoPais", { length: 5 }).default("+506"),
+  whatsapp: varchar("whatsapp", { length: 20 }),
   direccion: text("direccion"),
   redesSociales: text("redesSociales"), // JSON string: {instagram: "", facebook: ""}
   createdAt: timestamp("createdAt").defaultNow().notNull(),

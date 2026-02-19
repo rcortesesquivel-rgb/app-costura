@@ -49,6 +49,13 @@ export async function updateUserStatus(id: number, isActive: "active" | "inactiv
   await db.update(users).set({ isActive }).where(eq(users.id, id));
 }
 
+export async function deleteUser(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db.delete(users).where(eq(users.id, id));
+}
+
 export async function getActiveUsersCount() {
   const db = await getDb();
   if (!db) return 0;

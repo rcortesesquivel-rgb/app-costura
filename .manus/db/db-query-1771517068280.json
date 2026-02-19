@@ -1,0 +1,31 @@
+{
+  "query": "SELECT COUNT(*) as total_users FROM users; SELECT COUNT(*) as total_clientes FROM clientes; SELECT COUNT(*) as total_trabajos FROM trabajos; SELECT COUNT(*) as total_agregados FROM agregados;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 37KVpxZeS2CVQbP.root --database NUhPjFzKcLyhLeGMAd6M8H --execute SELECT COUNT(*) as total_users FROM users; SELECT COUNT(*) as total_clientes FROM clientes; SELECT COUNT(*) as total_trabajos FROM trabajos; SELECT COUNT(*) as total_agregados FROM agregados;",
+  "rows": [
+    {
+      "total_users": "15"
+    },
+    {
+      "total_users": "total_clientes"
+    },
+    {
+      "total_users": "6"
+    },
+    {
+      "total_users": "total_trabajos"
+    },
+    {
+      "total_users": "6"
+    },
+    {
+      "total_users": "total_agregados"
+    },
+    {
+      "total_users": "0"
+    }
+  ],
+  "messages": [],
+  "stdout": "total_users\n15\ntotal_clientes\n6\ntotal_trabajos\n6\ntotal_agregados\n0\n",
+  "stderr": "",
+  "execution_time_ms": 717
+}

@@ -7,8 +7,8 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useColors } from "@/hooks/use-colors";
 import { useAuth } from "@/lib/auth-context";
 
-const SOPORTE_EMAIL = "soporteviral@gmail.com";
-const WHATSAPP_LINK = "https://wa.me/50686419894";
+const SOPORTE_EMAIL = "ryrnissi@gmail.com";
+const WHATSAPP_LINK = "https://wa.me/50670460451";
 
 export default function CentroAyudaScreen() {
   const colors = useColors();

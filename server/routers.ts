@@ -81,6 +81,8 @@ export const appRouter = router({
       .input(z.object({
         nombreCompleto: z.string().min(1).max(255),
         telefono: z.string().max(20).optional(),
+        codigoPais: z.string().max(5).optional(),
+        whatsapp: z.string().max(20).optional(),
         direccion: z.string().optional(),
         redesSociales: z.string().optional(),
       }))
@@ -98,6 +100,8 @@ export const appRouter = router({
         data: z.object({
           nombreCompleto: z.string().min(1).max(255).optional(),
           telefono: z.string().max(20).optional(),
+          codigoPais: z.string().max(5).optional(),
+          whatsapp: z.string().max(20).optional(),
           direccion: z.string().optional(),
           redesSociales: z.string().optional(),
         }),
@@ -378,6 +382,13 @@ export const appRouter = router({
         }))
         .mutation(async ({ input }) => {
           await adminDb.updateUserStatus(input.id, input.isActive);
+          return { success: true };
+        }),
+
+      delete: adminProcedure
+        .input(z.object({ id: z.number() }))
+        .mutation(async ({ input }) => {
+          await adminDb.deleteUser(input.id);
           return { success: true };
         }),
     }),

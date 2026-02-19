@@ -92,6 +92,13 @@
       "when": 1771438225438,
       "tag": "0012_parched_secret_warriors",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "5",
+      "when": 1771516774491,
+      "tag": "0013_big_sentinels",
+      "breakpoints": true
     }
   ]
 }

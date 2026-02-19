@@ -8,35 +8,77 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { trpc } from "@/lib/trpc";
 import { useColors } from "@/hooks/use-colors";
 
+const COUNTRY_CODES = [
+  { code: "+506", flag: "🇨🇷", name: "Costa Rica" },
+  { code: "+1", flag: "🇺🇸", name: "Estados Unidos" },
+  { code: "+52", flag: "🇲🇽", name: "México" },
+  { code: "+57", flag: "🇨🇴", name: "Colombia" },
+  { code: "+34", flag: "🇪🇸", name: "España" },
+  { code: "+507", flag: "🇵🇦", name: "Panamá" },
+  { code: "+503", flag: "🇸🇻", name: "El Salvador" },
+  { code: "+502", flag: "🇬🇹", name: "Guatemala" },
+  { code: "+504", flag: "🇭🇳", name: "Honduras" },
+  { code: "+505", flag: "🇳🇮", name: "Nicaragua" },
+  { code: "+51", flag: "🇵🇪", name: "Perú" },
+  { code: "+56", flag: "🇨🇱", name: "Chile" },
+  { code: "+54", flag: "🇦🇷", name: "Argentina" },
+  { code: "+593", flag: "🇪🇨", name: "Ecuador" },
+  { code: "+58", flag: "🇻🇪", name: "Venezuela" },
+  { code: "+55", flag: "🇧🇷", name: "Brasil" },
+  { code: "+1809", flag: "🇩🇴", name: "Rep. Dominicana" },
+];
+
 export default function CrearClienteScreen() {
   const colors = useColors();
   const router = useRouter();
   const [nombreCompleto, setNombreCompleto] = useState("");
+  const [codigoPais, setCodigoPais] = useState("+506");
   const [telefono, setTelefono] = useState("");
+  const [whatsapp, setWhatsapp] = useState("");
   const [direccion, setDireccion] = useState("");
   const [instagram, setInstagram] = useState("");
   const [facebook, setFacebook] = useState("");
+  const [showCountryPicker, setShowCountryPicker] = useState(false);
 
   const utils = trpc.useUtils();
   const createMutation = trpc.clientes.create.useMutation({
-    onSuccess: async (data) => {
+    onSuccess: async () => {
       await utils.clientes.list.invalidate();
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      Alert.alert("Éxito", "Cliente creado correctamente", [
-        {
-          text: "OK",
-          onPress: () => router.back(),
-        },
-      ]);
+      if (Platform.OS !== "web") {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
+      if (Platform.OS === "web") {
+        window.alert("Cliente creado correctamente");
+        router.back();
+      } else {
+        Alert.alert("Éxito", "Cliente creado correctamente", [
+          { text: "OK", onPress: () => router.back() },
+        ]);
+      }
     },
     onError: (error) => {
-      Alert.alert("Error", "No se pudo crear el cliente: " + error.message);
+      if (Platform.OS === "web") {
+        window.alert("No se pudo crear el cliente: " + error.message);
+      } else {
+        Alert.alert("Error", "No se pudo crear el cliente: " + error.message);
+      }
     },
   });
 
+  const handleCopiarTelefono = () => {
+    setWhatsapp(telefono);
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+  };
+
   const handleGuardar = () => {
     if (!nombreCompleto.trim()) {
-      Alert.alert("Error", "El nombre completo es obligatorio");
+      if (Platform.OS === "web") {
+        window.alert("El nombre completo es obligatorio");
+      } else {
+        Alert.alert("Error", "El nombre completo es obligatorio");
+      }
       return;
     }
 
@@ -48,10 +90,14 @@ export default function CrearClienteScreen() {
     createMutation.mutate({
       nombreCompleto: nombreCompleto.trim(),
       telefono: telefono.trim() || undefined,
+      codigoPais: codigoPais,
+      whatsapp: whatsapp.trim() || undefined,
       direccion: direccion.trim() || undefined,
       redesSociales: redesSociales,
     });
   };
+
+  const selectedCountry = COUNTRY_CODES.find(c => c.code === codigoPais) || COUNTRY_CODES[0];
 
   return (
     <ScreenContainer className="bg-background">
@@ -65,7 +111,7 @@ export default function CrearClienteScreen() {
             <View className="flex-row items-center gap-4">
               <TouchableOpacity
                 onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                   router.back();
                 }}
                 activeOpacity={0.7}
@@ -92,18 +138,107 @@ export default function CrearClienteScreen() {
                 />
               </View>
 
-              {/* Teléfono */}
+              {/* Teléfono con selector de país */}
               <View className="gap-2">
                 <Text className="text-sm font-semibold text-foreground">Teléfono</Text>
-                <TextInput
-                  className="bg-surface rounded-xl border border-border px-4 py-3 text-base text-foreground"
-                  placeholder="Ej: +34 600 123 456"
-                  placeholderTextColor={colors.muted}
-                  value={telefono}
-                  onChangeText={setTelefono}
-                  keyboardType="phone-pad"
-                  returnKeyType="next"
-                />
+                <View className="flex-row gap-2">
+                  {/* Selector de bandera */}
+                  <TouchableOpacity
+                    onPress={() => setShowCountryPicker(!showCountryPicker)}
+                    style={{
+                      backgroundColor: colors.surface,
+                      borderWidth: 1,
+                      borderColor: colors.border,
+                      borderRadius: 12,
+                      paddingHorizontal: 12,
+                      paddingVertical: 12,
+                      flexDirection: "row",
+                      alignItems: "center",
+                      gap: 4,
+                      minWidth: 90,
+                    }}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={{ fontSize: 20 }}>{selectedCountry.flag}</Text>
+                    <Text className="text-sm text-foreground">{codigoPais}</Text>
+                    <Text style={{ fontSize: 10, color: colors.muted }}>▼</Text>
+                  </TouchableOpacity>
+                  {/* Input teléfono */}
+                  <TextInput
+                    className="bg-surface rounded-xl border border-border px-4 py-3 text-base text-foreground flex-1"
+                    placeholder="Número de teléfono"
+                    placeholderTextColor={colors.muted}
+                    value={telefono}
+                    onChangeText={setTelefono}
+                    keyboardType="phone-pad"
+                    returnKeyType="next"
+                  />
+                </View>
+                {/* Picker de países */}
+                {showCountryPicker && (
+                  <View className="bg-surface rounded-xl border border-border" style={{ maxHeight: 200, overflow: "hidden" }}>
+                    <ScrollView nestedScrollEnabled>
+                      {COUNTRY_CODES.map((country) => (
+                        <TouchableOpacity
+                          key={country.code}
+                          onPress={() => {
+                            setCodigoPais(country.code);
+                            setShowCountryPicker(false);
+                          }}
+                          style={{
+                            flexDirection: "row",
+                            alignItems: "center",
+                            gap: 10,
+                            padding: 12,
+                            borderBottomWidth: 0.5,
+                            borderBottomColor: colors.border,
+                            backgroundColor: country.code === codigoPais ? `${colors.primary}15` : "transparent",
+                          }}
+                          activeOpacity={0.7}
+                        >
+                          <Text style={{ fontSize: 18 }}>{country.flag}</Text>
+                          <Text className="text-sm text-foreground flex-1">{country.name}</Text>
+                          <Text className="text-sm text-muted">{country.code}</Text>
+                        </TouchableOpacity>
+                      ))}
+                    </ScrollView>
+                  </View>
+                )}
+              </View>
+
+              {/* WhatsApp con botón copiar */}
+              <View className="gap-2">
+                <Text className="text-sm font-semibold text-foreground">WhatsApp (opcional)</Text>
+                <View className="flex-row gap-2">
+                  <TextInput
+                    className="bg-surface rounded-xl border border-border px-4 py-3 text-base text-foreground flex-1"
+                    placeholder="Número de WhatsApp"
+                    placeholderTextColor={colors.muted}
+                    value={whatsapp}
+                    onChangeText={setWhatsapp}
+                    keyboardType="phone-pad"
+                    returnKeyType="next"
+                  />
+                  <TouchableOpacity
+                    onPress={handleCopiarTelefono}
+                    style={{
+                      backgroundColor: telefono ? `${colors.primary}15` : `${colors.muted}15`,
+                      borderWidth: 1,
+                      borderColor: telefono ? `${colors.primary}40` : colors.border,
+                      borderRadius: 12,
+                      paddingHorizontal: 14,
+                      justifyContent: "center",
+                      alignItems: "center",
+                    }}
+                    activeOpacity={0.7}
+                    disabled={!telefono}
+                  >
+                    <Text style={{ fontSize: 12, color: telefono ? colors.primary : colors.muted, fontWeight: "600" }}>
+                      Copiar Tel.
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+                <Text className="text-xs text-muted">Si el WhatsApp es igual al teléfono, usa el botón "Copiar Tel."</Text>
               </View>
 
               {/* Dirección */}
@@ -111,7 +246,7 @@ export default function CrearClienteScreen() {
                 <Text className="text-sm font-semibold text-foreground">Dirección</Text>
                 <TextInput
                   className="bg-surface rounded-xl border border-border px-4 py-3 text-base text-foreground"
-                  placeholder="Ej: Calle Mayor 123, Madrid"
+                  placeholder="Ej: San José, Costa Rica"
                   placeholderTextColor={colors.muted}
                   value={direccion}
                   onChangeText={setDireccion}

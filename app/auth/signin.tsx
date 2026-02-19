@@ -1,4 +1,4 @@
-import { ScrollView, Text, View, Platform, KeyboardAvoidingView, Alert } from "react-native";
+import { ScrollView, Text, View, Platform, KeyboardAvoidingView, Alert, TouchableOpacity } from "react-native";
 import { useState } from "react";
 import { useRouter } from "expo-router";
 import * as Haptics from "expo-haptics";
@@ -16,6 +16,7 @@ export default function SignInScreen() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
@@ -91,24 +92,51 @@ export default function SignInScreen() {
 
               <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                 <label style={{ fontSize: 14, fontWeight: "600", color: colors.foreground }}>Contraseña</label>
-                <input
-                  type="password"
-                  placeholder="Tu contraseña"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  disabled={isLoading}
-                  onKeyDown={(e) => { if (e.key === "Enter") handleSignIn(); }}
-                  style={{
-                    backgroundColor: colors.surface,
-                    border: `1px solid ${colors.border}`,
-                    borderRadius: 12,
-                    padding: "12px 16px",
-                    fontSize: 16,
-                    color: colors.foreground,
-                    outline: "none",
-                    fontFamily: "inherit",
-                  }}
-                />
+                <div style={{ position: "relative" }}>
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Tu contraseña"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    disabled={isLoading}
+                    onKeyDown={(e) => { if (e.key === "Enter") handleSignIn(); }}
+                    style={{
+                      backgroundColor: colors.surface,
+                      border: `1px solid ${colors.border}`,
+                      borderRadius: 12,
+                      padding: "12px 16px",
+                      paddingRight: 48,
+                      fontSize: 16,
+                      color: colors.foreground,
+                      outline: "none",
+                      fontFamily: "inherit",
+                      width: "100%",
+                      boxSizing: "border-box",
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    style={{
+                      position: "absolute",
+                      right: 12,
+                      top: "50%",
+                      transform: "translateY(-50%)",
+                      background: "none",
+                      border: "none",
+                      cursor: "pointer",
+                      padding: 4,
+                      display: "flex",
+                      alignItems: "center",
+                    }}
+                  >
+                    <IconSymbol
+                      name={showPassword ? "eye.slash.fill" : "eye.fill"}
+                      size={20}
+                      color={colors.muted}
+                    />
+                  </button>
+                </div>
               </div>
 
               <button
@@ -209,11 +237,22 @@ export default function SignInScreen() {
                     placeholderTextColor={colors.muted}
                     value={password}
                     onChangeText={setPassword}
-                    secureTextEntry
+                    secureTextEntry={!showPassword}
                     editable={!isLoading}
                     returnKeyType="done"
                     onSubmitEditing={handleSignIn}
                   />
+                  <TouchableOpacity
+                    onPress={() => setShowPassword(!showPassword)}
+                    style={{ padding: 4 }}
+                    activeOpacity={0.6}
+                  >
+                    <IconSymbol
+                      name={showPassword ? "eye.slash.fill" : "eye.fill"}
+                      size={20}
+                      color={colors.muted}
+                    />
+                  </TouchableOpacity>
                 </View>
               </View>
             </View>

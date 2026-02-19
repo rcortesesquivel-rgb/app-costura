@@ -405,3 +405,13 @@
 - [x] Configurar EXPO_PUBLIC_API_BASE_URL con URL pública real del backend
 - [x] Eliminar fallback a localhost en getApiBaseUrl()
 - [x] Generar build v1.0.3
+
+## Módulo 1: Seguridad, Escalabilidad y Ventas - 19 Feb 2026
+- [x] Gestión de Usuarios admin: vista con Nombre, Email, botones Activar/Desactivar/Borrar
+- [x] Filtro admin: solo ver trabajos/clientes creados por el admin, no de otros usuarios (ya filtrado por userId)
+- [x] Webhook Hotmart: endpoint para recibir compras y crear cuentas automáticamente (ya implementado)
+- [x] Login: icono ojo para mostrar/ocultar contraseña
+- [x] Soporte: actualizar email a ryrnissi@gmail.com y WhatsApp a +506 70460451
+- [x] Moneda: Colones (₡) por defecto con detección de país (ya implementado en format-currency.ts)
+- [x] Clientes: input de banderas en teléfono + campo WhatsApp con botón copiar
+- [x] Reporte técnico: tier de BD, capacidad, previsión +1000 usuarios

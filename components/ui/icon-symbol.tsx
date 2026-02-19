@@ -48,6 +48,9 @@ const MAPPING = {
   "arrow.left.circle.fill": "arrow-back",
   "message.fill": "chat",
   "questionmark.circle.fill": "help",
+  "person.badge.shield.checkmark.fill": "admin-panel-settings",
+  "person.3.fill": "groups",
+  "power": "power-settings-new",
 } as IconMapping;
 
 /**
