@@ -1,0 +1,8 @@
+{
+  "query": "INSERT INTO users (email, name, role, isActive, createdAt, updatedAt) VALUES ('rcortesesquivel@gmail.com', 'Administrador', 'admin', 'active', NOW(), NOW()) ON DUPLICATE KEY UPDATE role='admin', isActive='active';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 37KVpxZeS2CVQbP.root --database NUhPjFzKcLyhLeGMAd6M8H --execute INSERT INTO users (email, name, role, isActive, createdAt, updatedAt) VALUES ('rcortesesquivel@gmail.com', 'Administrador', 'admin', 'active', NOW(), NOW()) ON DUPLICATE KEY UPDATE role='admin', isActive='active';",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1364 (HY000) at line 1: Field 'openId' doesn't have a default value"
+  ]
+}

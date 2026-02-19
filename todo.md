@@ -394,3 +394,9 @@
 - [x] Formato moneda: todos los totales con 2 decimales y símbolo
 - [x] Días restantes en detalle de trabajo ("Entrega en X días")
 - [x] Verificar que dictado por voz y login obligatorio no se rompieron
+
+
+## Acceso de Administrador - 19 Feb 2026
+- [ ] Revisar código de autenticación para credenciales admin por defecto
+- [ ] Verificar configuración de BD y conexión de login
+- [ ] Crear/confirmar usuario admin con email del propietario
