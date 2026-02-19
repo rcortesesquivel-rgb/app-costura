@@ -450,3 +450,6 @@
 - [x] Sección Cuentas por Cobrar (Entregado + Pagado=No)
 - [x] Conectar VoiceInput al backend de audios (límite 5)
 - [x] WhatsApp al pasar a Listo: preguntar si enviar mensaje de cobro
+
+## Corrección de Seguridad - 19 Feb 2026
+- [x] Webhook Hotmart: Validación de Hottok ahora rechaza 403 Forbidden si no es válido

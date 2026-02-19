@@ -217,11 +217,17 @@ router.post("/hotmart", async (req: Request, res: Response) => {
     console.log("[Webhook] 📦 Content-Type:", req.headers["content-type"]);
     console.log("[Webhook] 📦 Body keys:", Object.keys(req.body || {}).join(", "));
 
-    // Validar Hottok (solo log, SIEMPRE responde 200 OK)
+    // Validar Hottok - RECHAZAR si no es válido
     const hottokValid = validateHotmartHottok(req);
     if (!hottokValid) {
-      console.warn("[Webhook] \u26A0\uFE0F Hottok no coincide, pero se acepta la solicitud (modo tolerante 200 OK)");
+      console.error("[Webhook] ❌ ACCESO DENEGADO: Hottok inválido o no presente");
+      return res.status(403).json({
+        error: "Forbidden",
+        message: "Invalid or missing Hotmart authentication token",
+        timestamp: new Date().toISOString(),
+      });
     }
+    console.log("[Webhook] ✅ Hottok válido - procesando solicitud");
 
     // Validar firma HMAC (solo log, no bloquea)
     const signature = req.headers["x-hotmart-signature"] as string | undefined;
