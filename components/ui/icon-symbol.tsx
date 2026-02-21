@@ -55,6 +55,7 @@ const MAPPING = {
   "chart.bar.fill": "bar-chart",
   "doc.fill": "description",
   "person.circle.fill": "account-circle",
+  "arrow.down.doc.fill": "download",
 } as IconMapping;
 
 /**

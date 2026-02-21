@@ -460,3 +460,8 @@
 - [x] Eliminar toda referencia residual a precioBase en todo el proyecto
 - [x] Verificar frontend envía campos correctos al endpoint create
 - [x] Reiniciar servidor y entregar link PWA funcional
+
+## Exportar a PDF - 21 Feb 2026
+- [ ] Crear endpoint backend para generar PDF de resumen de trabajos completados
+- [ ] Agregar botón de exportar en la lista de trabajos (index.tsx)
+- [ ] Conectar botón con endpoint y permitir descarga de PDF

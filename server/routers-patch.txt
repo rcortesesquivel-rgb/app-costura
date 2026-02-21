@@ -1,0 +1,11 @@
+    
+    exportPDF: protectedProcedure
+      .query(async ({ ctx }) => {
+        const { generateTrabajosPDF } = await import("./export-pdf");
+        const pdfBuffer = await generateTrabajosPDF(ctx.user.id);
+        return {
+          success: true,
+          data: pdfBuffer.toString("base64"),
+          filename: `resumen-trabajos-${new Date().toISOString().split("T")[0]}.pdf`,
+        };
+      }),
