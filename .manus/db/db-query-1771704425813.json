@@ -1,0 +1,138 @@
+{
+  "query": "DESCRIBE trabajos;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 37KVpxZeS2CVQbP.root --database NUhPjFzKcLyhLeGMAd6M8H --execute DESCRIBE trabajos;",
+  "rows": [
+    {
+      "Field": "id",
+      "Type": "int",
+      "Null": "NO",
+      "Key": "PRI",
+      "Default": "NULL",
+      "Extra": "auto_increment"
+    },
+    {
+      "Field": "clienteId",
+      "Type": "int",
+      "Null": "NO",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "descripcion",
+      "Type": "text",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "precioBase",
+      "Type": "decimal(12,2)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "0.00",
+      "Extra": ""
+    },
+    {
+      "Field": "abonoInicial",
+      "Type": "decimal(12,2)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "0.00",
+      "Extra": ""
+    },
+    {
+      "Field": "estado",
+      "Type": "enum('recibido','cortando','cosiendo','bordado_personalizado','listo','entregado')",
+      "Null": "NO",
+      "Key": "",
+      "Default": "recibido",
+      "Extra": ""
+    },
+    {
+      "Field": "fechaEntrega",
+      "Type": "timestamp",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "createdAt",
+      "Type": "timestamp",
+      "Null": "NO",
+      "Key": "",
+      "Default": "CURRENT_TIMESTAMP",
+      "Extra": ""
+    },
+    {
+      "Field": "updatedAt",
+      "Type": "timestamp",
+      "Null": "NO",
+      "Key": "",
+      "Default": "CURRENT_TIMESTAMP",
+      "Extra": "DEFAULT_GENERATED on update CURRENT_TIMESTAMP"
+    },
+    {
+      "Field": "userId",
+      "Type": "int",
+      "Null": "NO",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "impuestos",
+      "Type": "decimal(12,2)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "0.00",
+      "Extra": ""
+    },
+    {
+      "Field": "varios",
+      "Type": "decimal(12,2)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "0.00",
+      "Extra": ""
+    },
+    {
+      "Field": "categoria",
+      "Type": "enum('arreglo','confeccion','bordado','sublimado','otros')",
+      "Null": "NO",
+      "Key": "",
+      "Default": "otros",
+      "Extra": ""
+    },
+    {
+      "Field": "urgencia",
+      "Type": "enum('baja','media','alta')",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "cantidad",
+      "Type": "int",
+      "Null": "NO",
+      "Key": "",
+      "Default": "1",
+      "Extra": ""
+    },
+    {
+      "Field": "pagado",
+      "Type": "int",
+      "Null": "NO",
+      "Key": "",
+      "Default": "0",
+      "Extra": ""
+    }
+  ],
+  "messages": [],
+  "stdout": "Field\tType\tNull\tKey\tDefault\tExtra\nid\tint\tNO\tPRI\tNULL\tauto_increment\nclienteId\tint\tNO\t\tNULL\t\ndescripcion\ttext\tYES\t\tNULL\t\nprecioBase\tdecimal(12,2)\tYES\t\t0.00\t\nabonoInicial\tdecimal(12,2)\tYES\t\t0.00\t\nestado\tenum('recibido','cortando','cosiendo','bordado_personalizado','listo','entregado')\tNO\t\trecibido\t\nfechaEntrega\ttimestamp\tYES\t\tNULL\t\ncreatedAt\ttimestamp\tNO\t\tCURRENT_TIMESTAMP\t\nupdatedAt\ttimestamp\tNO\t\tCURRENT_TIMESTAMP\tDEFAULT_GENERATED on update CURRENT_TIMESTAMP\nuserId\tint\tNO\t\tNULL\t\nimpuestos\tdecimal(12,2)\tYES\t\t0.00\t\nvarios\tdecimal(12,2)\tYES\t\t0.00\t\ncategoria\tenum('arreglo','confeccion','bordado','sublimado','otros')\tNO\t\totros\t\nurgencia\tenum('baja','media','alta')\tYES\t\tNULL\t\ncantidad\tint\tNO\t\t1\t\npagado\tint\tNO\t\t0\t\n",
+  "stderr": "",
+  "execution_time_ms": 423
+}

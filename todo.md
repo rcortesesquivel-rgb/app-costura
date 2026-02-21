@@ -453,3 +453,10 @@
 
 ## Corrección de Seguridad - 19 Feb 2026
 - [x] Webhook Hotmart: Validación de Hottok ahora rechaza 403 Forbidden si no es válido
+
+## Sincronización Insert Trabajos - 21 Feb 2026
+- [x] Auditar schema real de BD (columnas exactas de tabla trabajos)
+- [x] Sincronizar server/routers.ts y server/db.ts con schema real
+- [x] Eliminar toda referencia residual a precioBase en todo el proyecto
+- [x] Verificar frontend envía campos correctos al endpoint create
+- [x] Reiniciar servidor y entregar link PWA funcional
