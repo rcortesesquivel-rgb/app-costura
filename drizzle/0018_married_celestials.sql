@@ -1,0 +1,1 @@
+ALTER TABLE `trabajos` MODIFY COLUMN `categoria` enum('arreglo','reparacion','confeccion','bordado','sublimado','otros') NOT NULL DEFAULT 'otros';

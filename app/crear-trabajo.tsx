@@ -24,7 +24,7 @@ export default function CrearTrabajoScreen() {
   const [varios, setVarios] = useState("");
   const [abonoInicial, setAbonoInicial] = useState("");
   const [fechaEntrega, setFechaEntrega] = useState("");
-  const [categoria, setCategoria] = useState("reparacion");
+  const [categoria, setCategoria] = useState("arreglo");
   const [urgencia, setUrgencia] = useState<string | undefined>("baja");
 
   const { data: clientes, isLoading: loadingClientes } = trpc.clientes.list.useQuery();
@@ -147,8 +147,8 @@ export default function CrearTrabajoScreen() {
             <View className="gap-2">
               <Text className="text-sm font-semibold text-foreground">Categoría</Text>
               <View className="flex-row gap-2 flex-wrap">
-                {(["reparacion", "confeccion", "bordado", "sublimado", "otros"] as const).map((cat) => {
-                  const labels: Record<string, string> = { reparacion: "Reparación", confeccion: "Confección", bordado: "Bordado", sublimado: "Sublimado", otros: "Otros" };
+                {(["arreglo", "confeccion", "bordado", "sublimado", "otros"] as const).map((cat) => {
+                  const labels: Record<string, string> = { arreglo: "Reparación", confeccion: "Confección", bordado: "Bordado", sublimado: "Sublimado", otros: "Otros" };
                   const isActive = categoria === cat;
                   return (
                     <TouchableOpacity
