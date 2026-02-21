@@ -205,6 +205,19 @@ export default function CrearTrabajoScreen() {
               </View>
             </View>
 
+            {/* Cantidad */}
+            <View className="gap-2">
+              <Text className="text-sm font-semibold text-foreground">Cantidad *</Text>
+              <TextInput
+                className="bg-surface rounded-xl border border-border px-4 py-3 text-base text-foreground"
+                placeholder="1"
+                placeholderTextColor={colors.muted}
+                value={cantidad}
+                onChangeText={setCantidad}
+                keyboardType="numeric"
+              />
+            </View>
+
             {/* Descripción con dictado */}
             <View className="gap-2">
               <View className="flex-row items-center justify-between">
@@ -226,38 +239,23 @@ export default function CrearTrabajoScreen() {
               />
             </View>
 
-            {/* Precio base y Cantidad en la misma fila */}
+            {/* Precio unitario */}
             <View className="gap-2">
-              <Text className="text-sm font-semibold text-foreground">Precio y Cantidad *</Text>
-              <View className="flex-row gap-3">
-                <View className="flex-1 gap-1">
-                  <Text className="text-xs text-muted">Precio unitario (₡)</Text>
-                  <View className="flex-row items-center gap-1">
-                    <TextInput
-                      className="flex-1 bg-surface rounded-xl border border-border px-4 py-3 text-base text-foreground"
-                      placeholder="0.00"
-                      placeholderTextColor={colors.muted}
-                      value={precioUnitario}
-                      onChangeText={setPrecioUnitario}
-                      keyboardType="decimal-pad"
-                    />
-                    <VoiceInput mode="numeric" onResult={setPrecioUnitario} size={28} />
-                  </View>
-                </View>
-                <View className="w-24 gap-1">
-                  <Text className="text-xs text-muted">Cantidad</Text>
-                  <View className="flex-row items-center gap-1">
-                    <TextInput
-                      className="flex-1 bg-surface rounded-xl border border-border px-4 py-3 text-base text-foreground"
-                      placeholder="1"
-                      placeholderTextColor={colors.muted}
-                      value={cantidad}
-                      onChangeText={setCantidad}
-                      keyboardType="numeric"
-                    />
-                  </View>
-                </View>
+              <Text className="text-sm font-semibold text-foreground">Precio unitario (₡) *</Text>
+              <View className="flex-row items-center gap-1">
+                <TextInput
+                  className="flex-1 bg-surface rounded-xl border border-border px-4 py-3 text-base text-foreground"
+                  placeholder="0.00"
+                  placeholderTextColor={colors.muted}
+                  value={precioUnitario}
+                  onChangeText={setPrecioUnitario}
+                  keyboardType="decimal-pad"
+                />
+                <VoiceInput mode="numeric" onResult={setPrecioUnitario} size={28} />
               </View>
+            </View>
+
+            <View className="gap-2">
               {/* Subtotal en tiempo real */}
               <View className="flex-row justify-between mt-1">
                 <Text className="text-sm text-muted">Subtotal (Precio × Cantidad)</Text>
