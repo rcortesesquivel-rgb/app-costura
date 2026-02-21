@@ -9,7 +9,7 @@ import { trpc } from "@/lib/trpc";
 import { useColors } from "@/hooks/use-colors";
 
 const CATEGORIAS = [
-  { value: "arreglo", label: "Arreglo" },
+  { value: "reparacion", label: "Reparación" },
   { value: "confeccion", label: "Confección" },
   { value: "bordado", label: "Bordado" },
   { value: "sublimado", label: "Sublimado" },
@@ -71,29 +71,33 @@ export default function BusquedaScreen() {
 
   const getEstadoBadgeColor = (estado: string) => {
     switch (estado) {
-      case "en_espera": return "#8E8E93";
+      case "recibido": return "#8E8E93";
       case "cortando": return "#FF9500";
       case "cosiendo": return "#007AFF";
+      case "bordado_personalizado": return "#AF52DE";
       case "listo": return "#34C759";
       case "entregado": return "#5856D6";
+      case "en_espera": return "#8E8E93";
       default: return "#8E8E93";
     }
   };
 
   const getEstadoLabel = (estado: string) => {
     switch (estado) {
-      case "en_espera": return "En espera";
+      case "recibido": return "Recibido";
       case "cortando": return "Cortando";
       case "cosiendo": return "Cosiendo";
+      case "bordado_personalizado": return "Bordado/Personalizado";
       case "listo": return "Listo";
       case "entregado": return "Entregado";
+      case "en_espera": return "En espera";
       default: return estado;
     }
   };
 
   const getCategoriaLabel = (cat: string | null) => {
     switch (cat) {
-      case "arreglo": return "Arreglo";
+      case "reparacion": return "Reparación";
       case "confeccion": return "Confección";
       case "bordado": return "Bordado";
       case "sublimado": return "Sublimado";
