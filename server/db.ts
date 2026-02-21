@@ -338,18 +338,20 @@ export async function calcularTotalTrabajo(trabajoId: number, userId: number) {
   
   const listaAgregados = await getAgregadosByTrabajoId(trabajoId, userId);
   
-  const precioBase = parseFloat(trabajo.precioBase || "0");
+  const precioUnitario = parseFloat(trabajo.precioUnitario || "0");
+  const cantidad = trabajo.cantidad || 1;
+  const subtotal = precioUnitario * cantidad;
   const abonoInicial = parseFloat(trabajo.abonoInicial || "0");
   const totalAgregados = listaAgregados.reduce((sum, ag) => {
     const precio = parseFloat(ag.precio || "0");
-    const cantidad = ag.cantidad || 1;
-    return sum + (precio * cantidad);
+    const cantidadAg = ag.cantidad || 1;
+    return sum + (precio * cantidadAg);
   }, 0);
   
-  const total = precioBase + totalAgregados;
+  const total = subtotal + totalAgregados;
   const saldo = total - abonoInicial;
   
-  return { total, saldo, precioBase, totalAgregados, abonoInicial };
+  return { total, saldo, precioUnitario, cantidad, subtotal, totalAgregados, abonoInicial };
 }
 
 // ============ IMÁGENES ============
@@ -430,7 +432,7 @@ export async function getMisEstadisticas(userId: number) {
       trabajosPorUrgencia[urgencia] = (trabajosPorUrgencia[urgencia] || 0) + 1;
     }
 
-    const precio = parseFloat(t.precioBase || "0");
+    const precio = parseFloat(t.precioUnitario || "0");
     const cant = t.cantidad || 1;
     const imp = parseFloat(t.impuestos || "0");
     const var_ = parseFloat(t.varios || "0");

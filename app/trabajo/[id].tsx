@@ -210,13 +210,14 @@ export default function TrabajoDetalleScreen() {
     );
   }
 
-  const precioBase = parseFloat(trabajo.precioBase || "0");
+  const precioUnitario = parseFloat(trabajo.precioUnitario || "0");
   const impuestosVal = parseFloat(trabajo.impuestos || "0");
   const variosVal = parseFloat(trabajo.varios || "0");
-  const granTotal = precioBase + impuestosVal + variosVal;
+  const cantidadTrabajo = (trabajo as any)?.cantidad ?? 1;
+  const subtotal = precioUnitario * cantidadTrabajo;
+  const granTotal = subtotal + impuestosVal + variosVal;
   const abonoInicial = parseFloat(trabajo.abonoInicial || "0");
   const saldoPendiente = granTotal - abonoInicial;
-  const cantidadTrabajo = (trabajo as any)?.cantidad ?? 1;
 
   const diasRestantes = trabajo.fechaEntrega ? (() => {
     const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
@@ -374,8 +375,8 @@ export default function TrabajoDetalleScreen() {
             <Text className="text-lg font-semibold text-foreground">Precios</Text>
             <View className="bg-surface rounded-2xl p-4 border border-border gap-3">
               <View className="flex-row justify-between">
-                <Text className="text-sm text-muted">Precio base</Text>
-                <Text className="text-sm font-medium text-foreground">{formatCurrency(precioBase)}</Text>
+                <Text className="text-sm text-muted">Subtotal (unitario × cantidad)</Text>
+                <Text className="text-sm font-medium text-foreground">{formatCurrency(subtotal)}</Text>
               </View>
               <View className="flex-row justify-between">
                 <Text className="text-sm text-muted">Impuestos</Text>

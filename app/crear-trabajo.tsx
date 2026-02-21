@@ -18,7 +18,7 @@ export default function CrearTrabajoScreen() {
   // Estado del formulario
   const [clienteId, setClienteId] = useState("");
   const [descripcion, setDescripcion] = useState("");
-  const [precioBase, setPrecioBase] = useState("");
+  const [precioUnitario, setPrecioUnitario] = useState("");
   const [cantidad, setCantidad] = useState("1");
   const [impuestos, setImpuestos] = useState("");
   const [varios, setVarios] = useState("");
@@ -45,10 +45,10 @@ export default function CrearTrabajoScreen() {
 
   // Cálculos en tiempo real con useMemo
   const subtotal = useMemo(() => {
-    const base = parseFloat(precioBase) || 0;
+    const unitario = parseFloat(precioUnitario) || 0;
     const cant = parseFloat(cantidad) || 1;
-    return base * cant;
-  }, [precioBase, cantidad]);
+    return unitario * cant;
+  }, [precioUnitario, cantidad]);
 
   const totalImpuestos = useMemo(() => parseFloat(impuestos) || 0, [impuestos]);
   const totalVarios = useMemo(() => parseFloat(varios) || 0, [varios]);
@@ -63,8 +63,8 @@ export default function CrearTrabajoScreen() {
   }, [granTotal, abonoInicial]);
 
   const handleGuardar = () => {
-    if (!clienteId || !descripcion.trim() || !precioBase) {
-      showAlert("Error", "Completa los campos obligatorios: cliente, descripción y precio base");
+    if (!clienteId || !descripcion.trim() || !precioUnitario) {
+      showAlert("Error", "Completa los campos obligatorios: cliente, descripción y precio unitario");
       return;
     }
     if (Platform.OS !== "web") {
@@ -74,7 +74,7 @@ export default function CrearTrabajoScreen() {
     const data: any = {
       clienteId: parseInt(clienteId),
       descripcion: descripcion.trim(),
-      precioBase: subtotal.toFixed(2),
+      precioUnitario: precioUnitario,
       cantidad: parseInt(cantidad) || 1,
       abonoInicial: (parseFloat(abonoInicial) || 0).toFixed(2),
       impuestos: totalImpuestos.toFixed(2),
@@ -237,11 +237,11 @@ export default function CrearTrabajoScreen() {
                       className="flex-1 bg-surface rounded-xl border border-border px-4 py-3 text-base text-foreground"
                       placeholder="0.00"
                       placeholderTextColor={colors.muted}
-                      value={precioBase}
-                      onChangeText={setPrecioBase}
+                      value={precioUnitario}
+                      onChangeText={setPrecioUnitario}
                       keyboardType="decimal-pad"
                     />
-                    <VoiceInput mode="numeric" onResult={setPrecioBase} size={28} />
+                    <VoiceInput mode="numeric" onResult={setPrecioUnitario} size={28} />
                   </View>
                 </View>
                 <View className="w-24 gap-1">

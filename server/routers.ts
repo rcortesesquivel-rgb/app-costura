@@ -271,12 +271,12 @@ export const appRouter = router({
         // Restar del original
         await db.updateTrabajo(input.id, ctx.user.id, { cantidad: cantidadActual - input.cantidadSeparar } as any);
         // Crear nuevo con cantidad separada en estado recibido
-        const precioUnitario = parseFloat(trabajo.precioBase || "0") / cantidadActual;
+        const precioUnitario = parseFloat(trabajo.precioUnitario || "0");
         const nuevoId = await db.createTrabajo({
           userId: ctx.user.id,
           clienteId: trabajo.clienteId,
           descripcion: trabajo.descripcion || "",
-          precioBase: (precioUnitario * input.cantidadSeparar).toFixed(2),
+          precioUnitario: precioUnitario.toFixed(2),
           cantidad: input.cantidadSeparar,
           abonoInicial: "0.00",
           impuestos: "0.00",
@@ -287,7 +287,7 @@ export const appRouter = router({
           fechaEntrega: trabajo.fechaEntrega,
         });
         // Ajustar precio del original
-        await db.updateTrabajo(input.id, ctx.user.id, { precioBase: (precioUnitario * (cantidadActual - input.cantidadSeparar)).toFixed(2) } as any);
+        // No es necesario ajustar precio del original, solo la cantidad
         return { nuevoId, cantidadOriginal: cantidadActual - input.cantidadSeparar };
       }),
 

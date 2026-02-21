@@ -29,12 +29,13 @@ export function setupReciboRoutes(app: Express) {
       const [cliente] = await db.select().from(clientes).where(eq(clientes.id, trabajo.clienteId));
       if (!cliente) { res.status(404).json({ error: "Cliente no encontrado" }); return; }
 
-      const precioBase = parseFloat(trabajo.precioBase || "0");
+      const precioUnitario = parseFloat(trabajo.precioUnitario || "0");
       const impuestosVal = parseFloat(trabajo.impuestos || "0");
       const variosVal = parseFloat(trabajo.varios || "0");
       const abonoInicial = parseFloat(trabajo.abonoInicial || "0");
       const cantidad = trabajo.cantidad ?? 1;
-      const granTotal = precioBase + impuestosVal + variosVal;
+      const subtotal = precioUnitario * cantidad;
+      const granTotal = subtotal + impuestosVal + variosVal;
       const saldo = granTotal - abonoInicial;
       const folio = `TC-${String(trabajo.id).padStart(5, "0")}`;
       const fecha = new Date().toLocaleDateString("es-CR", { year: "numeric", month: "long", day: "numeric" });
@@ -94,7 +95,7 @@ export function setupReciboRoutes(app: Express) {
       ${trabajo.fechaEntrega ? `<div class="row"><span class="label">Fecha entrega:</span><span class="value">${new Date(trabajo.fechaEntrega).toLocaleDateString("es-CR")}</span></div>` : ""}
     </div>
     <div class="totales">
-      <div class="total-row"><span>Precio base:</span><span>${formatCurrency(precioBase)}</span></div>
+      <div class="total-row"><span>Subtotal (unitario × cantidad):</span><span>${formatCurrency(subtotal)}</span></div>
       <div class="total-row"><span>Impuestos:</span><span>${formatCurrency(impuestosVal)}</span></div>
       <div class="total-row"><span>Varios:</span><span>${formatCurrency(variosVal)}</span></div>
       <div class="total-row final"><span>Gran Total:</span><span>${formatCurrency(granTotal)}</span></div>

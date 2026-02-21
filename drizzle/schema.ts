@@ -77,7 +77,7 @@ export const trabajos = mysqlTable("trabajos", {
   userId: int("userId").notNull(),
   clienteId: int("clienteId").notNull(),
   descripcion: text("descripcion"),
-  precioBase: decimal("precioBase", { precision: 12, scale: 2 }).default("0.00"),
+  precioUnitario: decimal("precioUnitario", { precision: 12, scale: 2 }).default("0.00"),
   abonoInicial: decimal("abonoInicial", { precision: 12, scale: 2 }).default("0.00"),
   impuestos: decimal("impuestos", { precision: 12, scale: 2 }).default("0.00"),
   varios: decimal("varios", { precision: 12, scale: 2 }).default("0.00"),

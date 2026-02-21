@@ -19,7 +19,8 @@ export default function EditarTrabajoScreen() {
 
   // Estado del formulario
   const [descripcion, setDescripcion] = useState("");
-  const [precioBase, setPrecioBase] = useState("");
+  const [precioUnitario, setPrecioUnitario] = useState("");
+  const [cantidad, setCantidad] = useState("1");
   const [impuestos, setImpuestos] = useState("");
   const [varios, setVarios] = useState("");
   const [abonoInicial, setAbonoInicial] = useState("0");
@@ -61,7 +62,8 @@ export default function EditarTrabajoScreen() {
   useEffect(() => {
     if (trabajo) {
       setDescripcion(trabajo.descripcion || "");
-      setPrecioBase(trabajo.precioBase || "0");
+      setPrecioUnitario(trabajo.precioUnitario || "0");
+      setCantidad(trabajo.cantidad?.toString() || "1");
       setImpuestos(trabajo.impuestos || "0");
       setVarios(trabajo.varios || "0");
       setAbonoInicial(trabajo.abonoInicial || "0");
@@ -75,12 +77,17 @@ export default function EditarTrabajoScreen() {
   }, [trabajo]);
 
   // Cálculos en tiempo real
+  const subtotal = useMemo(() => {
+    const unitario = parseFloat(precioUnitario) || 0;
+    const cant = parseFloat(cantidad) || 1;
+    return unitario * cant;
+  }, [precioUnitario, cantidad]);
+
   const granTotal = useMemo(() => {
-    const base = parseFloat(precioBase) || 0;
     const imp = parseFloat(impuestos) || 0;
     const var_ = parseFloat(varios) || 0;
-    return base + imp + var_;
-  }, [precioBase, impuestos, varios]);
+    return subtotal + imp + var_;
+  }, [subtotal, impuestos, varios]);
 
   const saldoPendiente = useMemo(() => {
     const abono = parseFloat(abonoInicial) || 0;
@@ -92,8 +99,8 @@ export default function EditarTrabajoScreen() {
       showAlert("Error", "La descripción es obligatoria");
       return;
     }
-    if (!precioBase || parseFloat(precioBase) <= 0) {
-      showAlert("Error", "El precio base debe ser mayor a 0");
+    if (!precioUnitario || parseFloat(precioUnitario) <= 0) {
+      showAlert("Error", "El precio unitario debe ser mayor a 0");
       return;
     }
     if (Platform.OS !== "web") {
@@ -102,7 +109,8 @@ export default function EditarTrabajoScreen() {
 
     const data: any = {
       descripcion: descripcion.trim(),
-      precioBase: (parseFloat(precioBase) || 0).toFixed(2),
+      precioUnitario: precioUnitario,
+      cantidad: parseInt(cantidad) || 1,
       impuestos: (parseFloat(impuestos) || 0).toFixed(2),
       varios: (parseFloat(varios) || 0).toFixed(2),
       abonoInicial: (parseFloat(abonoInicial) || 0).toFixed(2),
@@ -249,11 +257,11 @@ export default function EditarTrabajoScreen() {
                 className="flex-1 bg-surface rounded-xl border border-border px-4 py-3 text-base text-foreground"
                 placeholder="0.00"
                 placeholderTextColor={colors.muted}
-                value={precioBase}
-                onChangeText={setPrecioBase}
+                value={precioUnitario}
+                onChangeText={setPrecioUnitario}
                 keyboardType="decimal-pad"
               />
-              <VoiceInput mode="numeric" onResult={setPrecioBase} size={36} />
+              <VoiceInput mode="numeric" onResult={setPrecioUnitario} size={28} />
             </View>
           </View>
 
@@ -322,8 +330,8 @@ export default function EditarTrabajoScreen() {
           <View className="bg-surface rounded-2xl p-4 border border-border gap-2">
             <Text className="text-sm font-semibold text-foreground mb-1">Resumen</Text>
             <View className="flex-row justify-between">
-              <Text className="text-sm text-muted">Precio base</Text>
-              <Text className="text-sm font-medium text-foreground">{formatCurrency(precioBase || "0")}</Text>
+              <Text className="text-sm text-muted">Subtotal (unitario × cantidad)</Text>
+              <Text className="text-sm font-medium text-foreground">{formatCurrency(subtotal.toString())}</Text>
             </View>
             <View className="flex-row justify-between">
               <Text className="text-sm text-muted">Impuestos</Text>
