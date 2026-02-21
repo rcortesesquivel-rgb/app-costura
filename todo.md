@@ -30,6 +30,7 @@
 - [x] Cálculo de totales (precio base + agregados)
 - [x] Gestión de abonos y saldo pendiente
 - [x] Adjuntar imágenes de referencia
+- [x] Editar/eliminar imágenes después de crear trabajo
 - [x] Pantalla de detalle de trabajo
 - [ ] Edición de trabajos existentes
 

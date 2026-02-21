@@ -424,6 +424,29 @@ export const appRouter = router({
         await db.deleteImagen(input.id, ctx.user.id);
         return { success: true };
       }),
+
+    addToTrabajo: protectedProcedure
+      .input(z.object({
+        trabajoId: z.number(),
+        attachments: z.array(z.object({
+          uri: z.string(),
+          name: z.string(),
+          type: z.enum(["image", "document"]),
+        })),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const ids = [];
+        for (const attachment of input.attachments) {
+          const id = await db.createImagen({
+            userId: ctx.user.id,
+            trabajoId: input.trabajoId,
+            url: attachment.uri,
+            tipo: attachment.type,
+          });
+          ids.push(id);
+        }
+        return { ids };
+      }),
   }),
 
   // ============ HISTORIAL ============
