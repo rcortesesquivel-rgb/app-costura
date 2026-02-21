@@ -210,7 +210,7 @@ export const appRouter = router({
       .input(z.object({
         clienteId: z.number(),
         descripcion: z.string().min(1),
-        precioBase: z.string(),
+        precioUnitario: z.string(),
         cantidad: z.number().int().min(1).optional(),
         abonoInicial: z.string().optional(),
         impuestos: z.string().optional(),
@@ -296,7 +296,7 @@ export const appRouter = router({
         id: z.number(),
         data: z.object({
           descripcion: z.string().min(1).optional(),
-          precioBase: z.string().optional(),
+          precioUnitario: z.string().optional(),
           cantidad: z.number().int().min(1).optional(),
           abonoInicial: z.string().optional(),
           impuestos: z.string().optional(),
