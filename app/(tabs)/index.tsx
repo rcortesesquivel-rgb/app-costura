@@ -11,9 +11,10 @@ import { useAuth } from "@/lib/auth-context";
 
 const ESTADOS = [
   { value: "todos", label: "Todos" },
-  { value: "en_espera", label: "En espera" },
+  { value: "recibido", label: "Recibido" },
   { value: "cortando", label: "Cortando" },
   { value: "cosiendo", label: "Cosiendo" },
+  { value: "bordado_personalizado", label: "Bordado/Personalizado" },
   { value: "listo", label: "Listo" },
   { value: "entregado", label: "Entregado" },
 ] as const;
