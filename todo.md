@@ -29,7 +29,7 @@
 - [x] Lista dinámica de agregados con suma automática
 - [x] Cálculo de totales (precio base + agregados)
 - [x] Gestión de abonos y saldo pendiente
-- [ ] Adjuntar imágenes de referencia
+- [x] Adjuntar imágenes de referencia
 - [x] Pantalla de detalle de trabajo
 - [ ] Edición de trabajos existentes
 

@@ -7,6 +7,7 @@ import { confirmAction, confirmDestructive, showAlert } from "@/lib/confirm";
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { VoiceInput } from "@/components/voice-input";
+import { ImageAttachmentWidget, type AttachedFile } from "@/components/image-attachment-widget";
 import { trpc } from "@/lib/trpc";
 import { useColors } from "@/hooks/use-colors";
 import { formatCurrency } from "@/lib/format-currency";
@@ -26,6 +27,7 @@ export default function CrearTrabajoScreen() {
   const [fechaEntrega, setFechaEntrega] = useState("");
   const [categoria, setCategoria] = useState("arreglo");
   const [urgencia, setUrgencia] = useState<string | undefined>("baja");
+  const [attachments, setAttachments] = useState<AttachedFile[]>([]);
 
   const { data: clientes, isLoading: loadingClientes } = trpc.clientes.list.useQuery();
 
@@ -88,6 +90,14 @@ export default function CrearTrabajoScreen() {
       if (!isNaN(parsed.getTime())) {
         data.fechaEntrega = parsed;
       }
+    }
+
+    if (attachments.length > 0) {
+      data.attachments = attachments.map((att) => ({
+        uri: att.uri,
+        name: att.name,
+        type: att.type,
+      }));
     }
 
     createMutation.mutate(data);
@@ -371,6 +381,15 @@ export default function CrearTrabajoScreen() {
                 </Text>
               </View>
             </View>
+
+            {/* Adjuntar imágenes */}
+            <ImageAttachmentWidget
+              attachments={attachments}
+              onAttach={setAttachments}
+              onRemove={(id) => setAttachments((prev) => prev.filter((f) => f.id !== id))}
+              maxFiles={5}
+              maxSizeMB={10}
+            />
 
             {/* Botones */}
             <View className="gap-3 mt-4">

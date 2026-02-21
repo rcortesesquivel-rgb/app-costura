@@ -218,6 +218,7 @@ export const appRouter = router({
         categoria: z.enum(["arreglo", "confeccion", "bordado", "sublimado", "otros"]).optional(),
         urgencia: z.enum(["baja", "media", "alta"]).optional(),
         fechaEntrega: z.date().optional(),
+        attachments: z.array(z.object({ uri: z.string(), name: z.string(), type: z.enum(["image", "document"]) })).optional(),
       }))
       .mutation(async ({ input, ctx }) => {
         const id = await db.createTrabajo({
@@ -234,6 +235,23 @@ export const appRouter = router({
           userId: ctx.user.id,
           estado: "recibido",
         });
+
+        // Procesar adjuntos si existen
+        if (input.attachments && input.attachments.length > 0) {
+          for (const attachment of input.attachments) {
+            try {
+              await db.createImagen({
+                userId: ctx.user.id,
+                trabajoId: id,
+                url: attachment.uri,
+                tipo: attachment.type,
+              });
+            } catch (error) {
+              console.error(`Error guardando imagen ${attachment.name}:`, error);
+            }
+          }
+        }
+
         return { id };
       }),
 
