@@ -211,7 +211,7 @@ export const appRouter = router({
         clienteId: z.number(),
         descripcion: z.string().min(1),
         precioUnitario: z.string(),
-        cantidad: z.number().int().min(1).optional(),
+        cantidad: z.number().int().min(1).default(1),
         abonoInicial: z.string().optional(),
         impuestos: z.string().optional(),
         varios: z.string().optional(),
@@ -221,7 +221,16 @@ export const appRouter = router({
       }))
       .mutation(async ({ input, ctx }) => {
         const id = await db.createTrabajo({
-          ...input,
+          clienteId: input.clienteId,
+          descripcion: input.descripcion,
+          precioUnitario: input.precioUnitario,
+          cantidad: input.cantidad ?? 1,
+          abonoInicial: input.abonoInicial ?? "0.00",
+          impuestos: input.impuestos ?? "0.00",
+          varios: input.varios ?? "0.00",
+          categoria: input.categoria ?? "otros",
+          urgencia: input.urgencia,
+          fechaEntrega: input.fechaEntrega,
           userId: ctx.user.id,
           estado: "recibido",
         });
