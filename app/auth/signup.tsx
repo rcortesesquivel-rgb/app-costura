@@ -8,6 +8,8 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useColors } from "@/hooks/use-colors";
 import { useAuth } from "@/lib/auth-context";
 import { WebSafeButton } from "@/components/web-safe-button";
+import { PhoneInput } from "@/components/phone-input";
+import { getDefaultCountryCode, formatPhoneForStorage, validatePhoneNumber } from "@/lib/phone-validation";
 
 export default function SignUpScreen() {
   const colors = useColors();
@@ -16,6 +18,9 @@ export default function SignUpScreen() {
 
   const [nombre, setNombre] = useState("");
   const [email, setEmail] = useState("");
+  const [telefono, setTelefono] = useState("");
+  const [countryCode, setCountryCode] = useState(getDefaultCountryCode());
+  const [phoneError, setPhoneError] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -28,6 +33,7 @@ export default function SignUpScreen() {
 
   const handleSignUp = async () => {
     setErrorMsg("");
+    setPhoneError("");
 
     if (!nombre.trim()) {
       setErrorMsg("El nombre es obligatorio");
@@ -46,9 +52,18 @@ export default function SignUpScreen() {
       return;
     }
 
+    let phoneToSend = telefono;
+    if (telefono.trim()) {
+      if (!validatePhoneNumber(telefono, countryCode)) {
+        setPhoneError("Por favor ingresa un número de teléfono válido");
+        return;
+      }
+      phoneToSend = formatPhoneForStorage(telefono, countryCode);
+    }
+
     setIsLoading(true);
     try {
-      await signUp(email, password, nombre);
+      await signUp(email, password, nombre, phoneToSend);
       if (Platform.OS !== "web") {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
@@ -145,6 +160,15 @@ export default function SignUpScreen() {
                   style={inputStyle}
                 />
               </div>
+
+              <PhoneInput
+                value={telefono}
+                onChangeText={setTelefono}
+                countryCode={countryCode}
+                onCountryChange={setCountryCode}
+                disabled={isLoading}
+                error={phoneError}
+              />
 
               <button
                 onClick={handleSignUp}

@@ -15,6 +15,7 @@ async function syncUser(userInfo: {
   email?: string | null;
   loginMethod?: string | null;
   platform?: string | null;
+  telefono?: string | null;
 }) {
   if (!userInfo.openId) {
     throw new Error("openId missing from user info");
@@ -31,6 +32,9 @@ async function syncUser(userInfo: {
   };
   if (userInfo.name !== undefined) {
     upsertData.name = userInfo.name || null;
+  }
+  if (userInfo.telefono !== undefined) {
+    upsertData.telefono = userInfo.telefono || null;
   }
   await upsertUser(upsertData);
   const saved = await getUserByOpenId(userInfo.openId);
@@ -184,7 +188,7 @@ export function registerOAuthRoutes(app: Express) {
   // Sign up with email and password
   app.post("/api/auth/signup", async (req: Request, res: Response) => {
     try {
-      const { email, password, name } = req.body;
+      const { email, password, name, phone } = req.body;
 
       if (!email || !password || !name) {
         res.status(400).json({ error: "email, password, and name are required" });
@@ -195,12 +199,16 @@ export function registerOAuthRoutes(app: Express) {
       const openId = `email:${email}`;
 
       // Create or update user in database
-      await syncUser({
+      const userData: any = {
         openId,
         email,
         name,
         loginMethod: "email",
-      });
+      };
+      if (phone) {
+        userData.telefono = phone;
+      }
+      await syncUser(userData);
 
       // Read the REAL user from database to get id, role, isActive
       const savedUser = await getUserByOpenId(openId);
