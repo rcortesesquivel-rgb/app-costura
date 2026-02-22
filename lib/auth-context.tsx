@@ -16,7 +16,7 @@ export interface AuthContextType {
   user: AuthUser | null;
   isLoading: boolean;
   isSignedIn: boolean;
-  signUp: (email: string, password: string, name: string, phone?: string) => Promise<void>;
+  signUp: (email: string, password: string, name: string, phone?: string, sinpeTelefono?: string) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
 }
@@ -57,12 +57,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(() => loadUserSync());
   const [isLoading] = useState(false); // Never loading - we read synchronously
 
-  const signUp = async (email: string, password: string, name: string, phone?: string) => {
+  const signUp = async (email: string, password: string, name: string, phone?: string, sinpeTelefono?: string) => {
     const baseUrl = getApiBaseUrl();
     const response = await fetch(`${baseUrl}/api/auth/signup`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password, name, ...(phone && { phone }) }),
+      body: JSON.stringify({ email, password, name, ...(phone && { phone }), ...(sinpeTelefono && { sinpeTelefono }) }),
       credentials: "include",
     });
 

@@ -21,6 +21,7 @@ export default function SignUpScreen() {
   const [telefono, setTelefono] = useState("");
   const [countryCode, setCountryCode] = useState(getDefaultCountryCode());
   const [phoneError, setPhoneError] = useState("");
+  const [sinpeTelefono, setSinpeTelefono] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -63,7 +64,7 @@ export default function SignUpScreen() {
 
     setIsLoading(true);
     try {
-      await signUp(email, password, nombre, phoneToSend);
+      await signUp(email, password, nombre, phoneToSend, sinpeTelefono);
       if (Platform.OS !== "web") {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
@@ -169,6 +170,18 @@ export default function SignUpScreen() {
                 disabled={isLoading}
                 error={phoneError}
               />
+
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                <label style={{ fontSize: 14, fontWeight: "600", color: colors.foreground }}>Número SINPE (para recibir pagos)</label>
+                <input
+                  type="tel"
+                  placeholder="Ej: 70460451"
+                  value={sinpeTelefono}
+                  onChange={(e) => setSinpeTelefono(e.target.value)}
+                  disabled={isLoading}
+                  style={inputStyle}
+                />
+              </div>
 
               <button
                 onClick={handleSignUp}

@@ -16,6 +16,7 @@ async function syncUser(userInfo: {
   loginMethod?: string | null;
   platform?: string | null;
   telefono?: string | null;
+  sinpeTelefono?: string | null;
 }) {
   if (!userInfo.openId) {
     throw new Error("openId missing from user info");
@@ -35,6 +36,9 @@ async function syncUser(userInfo: {
   }
   if (userInfo.telefono !== undefined) {
     upsertData.telefono = userInfo.telefono || null;
+  }
+  if (userInfo.sinpeTelefono !== undefined) {
+    upsertData.sinpeTelefono = userInfo.sinpeTelefono || null;
   }
   await upsertUser(upsertData);
   const saved = await getUserByOpenId(userInfo.openId);
@@ -188,7 +192,7 @@ export function registerOAuthRoutes(app: Express) {
   // Sign up with email and password
   app.post("/api/auth/signup", async (req: Request, res: Response) => {
     try {
-      const { email, password, name, phone } = req.body;
+      const { email, password, name, phone, sinpeTelefono } = req.body;
 
       if (!email || !password || !name) {
         res.status(400).json({ error: "email, password, and name are required" });
@@ -207,6 +211,9 @@ export function registerOAuthRoutes(app: Express) {
       };
       if (phone) {
         userData.telefono = phone;
+      }
+      if (sinpeTelefono) {
+        userData.sinpeTelefono = sinpeTelefono;
       }
       await syncUser(userData);
 
