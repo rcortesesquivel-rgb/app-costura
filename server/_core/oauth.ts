@@ -280,4 +280,34 @@ export function registerOAuthRoutes(app: Express) {
       res.status(500).json({ error: "Sign in failed" });
     }
   });
+
+  // Update user profile
+  app.post("/api/users/update-profile", async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (!user || !user.openId) {
+        res.status(401).json({ error: "Unauthorized" });
+        return;
+      }
+
+      const { sinpeTelefono, telefono } = req.body;
+      const updateData: any = {};
+      if (sinpeTelefono !== undefined) {
+        updateData.sinpeTelefono = sinpeTelefono || null;
+      }
+      if (telefono !== undefined) {
+        updateData.telefono = telefono || null;
+      }
+
+      await upsertUser({
+        openId: user.openId,
+        ...updateData,
+      });
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error("[Auth] /api/users/update-profile failed:", error);
+      res.status(500).json({ error: "Update failed" });
+    }
+  });
 }
