@@ -190,6 +190,20 @@
       "when": 1771764479580,
       "tag": "0026_sleepy_sage",
       "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "5",
+      "when": 1771767334618,
+      "tag": "0027_safe_typhoid_mary",
+      "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "5",
+      "when": 1771767617031,
+      "tag": "0028_useful_the_renegades",
+      "breakpoints": true
     }
   ]
 }

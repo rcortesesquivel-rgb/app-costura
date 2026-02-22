@@ -1,0 +1,1 @@
+ALTER TABLE `trabajos` DROP COLUMN `condicionesPago`;

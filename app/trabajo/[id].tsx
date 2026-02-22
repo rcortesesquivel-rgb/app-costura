@@ -13,6 +13,10 @@ import { getApiBaseUrl } from "@/constants/oauth";
 import { confirmAction, confirmDestructive, showAlert } from "@/lib/confirm";
 import { AudioRecorderWidget } from "@/components/audio-recorder";
 import { useAuth } from "@/lib/auth-context";
+import { generateCotizacionText } from "@/lib/generate-cotizacion-text";
+import { Clipboard } from "react-native";
+import * as Sharing from "expo-sharing";
+import * as FileSystem from "expo-file-system/legacy";
 
 const ESTADOS_ORDEN = ["recibido", "cortando", "cosiendo", "bordado_personalizado", "listo", "entregado"] as const;
 
@@ -115,6 +119,57 @@ export default function TrabajoDetalleScreen() {
     },
     onError: (error) => showAlert("Error", "No se pudo actualizar: " + error.message),
   });
+
+  const handleGenerarCotizacion = async () => {
+    if (!trabajo || !cliente) return;
+
+    try {
+      const cotizacionText = generateCotizacionText({
+        clienteName: cliente.nombreCompleto,
+        clientePhone: cliente.telefono,
+        clienteEmail: cliente.email,
+        descripcion: trabajo.descripcion,
+        precioUnitario: parseFloat(trabajo.precioUnitario),
+        cantidad: trabajo.cantidad,
+        impuestos: parseFloat(trabajo.impuestos),
+        varios: parseFloat(trabajo.varios),
+        abonoInicial: parseFloat(trabajo.abonoInicial),
+        fechaEntrega: trabajo.fechaEntrega ? new Date(trabajo.fechaEntrega).toLocaleDateString("es-CR") : undefined,
+        tallerName: "Taller de Costura",
+      });
+
+      // Mostrar opciones: Copiar o Compartir
+      Alert.alert(
+        "Cotización",
+        "¿Qué deseas hacer?",
+        [
+          {
+            text: "Copiar",
+            onPress: () => {
+              Clipboard.setString(cotizacionText);
+              showAlert("Éxito", "Cotización copiada al portapapeles");
+            },
+          },
+          {
+            text: "Compartir",
+            onPress: async () => {
+              try {
+                await Sharing.shareAsync(
+                  cotizacionText,
+                  { dialogTitle: "Compartir Cotización" }
+                );
+              } catch (error) {
+                showAlert("Error", "No se pudo compartir la cotización");
+              }
+            },
+          },
+          { text: "Cancelar", style: "cancel" },
+        ]
+      );
+    } catch (error) {
+      showAlert("Error", `No se pudo generar la cotización: ${error instanceof Error ? error.message : "Error desconocido"}`);
+    }
+  };
 
   const handleCambiarEstado = (nuevoEstado: string) => {
     if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -539,6 +594,17 @@ export default function TrabajoDetalleScreen() {
             </View>
           </View>
 
+          {/* Generar Cotización */}
+          <TouchableOpacity
+            className="rounded-xl py-4 items-center flex-row justify-center gap-2 mt-2"
+            style={{ backgroundColor: colors.primary }}
+            onPress={handleGenerarCotizacion}
+            activeOpacity={0.8}
+          >
+            <IconSymbol name="doc.text.fill" size={18} color="#FFFFFF" />
+            <Text className="text-base font-semibold text-white">Generar Cotización</Text>
+          </TouchableOpacity>
+
           {/* Eliminar */}
           <TouchableOpacity
             className="rounded-xl py-4 items-center flex-row justify-center gap-2 mt-2"
@@ -568,6 +634,7 @@ export default function TrabajoDetalleScreen() {
           <Text className="text-base font-semibold text-foreground">Ir Atrás</Text>
         </TouchableOpacity>
       </View>
+
     </ScreenContainer>
   );
 }

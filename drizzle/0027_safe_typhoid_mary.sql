@@ -1,0 +1,1 @@
+ALTER TABLE `trabajos` ADD `condicionesPago` text;
