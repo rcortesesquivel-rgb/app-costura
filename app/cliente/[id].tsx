@@ -185,21 +185,18 @@ export default function ClienteDetalleScreen() {
               </TouchableOpacity>
             </View>
 
-            <View className="bg-surface rounded-2xl p-4 border border-border gap-3">
-              {[
-                { key: "cuello", label: "Cuello" },
-                { key: "hombros", label: "Hombros" },
-                { key: "pecho", label: "Pecho" },
-                { key: "cintura", label: "Cintura" },
-                { key: "cadera", label: "Cadera" },
-                { key: "largoManga", label: "Largo de manga" },
-                { key: "largoEspalda", label: "Largo de espalda" },
-                { key: "largoPantalon", label: "Largo de pantalón" },
-                { key: "entrepierna", label: "Entrepierna" },
-                { key: "contornoBrazo", label: "Contorno de brazo" },
-                { key: "anchoPecho", label: "Ancho de pecho" },
-                { key: "anchoEspalda", label: "Ancho de espalda" },
-              ].map(({ key, label }) => (
+            <View className="bg-surface rounded-2xl p-4 border border-border gap-4">
+              {/* CONTORNOS */}
+              <View>
+                <Text className="text-sm font-semibold text-foreground mb-3">Contornos (Medidas de circunferencia)</Text>
+                {[
+                  { key: "cuello", label: "Contorno de Cuello" },
+                  { key: "pecho", label: "Contorno de Busto/Pecho" },
+                  { key: "cintura", label: "Contorno de Cintura" },
+                  { key: "cadera", label: "Contorno de Cadera" },
+                  { key: "contornoBrazo", label: "Contorno de Brazo" },
+                  { key: "hombros", label: "Contorno de Muñeca" },
+                ].map(({ key, label }) => (
                 <View key={key} className="flex-row items-center justify-between">
                   <Text className="text-sm text-muted">{label}</Text>
                   {editandoMedidas ? (
@@ -218,10 +215,68 @@ export default function ClienteDetalleScreen() {
                   )}
                 </View>
               ))}
+              </View>
+
+              {/* LARGOS */}
+              <View className="pt-2 border-t border-border">
+                <Text className="text-sm font-semibold text-foreground mb-3">Largos (Medidas verticales)</Text>
+                {[
+                  { key: "largoEspalda", label: "Talle Espalda" },
+                  { key: "largoManga", label: "Largo de Manga" },
+                  { key: "largoPantalon", label: "Largo de Falda/Pantalón" },
+                  { key: "entrepierna", label: "Tiro" },
+                ].map(({ key, label }) => (
+                <View key={key} className="flex-row items-center justify-between mb-2">
+                  <Text className="text-sm text-muted">{label}</Text>
+                  {editandoMedidas ? (
+                    <TextInput
+                      className="bg-background rounded-lg border border-border px-3 py-2 text-sm text-foreground w-24 text-right"
+                      placeholder="0 cm"
+                      placeholderTextColor={colors.muted}
+                      value={medidas[key as keyof typeof medidas]}
+                      onChangeText={(text) => setMedidas({ ...medidas, [key]: text })}
+                      keyboardType="numeric"
+                    />
+                  ) : (
+                    <Text className="text-sm font-medium text-foreground">
+                      {(medidasData?.[key as keyof typeof medidasData] as string) || "—"}
+                    </Text>
+                  )}
+                </View>
+                ))}
+              </View>
+
+              {/* ANCHOS */}
+              <View className="pt-2 border-t border-border">
+                <Text className="text-sm font-semibold text-foreground mb-3">Anchos</Text>
+                {[
+                  { key: "anchoEspalda", label: "Ancho de Espalda" },
+                  { key: "anchoPecho", label: "Separación de Busto" },
+                ].map(({ key, label }) => (
+                <View key={key} className="flex-row items-center justify-between mb-2">
+                  <Text className="text-sm text-muted">{label}</Text>
+                  {editandoMedidas ? (
+                    <TextInput
+                      className="bg-background rounded-lg border border-border px-3 py-2 text-sm text-foreground w-24 text-right"
+                      placeholder="0 cm"
+                      placeholderTextColor={colors.muted}
+                      value={medidas[key as keyof typeof medidas]}
+                      onChangeText={(text) => setMedidas({ ...medidas, [key]: text })}
+                      keyboardType="numeric"
+                    />
+                  ) : (
+                    <Text className="text-sm font-medium text-foreground">
+                      {(medidasData?.[key as keyof typeof medidasData] as string) || "—"}
+                    </Text>
+                  )}
+                </View>
+                ))}
+              </View>
 
               {editandoMedidas && (
-                <View className="gap-2 mt-2">
-                  <Text className="text-sm text-muted">Notas adicionales</Text>
+                <View className="gap-2 mt-2 pt-2 border-t border-border">
+                  <Text className="text-sm font-semibold text-foreground">Otras</Text>
+                  <Text className="text-sm text-muted">Descripción adicional</Text>
                   <TextInput
                     className="bg-background rounded-lg border border-border px-3 py-2 text-sm text-foreground"
                     placeholder="Notas sobre las medidas..."
