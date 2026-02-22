@@ -254,11 +254,11 @@ export default function CrearTrabajoScreen() {
                     <VoiceInput mode="numeric" onResult={setPrecioUnitario} size={28} />
                   </View>
                 </View>
-                <View className="w-24 gap-1">
+                <View className="w-20 gap-1">
                   <Text className="text-xs text-muted">Cantidad</Text>
                   <View className="flex-row items-center gap-1">
                     <TextInput
-                      className="flex-1 bg-surface rounded-xl border border-border px-4 py-3 text-base text-foreground"
+                      className="flex-1 bg-surface rounded-xl border border-border px-2 py-3 text-base text-foreground text-center"
                       placeholder="1"
                       placeholderTextColor={colors.muted}
                       value={cantidad}
