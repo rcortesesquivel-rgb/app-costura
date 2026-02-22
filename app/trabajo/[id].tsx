@@ -246,9 +246,8 @@ export default function TrabajoDetalleScreen() {
     if (tipo === "recibido") {
       mensaje = `Hola ${nombre}, hemos recibido su trabajo de ${cat}. Y necesito preguntarle`;
     } else if (tipo === "listo") {
-      const sinpe = (user as any)?.sinpeTelefono || "";
-      const sinpeTexto = sinpe ? ` Si el pago es por SINPE Móvil al número: ${sinpe}.` : "";
-      mensaje = `Hola ${nombre}, su trabajo de ${cat} está LISTO.${sinpeTexto} Gracias.`;
+      const telefono = (user as any)?.sinpeTelefono || "";
+      mensaje = `Hola ${nombre} su trabajo de: ${cat} está listo, puede pasar o pedir envío por mensajero (costo adicional), si paga a mi numero telefónico es ${telefono}, muchas gracias.`;
     } else if (tipo === "entregado") {
       mensaje = `Hola ${nombre}, su trabajo de ${cat} ha sido entregado. ¿Todo estuvo bien?`;
     }
