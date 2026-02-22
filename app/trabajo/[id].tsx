@@ -5,7 +5,6 @@ import * as Haptics from "expo-haptics";
 
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { ImageGalleryWidget } from "@/components/image-gallery-widget";
 import { trpc } from "@/lib/trpc";
 import { useColors } from "@/hooks/use-colors";
 import { formatCurrency } from "@/lib/format-currency";
@@ -89,22 +88,6 @@ export default function TrabajoDetalleScreen() {
       showAlert("Eliminado", "El trabajo ha sido eliminado", () => router.replace("/(tabs)"));
     },
     onError: (error) => showAlert("Error", "No se pudo eliminar: " + error.message),
-  });
-
-  const deleteImageMutation = trpc.imagenes.delete.useMutation({
-    onSuccess: () => {
-      refetch();
-      if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    },
-    onError: (error) => showAlert("Error", "No se pudo eliminar la imagen: " + error.message),
-  });
-
-  const addImagesMutation = trpc.imagenes.addToTrabajo.useMutation({
-    onSuccess: () => {
-      refetch();
-      if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    },
-    onError: (error: any) => showAlert("Error", "No se pudieron agregar las imagenes: " + error.message),
   });
 
   const togglePagadoMutation = trpc.trabajos.togglePagado.useMutation({
@@ -365,22 +348,6 @@ export default function TrabajoDetalleScreen() {
                 </View>
               )}
             </View>
-          )}
-
-          {/* Galería de imágenes */}
-          {trabajo && (
-            <ImageGalleryWidget
-              images={(trabajo as any)?.imagenes || []}
-              onDelete={(id) => deleteImageMutation.mutate({ id })}
-              onAdd={(files) =>
-                addImagesMutation.mutateAsync({
-                  trabajoId: trabajoId,
-                  attachments: files,
-                })
-              }
-              isLoading={deleteImageMutation.isPending || addImagesMutation.isPending}
-              canEdit={true}
-            />
           )}
 
           {/* Audios */}
