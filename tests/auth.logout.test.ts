@@ -31,8 +31,6 @@ function createAuthContext(): { ctx: TrpcContext; clearedCookies: CookieCall[] }
     updatedAt: new Date(),
     lastSignedIn: new Date(),
     sinpeTelefono: null,
-    telefono: null,
-    codigoPais: "CR",
     resetToken: null,
     resetTokenExpiry: null,
   };

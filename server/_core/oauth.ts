@@ -4,12 +4,6 @@ import { getUserByOpenId, upsertUser } from "../db";
 import { getSessionCookieOptions } from "./cookies";
 import { sdk } from "./sdk";
 
-function validatePhoneNumber(phoneNumber: string): boolean {
-  if (!phoneNumber) return true;
-  const cleaned = phoneNumber.replace(/\D/g, "");
-  return cleaned.length >= 8 && cleaned.length <= 15;
-}
-
 function getQueryParam(req: Request, key: string): string | undefined {
   const value = req.query[key];
   return typeof value === "string" ? value : undefined;
@@ -21,7 +15,6 @@ async function syncUser(userInfo: {
   email?: string | null;
   loginMethod?: string | null;
   platform?: string | null;
-  telefono?: string | null;
 }) {
   if (!userInfo.openId) {
     throw new Error("openId missing from user info");
@@ -38,9 +31,6 @@ async function syncUser(userInfo: {
   };
   if (userInfo.name !== undefined) {
     upsertData.name = userInfo.name || null;
-  }
-  if (userInfo.telefono !== undefined) {
-    upsertData.telefono = userInfo.telefono || null;
   }
   await upsertUser(upsertData);
   const saved = await getUserByOpenId(userInfo.openId);
@@ -194,16 +184,10 @@ export function registerOAuthRoutes(app: Express) {
   // Sign up with email and password
   app.post("/api/auth/signup", async (req: Request, res: Response) => {
     try {
-      const { email, password, name, telefono } = req.body;
+      const { email, password, name } = req.body;
 
       if (!email || !password || !name) {
         res.status(400).json({ error: "email, password, and name are required" });
-        return;
-      }
-
-      // Validar teléfono si se proporciona
-      if (telefono && !validatePhoneNumber(telefono)) {
-        res.status(400).json({ error: "Invalid phone number format" });
         return;
       }
 
@@ -215,7 +199,6 @@ export function registerOAuthRoutes(app: Express) {
         openId,
         email,
         name,
-        telefono,
         loginMethod: "email",
       });
 

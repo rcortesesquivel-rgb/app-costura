@@ -141,41 +141,6 @@
       "when": 1771717271141,
       "tag": "0019_silky_human_torch",
       "breakpoints": true
-    },
-    {
-      "idx": 20,
-      "version": "5",
-      "when": 1771718462042,
-      "tag": "0020_fantastic_chronomancer",
-      "breakpoints": true
-    },
-    {
-      "idx": 21,
-      "version": "5",
-      "when": 1771718485896,
-      "tag": "0021_right_ultimates",
-      "breakpoints": true
-    },
-    {
-      "idx": 22,
-      "version": "5",
-      "when": 1771718526808,
-      "tag": "0022_wet_garia",
-      "breakpoints": true
-    },
-    {
-      "idx": 23,
-      "version": "5",
-      "when": 1771718545213,
-      "tag": "0023_salty_doctor_octopus",
-      "breakpoints": true
-    },
-    {
-      "idx": 24,
-      "version": "5",
-      "when": 1771718956093,
-      "tag": "0024_thick_kid_colt",
-      "breakpoints": true
     }
   ]
 }

@@ -30,6 +30,7 @@
 - [x] Cálculo de totales (precio base + agregados)
 - [x] Gestión de abonos y saldo pendiente
 - [x] Adjuntar imágenes de referencia
+- [x] Editar/eliminar imágenes después de crear trabajo
 - [x] Pantalla de detalle de trabajo
 - [ ] Edición de trabajos existentes
 
@@ -465,5 +466,3 @@
 - [ ] Crear endpoint backend para generar PDF de resumen de trabajos completados
 - [ ] Agregar botón de exportar en la lista de trabajos (index.tsx)
 - [ ] Conectar botón con endpoint y permitir descarga de PDF
-- [x] Agregar campo teléfono en Sign Up para pagos
-- [x] Validación de teléfono por país
