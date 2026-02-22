@@ -130,7 +130,6 @@ export default function TrabajoDetalleScreen() {
 
   const handleConfirmPaymentConditions = async () => {
     if (!trabajo || !cliente) return;
-    setShowPaymentConditions(false);
 
     try {
       const cotizacionText = generateCotizacionText({
@@ -147,6 +146,8 @@ export default function TrabajoDetalleScreen() {
         tallerName: "Taller de Costura",
         condicionesPago: paymentConditions,
       });
+
+      setShowPaymentConditions(false);
 
       // Mostrar opciones: Copiar o Compartir
       Alert.alert(
@@ -177,6 +178,7 @@ export default function TrabajoDetalleScreen() {
         ]
       );
     } catch (error) {
+      setShowPaymentConditions(false);
       showAlert("Error", `No se pudo generar la cotización: ${error instanceof Error ? error.message : "Error desconocido"}`);
     }
   };
