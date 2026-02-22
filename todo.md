@@ -466,3 +466,4 @@
 - [ ] Agregar botón de exportar en la lista de trabajos (index.tsx)
 - [ ] Conectar botón con endpoint y permitir descarga de PDF
 - [x] Agregar campo teléfono en Sign Up para pagos
+- [x] Validación de teléfono por país

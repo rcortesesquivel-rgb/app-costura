@@ -169,6 +169,13 @@
       "when": 1771718545213,
       "tag": "0023_salty_doctor_octopus",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "5",
+      "when": 1771718956093,
+      "tag": "0024_thick_kid_colt",
+      "breakpoints": true
     }
   ]
 }

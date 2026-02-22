@@ -29,6 +29,7 @@ export const users = mysqlTable("users", {
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
   sinpeTelefono: varchar("sinpeTelefono", { length: 20 }),
   telefono: varchar("telefono", { length: 20 }),
+  codigoPais: varchar("codigoPais", { length: 5 }).default("CR"),
   resetToken: varchar("resetToken", { length: 255 }),
   resetTokenExpiry: timestamp("resetTokenExpiry"),
 });

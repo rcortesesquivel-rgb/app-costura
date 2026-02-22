@@ -4,6 +4,12 @@ import { getUserByOpenId, upsertUser } from "../db";
 import { getSessionCookieOptions } from "./cookies";
 import { sdk } from "./sdk";
 
+function validatePhoneNumber(phoneNumber: string): boolean {
+  if (!phoneNumber) return true;
+  const cleaned = phoneNumber.replace(/\D/g, "");
+  return cleaned.length >= 8 && cleaned.length <= 15;
+}
+
 function getQueryParam(req: Request, key: string): string | undefined {
   const value = req.query[key];
   return typeof value === "string" ? value : undefined;
@@ -192,6 +198,12 @@ export function registerOAuthRoutes(app: Express) {
 
       if (!email || !password || !name) {
         res.status(400).json({ error: "email, password, and name are required" });
+        return;
+      }
+
+      // Validar teléfono si se proporciona
+      if (telefono && !validatePhoneNumber(telefono)) {
+        res.status(400).json({ error: "Invalid phone number format" });
         return;
       }
 
