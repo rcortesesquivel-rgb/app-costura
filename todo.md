@@ -465,3 +465,4 @@
 - [ ] Crear endpoint backend para generar PDF de resumen de trabajos completados
 - [ ] Agregar botón de exportar en la lista de trabajos (index.tsx)
 - [ ] Conectar botón con endpoint y permitir descarga de PDF
+- [x] Agregar campo teléfono en Sign Up para pagos

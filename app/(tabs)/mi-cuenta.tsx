@@ -289,6 +289,12 @@ export default function MiCuentaScreen() {
                 <Text className="text-xs font-semibold text-muted uppercase mb-1">Estado</Text>
                 <Text className="text-base text-success font-semibold">Activo</Text>
               </View>
+              {user?.telefono && (
+                <View>
+                  <Text className="text-xs font-semibold text-muted uppercase mb-1">Teléfono</Text>
+                  <Text className="text-base text-foreground">{user.telefono}</Text>
+                </View>
+              )}
             </View>
           </View>
 

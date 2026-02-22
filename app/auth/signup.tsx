@@ -16,6 +16,7 @@ export default function SignUpScreen() {
 
   const [nombre, setNombre] = useState("");
   const [email, setEmail] = useState("");
+  const [telefono, setTelefono] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -48,7 +49,7 @@ export default function SignUpScreen() {
 
     setIsLoading(true);
     try {
-      await signUp(email, password, nombre);
+      await signUp(email, password, nombre, telefono);
       if (Platform.OS !== "web") {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
@@ -140,6 +141,18 @@ export default function SignUpScreen() {
                   placeholder="Repite tu contraseña"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
+                  disabled={isLoading}
+                  style={inputStyle}
+                />
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                <label style={{ fontSize: 14, fontWeight: "600", color: colors.foreground }}>Teléfono (opcional)</label>
+                <input
+                  type="tel"
+                  placeholder="+506 1234-5678"
+                  value={telefono}
+                  onChange={(e) => setTelefono(e.target.value)}
                   disabled={isLoading}
                   onKeyDown={(e) => { if (e.key === "Enter") handleSignUp(); }}
                   style={inputStyle}

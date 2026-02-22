@@ -28,6 +28,7 @@ export const users = mysqlTable("users", {
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
   sinpeTelefono: varchar("sinpeTelefono", { length: 20 }),
+  telefono: varchar("telefono", { length: 20 }),
   resetToken: varchar("resetToken", { length: 255 }),
   resetTokenExpiry: timestamp("resetTokenExpiry"),
 });
@@ -81,7 +82,7 @@ export const trabajos = mysqlTable("trabajos", {
   abonoInicial: decimal("abonoInicial", { precision: 12, scale: 2 }).default("0.00"),
   impuestos: decimal("impuestos", { precision: 12, scale: 2 }).default("0.00"),
   varios: decimal("varios", { precision: 12, scale: 2 }).default("0.00"),
-  categoria: mysqlEnum("categoria", ["arreglo", "confeccion", "bordado", "sublimado", "otros"]).default("otros").notNull(),
+  categoria: mysqlEnum("categoria", ["arreglo", "reparacion", "confeccion", "bordado", "sublimado", "otros"]).default("otros").notNull(),
   urgencia: mysqlEnum("urgencia", ["baja", "media", "alta"]),
   cantidad: int("cantidad").default(1).notNull(),
   estado: mysqlEnum("estado", ["recibido", "cortando", "cosiendo", "bordado_personalizado", "listo", "entregado"]).default("recibido").notNull(),
