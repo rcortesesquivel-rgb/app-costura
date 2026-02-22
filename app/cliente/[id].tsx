@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
-import { useLocalSearchParams } from "expo-router";
-import { View, Text, TextInput, ScrollView, ActivityIndicator, Platform, Alert } from "react-native";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { View, Text, TextInput, ScrollView, ActivityIndicator, Platform, Alert, TouchableOpacity } from "react-native";
 import { ScreenContainer } from "@/components/screen-container";
 import { useColors } from "@/hooks/use-colors";
 import { trpc } from "@/lib/trpc";
 import * as Haptics from "expo-haptics";
 
 export default function ClienteScreen() {
+  const router = useRouter();
   const { id } = useLocalSearchParams();
   const clienteId = parseInt(id as string);
 
@@ -336,6 +337,21 @@ export default function ClienteScreen() {
           )}
         </View>
       </ScrollView>
+
+      {/* Footer fijo: Ir Atrás */}
+      <View
+        className="border-t border-border px-6 py-3"
+        style={{ backgroundColor: colors.background }}
+      >
+        <TouchableOpacity
+          className="rounded-xl py-3 items-center flex-row justify-center gap-2"
+          style={{ backgroundColor: colors.surface, borderColor: colors.border, borderWidth: 1 }}
+          onPress={() => router.back()}
+          activeOpacity={0.7}
+        >
+          <Text className="text-base font-semibold text-foreground">← Ir Atrás</Text>
+        </TouchableOpacity>
+      </View>
     </ScreenContainer>
   );
 }
