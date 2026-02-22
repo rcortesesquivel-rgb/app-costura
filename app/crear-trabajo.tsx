@@ -20,7 +20,7 @@ export default function CrearTrabajoScreen() {
   const [clienteId, setClienteId] = useState("");
   const [descripcion, setDescripcion] = useState("");
   const [precioUnitario, setPrecioUnitario] = useState("");
-  const [cantidad, setCantidad] = useState("1");
+  const [cantidad, setCantidad] = useState("");
   const [impuestos, setImpuestos] = useState("");
   const [varios, setVarios] = useState("");
   const [abonoInicial, setAbonoInicial] = useState("");
