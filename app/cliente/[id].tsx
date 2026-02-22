@@ -29,6 +29,11 @@ export default function ClienteDetalleScreen() {
     contornoBrazo: "",
     anchoPecho: "",
     anchoEspalda: "",
+    talleDelantero: "",
+    alturaButso: "",
+    alturaCardera: "",
+    siza: "",
+    anchoHombro: "",
     notas: "",
   });
 
@@ -80,6 +85,11 @@ export default function ClienteDetalleScreen() {
         contornoBrazo: medidasData.contornoBrazo || "",
         anchoPecho: medidasData.anchoPecho || "",
         anchoEspalda: medidasData.anchoEspalda || "",
+        talleDelantero: (medidasData as any)?.talleDelantero || "",
+        alturaButso: (medidasData as any)?.alturaButso || "",
+        alturaCardera: (medidasData as any)?.alturaCardera || "",
+        siza: (medidasData as any)?.siza || "",
+        anchoHombro: (medidasData as any)?.anchoHombro || "",
         notas: medidasData.notas || "",
       });
     }
@@ -222,9 +232,13 @@ export default function ClienteDetalleScreen() {
                 <Text className="text-sm font-semibold text-foreground mb-3">Largos (Medidas verticales)</Text>
                 {[
                   { key: "largoEspalda", label: "Talle Espalda" },
+                  { key: "talleDelantero", label: "Talle Delantero", isExtra: true },
+                  { key: "alturaButso", label: "Altura de Busto", isExtra: true },
+                  { key: "alturaCardera", label: "Altura de Cadera", isExtra: true },
                   { key: "largoManga", label: "Largo de Manga" },
                   { key: "largoPantalon", label: "Largo de Falda/Pantalón" },
                   { key: "entrepierna", label: "Tiro" },
+                  { key: "siza", label: "Siza", isExtra: true },
                 ].map(({ key, label }) => (
                 <View key={key} className="flex-row items-center justify-between mb-2">
                   <Text className="text-sm text-muted">{label}</Text>
@@ -250,6 +264,7 @@ export default function ClienteDetalleScreen() {
               <View className="pt-2 border-t border-border">
                 <Text className="text-sm font-semibold text-foreground mb-3">Anchos</Text>
                 {[
+                  { key: "anchoHombro", label: "Ancho de Hombro", isExtra: true },
                   { key: "anchoEspalda", label: "Ancho de Espalda" },
                   { key: "anchoPecho", label: "Separación de Busto" },
                 ].map(({ key, label }) => (
