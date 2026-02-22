@@ -14,6 +14,7 @@ import { confirmAction, confirmDestructive, showAlert } from "@/lib/confirm";
 import { AudioRecorderWidget } from "@/components/audio-recorder";
 import { useAuth } from "@/lib/auth-context";
 import { generateCotizacionText } from "@/lib/generate-cotizacion-text";
+import { PaymentConditionsModal } from "@/components/payment-conditions-modal";
 import { Clipboard } from "react-native";
 import * as Sharing from "expo-sharing";
 import * as FileSystem from "expo-file-system/legacy";
@@ -56,6 +57,8 @@ export default function TrabajoDetalleScreen() {
   const trabajoId = parseInt(id as string);
   const [showDividir, setShowDividir] = useState(false);
   const [cantidadDividir, setCantidadDividir] = useState("");
+  const [showPaymentConditions, setShowPaymentConditions] = useState(false);
+  const [paymentConditions, setPaymentConditions] = useState("");
 
   const { data: trabajo, isLoading: loadingTrabajo, refetch } = trpc.trabajos.getById.useQuery({ id: trabajoId });
   const { data: cliente } = trpc.clientes.getById.useQuery(
@@ -122,6 +125,12 @@ export default function TrabajoDetalleScreen() {
 
   const handleGenerarCotizacion = async () => {
     if (!trabajo || !cliente) return;
+    setShowPaymentConditions(true);
+  };
+
+  const handleConfirmPaymentConditions = async () => {
+    if (!trabajo || !cliente) return;
+    setShowPaymentConditions(false);
 
     try {
       const cotizacionText = generateCotizacionText({
@@ -136,6 +145,7 @@ export default function TrabajoDetalleScreen() {
         abonoInicial: parseFloat(trabajo.abonoInicial),
         fechaEntrega: trabajo.fechaEntrega ? new Date(trabajo.fechaEntrega).toLocaleDateString("es-CR") : undefined,
         tallerName: "Taller de Costura",
+        condicionesPago: paymentConditions,
       });
 
       // Mostrar opciones: Copiar o Compartir
@@ -635,6 +645,14 @@ export default function TrabajoDetalleScreen() {
         </TouchableOpacity>
       </View>
 
+      {/* Modal de Condiciones de Pago */}
+      <PaymentConditionsModal
+        visible={showPaymentConditions}
+        conditions={paymentConditions}
+        onChangeConditions={setPaymentConditions}
+        onClose={() => setShowPaymentConditions(false)}
+        onConfirm={handleConfirmPaymentConditions}
+      />
     </ScreenContainer>
   );
 }
