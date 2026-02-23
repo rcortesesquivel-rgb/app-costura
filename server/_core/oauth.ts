@@ -16,7 +16,6 @@ async function syncUser(userInfo: {
   loginMethod?: string | null;
   platform?: string | null;
   telefono?: string | null;
-  sinpeTelefono?: string | null;
 }) {
   if (!userInfo.openId) {
     throw new Error("openId missing from user info");
@@ -36,9 +35,6 @@ async function syncUser(userInfo: {
   }
   if (userInfo.telefono !== undefined) {
     upsertData.telefono = userInfo.telefono || null;
-  }
-  if (userInfo.sinpeTelefono !== undefined) {
-    upsertData.sinpeTelefono = userInfo.sinpeTelefono || null;
   }
   await upsertUser(upsertData);
   const saved = await getUserByOpenId(userInfo.openId);
@@ -192,7 +188,7 @@ export function registerOAuthRoutes(app: Express) {
   // Sign up with email and password
   app.post("/api/auth/signup", async (req: Request, res: Response) => {
     try {
-      const { email, password, name, phone, sinpeTelefono } = req.body;
+      const { email, password, name, phone } = req.body;
 
       if (!email || !password || !name) {
         res.status(400).json({ error: "email, password, and name are required" });
@@ -211,9 +207,6 @@ export function registerOAuthRoutes(app: Express) {
       };
       if (phone) {
         userData.telefono = phone;
-      }
-      if (sinpeTelefono) {
-        userData.sinpeTelefono = sinpeTelefono;
       }
       await syncUser(userData);
 
@@ -278,36 +271,6 @@ export function registerOAuthRoutes(app: Express) {
     } catch (error) {
       console.error("[Auth] /api/auth/signin failed:", error);
       res.status(500).json({ error: "Sign in failed" });
-    }
-  });
-
-  // Update user profile
-  app.post("/api/users/update-profile", async (req: Request, res: Response) => {
-    try {
-      const user = (req as any).user;
-      if (!user || !user.openId) {
-        res.status(401).json({ error: "Unauthorized" });
-        return;
-      }
-
-      const { sinpeTelefono, telefono } = req.body;
-      const updateData: any = {};
-      if (sinpeTelefono !== undefined) {
-        updateData.sinpeTelefono = sinpeTelefono || null;
-      }
-      if (telefono !== undefined) {
-        updateData.telefono = telefono || null;
-      }
-
-      await upsertUser({
-        openId: user.openId,
-        ...updateData,
-      });
-
-      res.json({ success: true });
-    } catch (error) {
-      console.error("[Auth] /api/users/update-profile failed:", error);
-      res.status(500).json({ error: "Update failed" });
     }
   });
 }

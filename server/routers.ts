@@ -9,7 +9,6 @@ import * as adminDb from "./admin-db";
 import * as superAdminDb from "./superadmin-db";
 import * as notificationsDb from "./notifications-db";
 import { storagePut } from "./storage";
-import { z } from "zod";
 
 // Procedimiento protegido que requiere autenticación
 const protectedProcedure = publicProcedure.use(async (opts) => {
@@ -57,11 +56,7 @@ export const appRouter = router({
   // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
   system: systemRouter,
   auth: router({
-    me: publicProcedure.query(async (opts) => {
-      if (!opts.ctx.user) return null;
-      const dbUser = await db.getUserByOpenId(opts.ctx.user.openId);
-      return dbUser || opts.ctx.user;
-    }),
+    me: publicProcedure.query((opts) => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {
       const cookieOptions = getSessionCookieOptions(ctx.req);
       ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
