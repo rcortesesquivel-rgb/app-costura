@@ -77,14 +77,17 @@ async function startServer() {
   );
 
   const preferredPort = parseInt(process.env.PORT || "3000");
-  const port = await findAvailablePort(preferredPort);
-
-  if (port !== preferredPort) {
-    console.log(`Port ${preferredPort} is busy, using port ${port} instead`);
-  }
-
-  server.listen(port, () => {
-    console.log(`[api] server listening on port ${port}`);
+  
+  server.listen(preferredPort, () => {
+    console.log(`[api] server listening on port ${preferredPort}`);
+  });
+  
+  server.on("error", (err: any) => {
+    if (err.code === "EADDRINUSE") {
+      console.error(`[api] Port ${preferredPort} is already in use. Kill the process and try again.`);
+      process.exit(1);
+    }
+    throw err;
   });
 }
 

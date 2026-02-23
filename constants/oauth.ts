@@ -32,6 +32,7 @@ export const API_BASE_URL = env.apiBaseUrl;
 export function getApiBaseUrl(): string {
   // If API_BASE_URL is set, use it
   if (API_BASE_URL) {
+    console.log("[getApiBaseUrl] Using EXPO_PUBLIC_API_BASE_URL:", API_BASE_URL);
     return API_BASE_URL.replace(/\/$/, "");
   }
 
@@ -40,12 +41,15 @@ export function getApiBaseUrl(): string {
     const { protocol, hostname } = window.location;
     // Pattern: 8081-sandboxid.region.domain -> 3000-sandboxid.region.domain
     const apiHostname = hostname.replace(/^8081-/, "3000-");
+    const result = `${protocol}//${apiHostname}`;
+    console.log("[getApiBaseUrl] Derived from hostname:", { hostname, apiHostname, result });
     if (apiHostname !== hostname) {
-      return `${protocol}//${apiHostname}`;
+      return result;
     }
   }
 
   // Fallback to empty (will use relative URL on web)
+  console.log("[getApiBaseUrl] Returning empty string (fallback)");
   return "";
 }
 
