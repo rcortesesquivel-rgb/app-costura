@@ -56,6 +56,8 @@ const MAPPING = {
   "doc.fill": "description",
   "person.circle.fill": "account-circle",
   "arrow.down.doc.fill": "download",
+  "doc.text.fill": "receipt-long",
+  "dollarsign.circle.fill": "attach-money",
 } as IconMapping;
 
 /**

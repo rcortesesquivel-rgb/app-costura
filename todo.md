@@ -501,3 +501,7 @@
 - [ ] Filtro por status (prueba/pagado)
 - [ ] Buscador por email o nombre
 - [ ] Probar agregar, editar, eliminar usuarios sin SQL
+
+## Arreglar Botón de Cotizaciones y Facturación al Contador - 24 Feb 2026
+- [x] Diagnosticar y arreglar botón de cotizaciones que no funciona
+- [x] Integrar envío de mensaje de facturación al contador (WhatsApp o similar)

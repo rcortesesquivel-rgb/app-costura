@@ -1,4 +1,4 @@
-import { Text, View, ScrollView, TouchableOpacity, ActivityIndicator, Alert, Platform, TextInput, Linking, Switch } from "react-native";
+import { Text, View, ScrollView, TouchableOpacity, ActivityIndicator, Alert, Platform, TextInput, Linking, Switch, Modal } from "react-native";
 import { useState } from "react";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import * as Haptics from "expo-haptics";
@@ -15,9 +15,7 @@ import { AudioRecorderWidget } from "@/components/audio-recorder";
 import { useAuth } from "@/lib/auth-context";
 import { generateCotizacionText } from "@/lib/generate-cotizacion-text";
 import { PaymentConditionsModal } from "@/components/payment-conditions-modal";
-import { Clipboard } from "react-native";
-import * as Sharing from "expo-sharing";
-import * as FileSystem from "expo-file-system/legacy";
+
 
 const ESTADOS_ORDEN = ["recibido", "cortando", "cosiendo", "bordado_personalizado", "listo", "entregado"] as const;
 
@@ -59,6 +57,11 @@ export default function TrabajoDetalleScreen() {
   const [cantidadDividir, setCantidadDividir] = useState("");
   const [showPaymentConditions, setShowPaymentConditions] = useState(false);
   const [paymentConditions, setPaymentConditions] = useState("");
+  const [showCotizacionModal, setShowCotizacionModal] = useState(false);
+  const [cotizacionGenerada, setCotizacionGenerada] = useState("");
+  const [showFacturacionModal, setShowFacturacionModal] = useState(false);
+  const [contadorWhatsApp, setContadorWhatsApp] = useState("");
+  const [mensajeFacturacion, setMensajeFacturacion] = useState("");
 
   const { data: trabajo, isLoading: loadingTrabajo, refetch } = trpc.trabajos.getById.useQuery({ id: trabajoId });
   const { data: cliente } = trpc.clientes.getById.useQuery(
@@ -148,39 +151,90 @@ export default function TrabajoDetalleScreen() {
       });
 
       setShowPaymentConditions(false);
-
-      // Mostrar opciones: Copiar o Compartir
-      Alert.alert(
-        "Cotización",
-        "¿Qué deseas hacer?",
-        [
-          {
-            text: "Copiar",
-            onPress: () => {
-              Clipboard.setString(cotizacionText);
-              showAlert("Éxito", "Cotización copiada al portapapeles");
-            },
-          },
-          {
-            text: "Compartir",
-            onPress: async () => {
-              try {
-                await Sharing.shareAsync(
-                  cotizacionText,
-                  { dialogTitle: "Compartir Cotización" }
-                );
-              } catch (error) {
-                showAlert("Error", "No se pudo compartir la cotización");
-              }
-            },
-          },
-          { text: "Cancelar", style: "cancel" },
-        ]
-      );
+      setCotizacionGenerada(cotizacionText);
+      setShowCotizacionModal(true);
     } catch (error) {
       setShowPaymentConditions(false);
       showAlert("Error", `No se pudo generar la cotización: ${error instanceof Error ? error.message : "Error desconocido"}`);
     }
+  };
+
+  const handleCopiarCotizacion = async () => {
+    try {
+      if (Platform.OS === "web" && navigator.clipboard) {
+        await navigator.clipboard.writeText(cotizacionGenerada);
+      }
+      showAlert("Éxito", "Cotización copiada al portapapeles");
+    } catch {
+      showAlert("Error", "No se pudo copiar la cotización");
+    }
+  };
+
+  const handleCompartirCotizacionWhatsApp = () => {
+    if (!cliente) return;
+    const telefono = (cliente as any).whatsapp || cliente.telefono || "";
+    const telLimpio = telefono.replace(/[^0-9]/g, "");
+    const url = `https://wa.me/${telLimpio}?text=${encodeURIComponent(cotizacionGenerada)}`;
+    Linking.openURL(url);
+    setShowCotizacionModal(false);
+  };
+
+  const generarMensajeFacturacion = () => {
+    if (!trabajo || !cliente) return "";
+    const precioUnit = parseFloat(trabajo.precioUnitario || "0");
+    const cant = (trabajo as any)?.cantidad ?? 1;
+    const imp = parseFloat(trabajo.impuestos || "0");
+    const var_ = parseFloat(trabajo.varios || "0");
+    const sub = precioUnit * cant;
+    const tot = sub + imp + var_;
+    const abono = parseFloat(trabajo.abonoInicial || "0");
+    const saldo = Math.max(0, tot - abono);
+    const cat = CATEGORIA_LABELS[(trabajo as any)?.categoria || "otros"] || "Costura";
+    const fecha = trabajo.fechaEntrega ? new Date(trabajo.fechaEntrega).toLocaleDateString("es-CR") : "No definida";
+
+    let msg = `📋 *DATOS PARA FACTURACIÓN*\n\n`;
+    msg += `👤 Cliente: ${cliente.nombreCompleto}\n`;
+    if (cliente.telefono) msg += `📱 Tel: ${cliente.telefono}\n`;
+    if (cliente.email) msg += `📧 Email: ${cliente.email}\n`;
+    msg += `\n🧵 Trabajo #${trabajo.id} - ${cat}\n`;
+    msg += `📝 ${trabajo.descripcion}\n`;
+    msg += `\n💰 *Desglose:*\n`;
+    msg += `  Precio unitario: ₡${precioUnit.toFixed(2)}\n`;
+    msg += `  Cantidad: ${cant}\n`;
+    msg += `  Subtotal: ₡${sub.toFixed(2)}\n`;
+    if (imp > 0) msg += `  Impuestos: ₡${imp.toFixed(2)}\n`;
+    if (var_ > 0) msg += `  Varios: ₡${var_.toFixed(2)}\n`;
+    msg += `  *TOTAL: ₡${tot.toFixed(2)}*\n`;
+    msg += `  Abono: ₡${abono.toFixed(2)}\n`;
+    msg += `  *Saldo pendiente: ₡${saldo.toFixed(2)}*\n`;
+    msg += `\n📅 Fecha entrega: ${fecha}\n`;
+    msg += `📊 Estado: ${ESTADO_LABELS[trabajo.estado] || trabajo.estado}\n`;
+    msg += `💳 Pagado: ${(trabajo as any).pagado ? "Sí" : "No"}\n`;
+    if (mensajeFacturacion.trim()) {
+      msg += `\n📌 *Nota:* ${mensajeFacturacion.trim()}\n`;
+    }
+    msg += `\n_Generado: ${new Date().toLocaleDateString("es-CR")} ${new Date().toLocaleTimeString("es-CR")}_`;
+    return msg;
+  };
+
+  const handleAbrirFacturacion = () => {
+    if (!trabajo || !cliente) {
+      showAlert("Error", "No se pudo cargar los datos del trabajo");
+      return;
+    }
+    setShowFacturacionModal(true);
+  };
+
+  const handleEnviarFacturacion = () => {
+    const telLimpio = contadorWhatsApp.replace(/[^0-9]/g, "");
+    if (!telLimpio || telLimpio.length < 8) {
+      showAlert("Error", "Ingresa un número de WhatsApp válido para el contador");
+      return;
+    }
+    const mensaje = generarMensajeFacturacion();
+    const url = `https://wa.me/${telLimpio}?text=${encodeURIComponent(mensaje)}`;
+    Linking.openURL(url);
+    setShowFacturacionModal(false);
   };
 
   const handleCambiarEstado = (nuevoEstado: string) => {
@@ -616,6 +670,17 @@ export default function TrabajoDetalleScreen() {
             <Text className="text-base font-semibold text-white">Generar Cotización</Text>
           </TouchableOpacity>
 
+          {/* Enviar Facturación al Contador */}
+          <TouchableOpacity
+            className="rounded-xl py-4 items-center flex-row justify-center gap-2 mt-2"
+            style={{ backgroundColor: "#25D366" }}
+            onPress={handleAbrirFacturacion}
+            activeOpacity={0.8}
+          >
+            <IconSymbol name="dollarsign.circle.fill" size={18} color="#FFFFFF" />
+            <Text className="text-base font-semibold text-white">Enviar Facturación al Contador</Text>
+          </TouchableOpacity>
+
           {/* Eliminar */}
           <TouchableOpacity
             className="rounded-xl py-4 items-center flex-row justify-center gap-2 mt-2"
@@ -654,6 +719,135 @@ export default function TrabajoDetalleScreen() {
         onClose={() => setShowPaymentConditions(false)}
         onConfirm={handleConfirmPaymentConditions}
       />
+
+      {/* Modal de Cotización Generada */}
+      <Modal
+        visible={showCotizacionModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowCotizacionModal(false)}
+      >
+        <View className="flex-1 justify-end" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
+          <View className="rounded-t-3xl p-6 gap-4" style={{ backgroundColor: colors.background, maxHeight: "80%" }}>
+            <View className="flex-row items-center justify-between">
+              <Text className="text-xl font-bold text-foreground">Cotización Generada</Text>
+              <TouchableOpacity onPress={() => setShowCotizacionModal(false)}>
+                <IconSymbol name="xmark.circle.fill" size={28} color={colors.muted} />
+              </TouchableOpacity>
+            </View>
+            <ScrollView style={{ maxHeight: 300 }}>
+              <View className="bg-surface rounded-xl p-4 border border-border">
+                <Text className="text-sm text-foreground" style={{ fontFamily: Platform.OS === "web" ? "monospace" : undefined }}>
+                  {cotizacionGenerada}
+                </Text>
+              </View>
+            </ScrollView>
+            <View className="gap-3">
+              <TouchableOpacity
+                className="rounded-xl py-3 items-center flex-row justify-center gap-2"
+                style={{ backgroundColor: colors.primary }}
+                onPress={handleCopiarCotizacion}
+                activeOpacity={0.8}
+              >
+                <IconSymbol name="doc.fill" size={18} color="#FFFFFF" />
+                <Text className="text-base font-semibold text-white">Copiar al Portapapeles</Text>
+              </TouchableOpacity>
+              {cliente && (
+                <TouchableOpacity
+                  className="rounded-xl py-3 items-center flex-row justify-center gap-2"
+                  style={{ backgroundColor: "#25D366" }}
+                  onPress={handleCompartirCotizacionWhatsApp}
+                  activeOpacity={0.8}
+                >
+                  <IconSymbol name="paperplane.fill" size={18} color="#FFFFFF" />
+                  <Text className="text-base font-semibold text-white">Enviar por WhatsApp</Text>
+                </TouchableOpacity>
+              )}
+              <TouchableOpacity
+                className="rounded-xl py-3 items-center"
+                style={{ backgroundColor: colors.surface, borderColor: colors.border, borderWidth: 1 }}
+                onPress={() => setShowCotizacionModal(false)}
+                activeOpacity={0.7}
+              >
+                <Text className="text-base font-semibold text-foreground">Cerrar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Modal de Facturación al Contador */}
+      <Modal
+        visible={showFacturacionModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowFacturacionModal(false)}
+      >
+        <View className="flex-1 justify-end" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
+          <View className="rounded-t-3xl p-6 gap-4" style={{ backgroundColor: colors.background }}>
+            <View className="gap-2 mb-2">
+              <Text className="text-xl font-bold text-foreground">Enviar Facturación al Contador</Text>
+              <Text className="text-sm text-muted">Envía los datos del trabajo por WhatsApp a tu contador para facturación</Text>
+            </View>
+
+            {/* Número del contador */}
+            <View className="gap-1">
+              <Text className="text-sm font-semibold text-foreground">WhatsApp del Contador</Text>
+              <TextInput
+                className="border rounded-lg px-4 py-3 text-foreground"
+                style={{ borderColor: colors.border, backgroundColor: colors.surface, color: colors.foreground }}
+                placeholder="Ej: 50670460451"
+                placeholderTextColor={colors.muted}
+                value={contadorWhatsApp}
+                onChangeText={setContadorWhatsApp}
+                keyboardType="phone-pad"
+              />
+            </View>
+
+            {/* Mensaje personalizado */}
+            <View className="gap-1">
+              <Text className="text-sm font-semibold text-foreground">Mensaje adicional (opcional)</Text>
+              <TextInput
+                className="border rounded-lg px-4 py-3 text-foreground"
+                style={{ borderColor: colors.border, backgroundColor: colors.surface, color: colors.foreground, minHeight: 80 }}
+                placeholder="Ej: Favor facturar a nombre de..."
+                placeholderTextColor={colors.muted}
+                value={mensajeFacturacion}
+                onChangeText={setMensajeFacturacion}
+                multiline
+                numberOfLines={3}
+                textAlignVertical="top"
+              />
+            </View>
+
+            {/* Preview del mensaje */}
+            <View className="bg-surface rounded-xl p-3 border border-border">
+              <Text className="text-xs text-muted mb-1">Vista previa del mensaje:</Text>
+              <Text className="text-xs text-foreground" numberOfLines={6}>
+                {generarMensajeFacturacion()}
+              </Text>
+            </View>
+
+            {/* Botones */}
+            <View className="flex-row gap-3 mt-2">
+              <TouchableOpacity
+                className="flex-1 rounded-lg py-3 items-center"
+                style={{ backgroundColor: colors.surface }}
+                onPress={() => setShowFacturacionModal(false)}
+              >
+                <Text className="text-base font-semibold text-foreground">Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                className="flex-1 rounded-lg py-3 items-center"
+                style={{ backgroundColor: "#25D366" }}
+                onPress={handleEnviarFacturacion}
+              >
+                <Text className="text-base font-semibold text-white">Enviar por WhatsApp</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </ScreenContainer>
   );
 }
