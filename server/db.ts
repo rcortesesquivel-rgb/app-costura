@@ -10,6 +10,7 @@ import {
   imagenes,
   historialEstados,
   audios,
+  emailsAutorizados,
   InsertCliente,
   InsertMedida,
   InsertTrabajo,
@@ -20,9 +21,13 @@ import {
 } from "../drizzle/schema";
 import { ENV } from "./_core/env";
 
+// Re-export commonly used functions and tables
+export { emailsAutorizados, eq, like, or, desc };
+
 let _db: ReturnType<typeof drizzle> | null = null;
 
 // Lazily create the drizzle instance so local tooling can run without a DB.
+
 export async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
     try {

@@ -606,8 +606,93 @@ export const appRouter = router({
           await db.deleteAudio(input.id, ctx.user.id);
           return { success: true };
         }),
+     }),
+    // Whitelist de Emails (Super Admin)
+    whitelist: router({
+      list: superAdminProcedure
+        .input(z.object({ search: z.string().optional(), status: z.enum(["prueba", "pagado"]).optional() }).optional())
+        .query(async ({ input }) => {
+          const db_conn = await db.getDb();
+          if (!db_conn) throw new Error("Database not available");
+          
+          let query = db_conn.select().from(db.emailsAutorizados);
+          
+          if (input?.search) {
+            query = query.where(
+              db.or(
+                db.like(db.emailsAutorizados.email, `%${input.search}%`),
+                db.like(db.emailsAutorizados.nombre, `%${input.search}%`)
+              )
+            );
+          }
+          
+          if (input?.status) {
+            query = query.where(db.eq(db.emailsAutorizados.status, input.status));
+          }
+          
+          return query.orderBy(db.desc(db.emailsAutorizados.createdAt));
+        }),
+      create: superAdminProcedure
+        .input(z.object({
+          email: z.string().email(),
+          nombre: z.string().min(1),
+          plan: z.enum(["basic", "vip", "lifetime"]),
+          status: z.enum(["prueba", "pagado"]),
+          diasExpiracion: z.number().int().min(1).default(2),
+        }))
+        .mutation(async ({ input }) => {
+          const db_conn = await db.getDb();
+          if (!db_conn) throw new Error("Database not available");
+          
+          const expiresAt = new Date();
+          expiresAt.setDate(expiresAt.getDate() + input.diasExpiracion);
+          
+          const result = await db_conn.insert(db.emailsAutorizados).values({
+            email: input.email,
+            nombre: input.nombre,
+            plan: input.plan,
+            status: input.status,
+            expiresAt,
+          });
+          
+          return { id: result[0].insertId, email: input.email };
+        }),
+      update: superAdminProcedure
+        .input(z.object({
+          email: z.string().email(),
+          nombre: z.string().min(1).optional(),
+          plan: z.enum(["basic", "vip", "lifetime"]).optional(),
+          status: z.enum(["prueba", "pagado"]).optional(),
+          diasExpiracion: z.number().int().min(1).optional(),
+        }))
+        .mutation(async ({ input }) => {
+          const db_conn = await db.getDb();
+          if (!db_conn) throw new Error("Database not available");
+          
+          const updateData: any = {};
+          if (input.nombre) updateData.nombre = input.nombre;
+          if (input.plan) updateData.plan = input.plan;
+          if (input.status) updateData.status = input.status;
+          
+          if (input.diasExpiracion) {
+            const expiresAt = new Date();
+            expiresAt.setDate(expiresAt.getDate() + input.diasExpiracion);
+            updateData.expiresAt = expiresAt;
+          }
+          
+          await db_conn.update(db.emailsAutorizados).set(updateData).where(db.eq(db.emailsAutorizados.email, input.email));
+          return { success: true };
+        }),
+      delete: superAdminProcedure
+        .input(z.object({ email: z.string().email() }))
+        .mutation(async ({ input }) => {
+          const db_conn = await db.getDb();
+          if (!db_conn) throw new Error("Database not available");
+          
+          await db_conn.delete(db.emailsAutorizados).where(db.eq(db.emailsAutorizados.email, input.email));
+          return { success: true };
+        }),
     }),
   }),
 });
-
 export type AppRouter = typeof appRouter;

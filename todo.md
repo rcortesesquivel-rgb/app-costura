@@ -489,3 +489,15 @@
 ## Link Hotmart en Prueba Vencida
 - [x] Agregar link de Hotmart checkout en mensaje de prueba vencida
 - [x] Confirmar sentencias SQL para prueba 48h y pagado 30 días
+
+
+## Panel de Administración de Whitelist
+- [ ] Crear endpoints tRPC: whitelist.list, whitelist.create, whitelist.update, whitelist.delete
+- [ ] Crear pantalla /app/(admin)/whitelist.tsx en Super Admin
+- [ ] Tabla con columnas: Email, Nombre, Plan, Status, Expira en
+- [ ] Botón "Agregar Usuario" con modal de formulario
+- [ ] Botón "Editar" por fila con modal pre-cargado
+- [ ] Botón "Eliminar" con confirmación
+- [ ] Filtro por status (prueba/pagado)
+- [ ] Buscador por email o nombre
+- [ ] Probar agregar, editar, eliminar usuarios sin SQL
