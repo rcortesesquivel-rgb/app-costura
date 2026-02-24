@@ -1,0 +1,9 @@
+{
+  "query": "INSERT INTO emailsAutorizados (email, nombre, plan, status, expiresAt) VALUES ('prueba_vencida@test.com', 'Prueba Vencida', 'basic', 'prueba', '2026-02-20 00:00:00'); INSERT INTO emailsAutorizados (email, nombre, plan, status, expiresAt) VALUES ('membresia_vencida@test.com', 'Membresia Vencida', 'vip', 'pagado', '2026-02-20 00:00:00'); INSERT INTO emailsAutorizados (email, nombre, plan, status, expiresAt) VALUES ('activo@test.com', 'Usuario Activo', 'vip', 'pagado', '2026-12-31 23:59:59');",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 37KVpxZeS2CVQbP.root --database NUhPjFzKcLyhLeGMAd6M8H --execute INSERT INTO emailsAutorizados (email, nombre, plan, status, expiresAt) VALUES ('prueba_vencida@test.com', 'Prueba Vencida', 'basic', 'prueba', '2026-02-20 00:00:00'); INSERT INTO emailsAutorizados (email, nombre, plan, status, expiresAt) VALUES ('membresia_vencida@test.com', 'Membresia Vencida', 'vip', 'pagado', '2026-02-20 00:00:00'); INSERT INTO emailsAutorizados (email, nombre, plan, status, expiresAt) VALUES ('activo@test.com', 'Usuario Activo', 'vip', 'pagado', '2026-12-31 23:59:59');",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 574
+}

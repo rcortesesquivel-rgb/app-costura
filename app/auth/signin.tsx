@@ -36,10 +36,8 @@ export default function SignInScreen() {
       }
       router.replace("/(tabs)");
     } catch (error: any) {
-      const msg = error.message === "ACCOUNT_INACTIVE"
-        ? "Tu suscripción ha vencido. Renueva tu membresía en Hotmart."
-        : "Email o contraseña incorrectos";
-      setErrorMsg(msg);
+      // Mostrar mensaje exacto del servidor (portero de acceso)
+      setErrorMsg(error.message || "Email o contraseña incorrectos");
     } finally {
       setIsLoading(false);
     }

@@ -177,12 +177,14 @@ export const notifications = mysqlTable("notifications", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
-// Emails autorizados (whitelist para registro)
+// Emails autorizados (whitelist para registro y membresías)
 export const emailsAutorizados = mysqlTable("emailsAutorizados", {
   id: int("id").autoincrement().primaryKey(),
   email: varchar("email", { length: 320 }).notNull().unique(),
   nombre: varchar("nombre", { length: 255 }),
   plan: mysqlEnum("plan", ["basic", "vip", "lifetime"]).default("basic").notNull(),
+  status: mysqlEnum("status", ["prueba", "pagado"]).default("pagado").notNull(),
+  expiresAt: timestamp("expiresAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 

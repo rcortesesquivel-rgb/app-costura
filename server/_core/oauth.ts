@@ -76,6 +76,54 @@ function buildUserResponse(
   };
 }
 
+// Verificar acceso del usuario en whitelist (status + expiración)
+async function verificarAcceso(email: string): Promise<{ permitido: boolean; error?: string; code?: string }> {
+  const db = await getDb();
+  if (!db) return { permitido: true }; // Si no hay BD, permitir (fallback)
+
+  const resultado = await db.select().from(emailsAutorizados).where(eq(emailsAutorizados.email, email.toLowerCase().trim()));
+
+  // Email no está en la lista
+  if (!resultado.length) {
+    return {
+      permitido: false,
+      error: "Acceso restringido. Si solicitaste prueba, espera autorización.",
+      code: "NOT_AUTHORIZED",
+    };
+  }
+
+  const registro = resultado[0];
+
+  // Si no tiene fecha de expiración (lifetime/admin), permitir siempre
+  if (!registro.expiresAt) {
+    return { permitido: true };
+  }
+
+  const ahora = new Date();
+  const expira = new Date(registro.expiresAt);
+
+  // Prueba vencida
+  if (registro.status === "prueba" && ahora > expira) {
+    return {
+      permitido: false,
+      error: "Tu periodo de prueba ha vencido. Adquiere tu membresía para seguir usando las herramientas.",
+      code: "TRIAL_EXPIRED",
+    };
+  }
+
+  // Membresía pagada pero vencida (no renovó)
+  if (registro.status === "pagado" && ahora > expira) {
+    return {
+      permitido: false,
+      error: "Tu membresía ha vencido. Renueva tu suscripción para seguir usando las herramientas.",
+      code: "MEMBERSHIP_EXPIRED",
+    };
+  }
+
+  // Está al día
+  return { permitido: true };
+}
+
 export function registerOAuthRoutes(app: Express) {
   app.get("/api/oauth/callback", async (req: Request, res: Response) => {
     const code = getQueryParam(req, "code");
@@ -198,16 +246,13 @@ export function registerOAuthRoutes(app: Express) {
       }
 
       // Verificar whitelist de emails autorizados
-      const db = await getDb();
-      if (db) {
-        const autorizado = await db.select().from(emailsAutorizados).where(eq(emailsAutorizados.email, email.toLowerCase().trim()));
-        if (!autorizado.length) {
-          console.log(`[Auth] Email no autorizado: ${email}`);
-          res.status(403).json({ error: "Acceso restringido. Si ya realizaste tu pago, espera 5 minutos a que el sistema te autorice o contacta a soporte." });
-          return;
-        }
-        console.log(`[Auth] Email autorizado: ${email}`);
+      const acceso = await verificarAcceso(email);
+      if (!acceso.permitido) {
+        console.log(`[Auth] Signup bloqueado para ${email}: ${acceso.code}`);
+        res.status(403).json({ error: acceso.error, code: acceso.code });
+        return;
       }
+      console.log(`[Auth] Email autorizado para signup: ${email}`);
 
       // Use email as openId for email/password authentication
       const openId = `email:${email}`;
@@ -247,6 +292,14 @@ export function registerOAuthRoutes(app: Express) {
 
       if (!email || !password) {
         res.status(400).json({ error: "email and password are required" });
+        return;
+      }
+
+      // Verificar whitelist de emails autorizados (portero)
+      const acceso = await verificarAcceso(email);
+      if (!acceso.permitido) {
+        console.log(`[Auth] Signin bloqueado para ${email}: ${acceso.code}`);
+        res.status(403).json({ error: acceso.error, code: acceso.code });
         return;
       }
 

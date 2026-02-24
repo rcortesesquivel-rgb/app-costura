@@ -1,0 +1,9 @@
+{
+  "query": "ALTER TABLE emailsAutorizados ADD COLUMN status ENUM('prueba', 'pagado') NOT NULL DEFAULT 'pagado', ADD COLUMN expiresAt TIMESTAMP NULL;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 37KVpxZeS2CVQbP.root --database NUhPjFzKcLyhLeGMAd6M8H --execute ALTER TABLE emailsAutorizados ADD COLUMN status ENUM('prueba', 'pagado') NOT NULL DEFAULT 'pagado', ADD COLUMN expiresAt TIMESTAMP NULL;",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 2459
+}

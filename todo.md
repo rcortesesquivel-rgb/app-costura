@@ -472,3 +472,16 @@
 - [x] Modificar endpoint signup para verificar whitelist antes de crear cuenta
 - [x] Mostrar mensaje "Acceso restringido" si email no está autorizado
 - [x] No afectar diseño de la PWA existente
+
+## Sistema Whitelist Avanzado - Pruebas y Membresías
+- [x] Modificar tabla emailsAutorizados: agregar campos status (prueba/pagado) y expiresAt
+- [x] Portero login: bloquear si email no está en lista
+- [x] Portero login: bloquear si prueba vencida con botón a Hotmart
+- [x] Portero login: bloquear si membresía vencida con mensaje de renovación
+- [x] Portero login: permitir acceso si está al día
+- [x] Webhook Hotmart: procesar PURCHASE_APPROVED (+30 días)
+- [x] Webhook Hotmart: procesar renovación de suscripción (+30 días)
+- [x] Webhook Hotmart: procesar cancelación/reembolso (bloquear)
+- [x] SQL manual: sentencia para autorizar prueba 48h
+- [x] SQL manual: sentencia para autorizar pago manual 30 días
+- [x] No tocar calculadora ni manuales internos

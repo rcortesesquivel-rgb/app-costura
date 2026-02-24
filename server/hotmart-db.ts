@@ -1,6 +1,68 @@
 import { eq } from "drizzle-orm";
-import { users, hotmartWebhooks, auditLog } from "../drizzle/schema";
+import { users, hotmartWebhooks, auditLog, emailsAutorizados } from "../drizzle/schema";
 import { getDb } from "./db";
+
+// ============ WHITELIST (emailsAutorizados) ============
+
+/**
+ * Agrega o actualiza un email en la whitelist.
+ * - PURCHASE_APPROVED: status='pagado', expiresAt=+30 días
+ * - subscription_charge_success: status='pagado', expiresAt=+30 días desde ahora
+ * - subscription_cancellation / charge_refund: no modifica whitelist (el portero ya verifica expiresAt)
+ */
+async function upsertWhitelist(email: string, status: "prueba" | "pagado", diasAcceso: number) {
+  const db = await getDb();
+  if (!db) return;
+
+  const emailLower = email.toLowerCase().trim();
+  const ahora = new Date();
+  const expiresAt = new Date(ahora.getTime() + diasAcceso * 24 * 60 * 60 * 1000);
+
+  const existing = await db.select().from(emailsAutorizados).where(eq(emailsAutorizados.email, emailLower));
+
+  if (existing.length > 0) {
+    // Si ya existe, extender la fecha de expiración
+    const currentExpires = existing[0].expiresAt ? new Date(existing[0].expiresAt) : ahora;
+    const baseDate = currentExpires > ahora ? currentExpires : ahora;
+    const newExpires = new Date(baseDate.getTime() + diasAcceso * 24 * 60 * 60 * 1000);
+
+    await db.update(emailsAutorizados).set({
+      status,
+      expiresAt: newExpires,
+    }).where(eq(emailsAutorizados.email, emailLower));
+
+    console.log(`[Whitelist] Actualizado: ${emailLower} → status=${status}, expiresAt=${newExpires.toISOString()}`);
+  } else {
+    // Si no existe, crear nuevo registro
+    await db.insert(emailsAutorizados).values({
+      email: emailLower,
+      nombre: email.split("@")[0],
+      plan: status === "pagado" ? "vip" : "basic",
+      status,
+      expiresAt,
+    });
+
+    console.log(`[Whitelist] Creado: ${emailLower} → status=${status}, expiresAt=${expiresAt.toISOString()}`);
+  }
+}
+
+/**
+ * Marca un email como vencido en la whitelist (cancelación/reembolso).
+ * Pone expiresAt en el pasado para que el portero lo bloquee.
+ */
+async function expireWhitelist(email: string) {
+  const db = await getDb();
+  if (!db) return;
+
+  const emailLower = email.toLowerCase().trim();
+  const pastDate = new Date(Date.now() - 1000); // 1 segundo en el pasado
+
+  await db.update(emailsAutorizados).set({
+    expiresAt: pastDate,
+  }).where(eq(emailsAutorizados.email, emailLower));
+
+  console.log(`[Whitelist] Expirado: ${emailLower}`);
+}
 
 // ============ WEBHOOKS ============
 
@@ -152,6 +214,9 @@ export async function processPurchaseApproved(email: string, payload: any) {
       }),
     });
 
+    // Actualizar whitelist con 30 días de acceso
+    await upsertWhitelist(email, "pagado", 30);
+
     console.log(`[Hotmart] Usuario actualizado: ${email} → rol=${role}, plan=${plan}`);
     return { success: true, userId, created: false, role, plan, isPriority };
   } else {
@@ -204,6 +269,9 @@ export async function processPurchaseApproved(email: string, payload: any) {
       });
     }
 
+    // Agregar a whitelist con 30 días de acceso
+    await upsertWhitelist(email, "pagado", 30);
+
     console.log(`[Hotmart] Nuevo usuario creado: ${email} → rol=${role}, plan=${plan}`);
     return { success: true, userId, created: true, role, plan, isPriority };
   }
@@ -248,6 +316,9 @@ export async function processSubscriptionChargeSuccess(email: string, payload: a
     }),
   });
 
+  // Renovar whitelist con 30 días más
+  await upsertWhitelist(email, "pagado", 30);
+
   console.log(`[Hotmart] Suscripción renovada: ${email}`);
   return { success: true, userId };
 }
@@ -289,6 +360,9 @@ export async function processSubscriptionCancellation(email: string, payload: an
       date: new Date().toISOString(),
     }),
   });
+
+  // Expirar whitelist inmediatamente
+  await expireWhitelist(email);
 
   console.log(`[Hotmart] Suscripción cancelada: ${email}`);
   return { success: true, userId };
@@ -332,6 +406,9 @@ export async function processChargeRefund(email: string, payload: any) {
       date: new Date().toISOString(),
     }),
   });
+
+  // Expirar whitelist inmediatamente
+  await expireWhitelist(email);
 
   console.log(`[Hotmart] Reembolso procesado: ${email}`);
   return { success: true, userId };
