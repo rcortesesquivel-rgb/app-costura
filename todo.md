@@ -514,3 +514,9 @@
 
 ## Agregar etiqueta "Crear" a botones + - 24 Feb 2026
 - [x] Buscar y actualizar botones de + con etiqueta "Crear"
+
+## Webhook para Solicitudes de Prueba desde Landing - 24 Feb 2026
+- [x] Crear endpoint webhook público que reciba email desde landing
+- [x] Agregar automáticamente el email a whitelist con 48h de prueba
+- [x] Devolver respuesta 200 al completar
+- [x] Entregar URL exacta del webhook al usuario

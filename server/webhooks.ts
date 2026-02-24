@@ -419,4 +419,153 @@ router.post("/hotmart/test", (req: Request, res: Response) => {
   });
 });
 
+// ============ WEBHOOK LANDING: SOLICITUD DE PRUEBA 48H ============
+
+/**
+ * POST /api/webhooks/trial
+ *
+ * Webhook público para recibir solicitudes de prueba desde la landing page.
+ * Al recibir un email, lo agrega automáticamente a la whitelist con 48 horas de acceso.
+ *
+ * Body esperado (JSON):
+ *   { "email": "usuario@ejemplo.com" }
+ *
+ * También acepta campos opcionales:
+ *   { "email": "...", "nombre": "...", "telefono": "..." }
+ *
+ * Responde con status 200 al completar.
+ */
+router.post("/trial", async (req: Request, res: Response) => {
+  try {
+    console.log("\n[Webhook Trial] \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550");
+    console.log("[Webhook Trial] \ud83d\udce8 Solicitud de prueba recibida:", new Date().toISOString());
+    console.log("[Webhook Trial] \ud83d\udce6 Body:", JSON.stringify(req.body));
+
+    // Extraer email del body (soporta múltiples formatos)
+    const email =
+      req.body?.email ||
+      req.body?.data?.email ||
+      req.body?.fields?.email ||
+      req.body?.Email ||
+      req.body?.correo;
+
+    if (!email || typeof email !== "string" || !email.includes("@")) {
+      console.error("[Webhook Trial] \u274c Email inv\u00e1lido o no proporcionado:", email);
+      return res.status(400).json({
+        success: false,
+        error: "Se requiere un email v\u00e1lido",
+        expectedFormat: '{ "email": "usuario@ejemplo.com" }',
+      });
+    }
+
+    const emailLower = email.toLowerCase().trim();
+    const nombre = req.body?.nombre || req.body?.name || req.body?.fields?.nombre || email.split("@")[0];
+
+    console.log(`[Webhook Trial] \ud83d\udcdd Procesando solicitud de prueba para: ${emailLower}`);
+
+    // Usar la funci\u00f3n existente de hotmart-db para agregar a whitelist
+    // 48 horas = 2 d\u00edas
+    const { getDb } = await import("./db");
+    const { emailsAutorizados: emailsTable } = await import("../drizzle/schema");
+    const { eq } = await import("drizzle-orm");
+
+    const db = await getDb();
+    if (!db) {
+      console.error("[Webhook Trial] \u274c No se pudo conectar a la base de datos");
+      return res.status(500).json({
+        success: false,
+        error: "Error interno del servidor",
+      });
+    }
+
+    const ahora = new Date();
+    const expiresAt = new Date(ahora.getTime() + 2 * 24 * 60 * 60 * 1000); // 48 horas
+
+    // Verificar si ya existe
+    const existing = await db.select().from(emailsTable).where(eq(emailsTable.email, emailLower));
+
+    if (existing.length > 0) {
+      const registro = existing[0];
+      // Si ya tiene status "pagado", no degradar a prueba
+      if (registro.status === "pagado") {
+        console.log(`[Webhook Trial] \u2139\ufe0f ${emailLower} ya tiene membres\u00eda pagada, no se modifica`);
+        return res.status(200).json({
+          success: true,
+          message: "El usuario ya tiene una membres\u00eda activa",
+          email: emailLower,
+          status: "pagado",
+        });
+      }
+
+      // Si ya tiene prueba activa, extender desde la fecha actual
+      const currentExpires = registro.expiresAt ? new Date(registro.expiresAt) : ahora;
+      const baseDate = currentExpires > ahora ? currentExpires : ahora;
+      const newExpires = new Date(baseDate.getTime() + 2 * 24 * 60 * 60 * 1000);
+
+      await db.update(emailsTable).set({
+        status: "prueba",
+        expiresAt: newExpires,
+      }).where(eq(emailsTable.email, emailLower));
+
+      console.log(`[Webhook Trial] \u2705 Prueba extendida: ${emailLower} \u2192 expiresAt=${newExpires.toISOString()}`);
+
+      return res.status(200).json({
+        success: true,
+        message: "Prueba de 48 horas activada (extendida)",
+        email: emailLower,
+        nombre,
+        status: "prueba",
+        expiresAt: newExpires.toISOString(),
+      });
+    }
+
+    // Crear nuevo registro de prueba
+    await db.insert(emailsTable).values({
+      email: emailLower,
+      nombre: String(nombre).substring(0, 100),
+      plan: "basic",
+      status: "prueba",
+      expiresAt,
+    });
+
+    console.log(`[Webhook Trial] \u2705 Prueba creada: ${emailLower} \u2192 expiresAt=${expiresAt.toISOString()}`);
+    console.log("[Webhook Trial] \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\n");
+
+    return res.status(200).json({
+      success: true,
+      message: "Prueba de 48 horas activada exitosamente",
+      email: emailLower,
+      nombre,
+      status: "prueba",
+      expiresAt: expiresAt.toISOString(),
+    });
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error("[Webhook Trial] \u274c Error:", errorMessage);
+
+    return res.status(500).json({
+      success: false,
+      error: "Error interno del servidor",
+      details: errorMessage,
+    });
+  }
+});
+
+/**
+ * GET /api/webhooks/trial/status
+ * Endpoint para verificar que el webhook de prueba est\u00e1 activo.
+ */
+router.get("/trial/status", (_req: Request, res: Response) => {
+  return res.status(200).json({
+    status: "ok",
+    endpoint: "POST /api/webhooks/trial",
+    description: "Webhook para activar prueba de 48 horas",
+    expectedBody: {
+      email: "usuario@ejemplo.com (requerido)",
+      nombre: "Nombre del usuario (opcional)",
+    },
+    timestamp: new Date().toISOString(),
+  });
+});
+
 export default router;
