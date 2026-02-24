@@ -511,3 +511,6 @@
 - [x] Formulario con campo de asunto, mensaje y email del usuario
 - [x] Enviar sugerencia a ryrnissi@gmail.com vía endpoint del servidor
 - [x] Confirmación visual al usuario después de enviar
+
+## Agregar etiqueta "Crear" a botones + - 24 Feb 2026
+- [x] Buscar y actualizar botones de + con etiqueta "Crear"

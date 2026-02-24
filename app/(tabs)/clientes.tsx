@@ -144,7 +144,23 @@ export default function ClientesScreen() {
 
       {/* Botón flotante */}
       {clientes && clientes.length > 0 && (
-        <View className="absolute bottom-24 right-6">
+        <View className="absolute bottom-24 right-6 gap-2 items-center">
+          <TouchableOpacity
+            className="rounded-full px-4 py-2 bg-white shadow-md flex-row items-center gap-2"
+            style={{
+              shadowColor: "#000",
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.2,
+              shadowRadius: 4,
+              elevation: 4,
+            }}
+            onPress={handleNuevoCliente}
+            activeOpacity={0.8}
+          >
+            <Text className="text-sm font-semibold" style={{ color: colors.primary }}>
+              Crear
+            </Text>
+          </TouchableOpacity>
           <TouchableOpacity
             className="rounded-full p-4 shadow-lg"
             style={{ 
