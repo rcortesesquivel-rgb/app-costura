@@ -1,0 +1,1 @@
+ALTER TABLE `users` ADD `codigoPais` varchar(5) DEFAULT 'CR';

@@ -505,3 +505,9 @@
 ## Arreglar Botón de Cotizaciones y Facturación al Contador - 24 Feb 2026
 - [x] Diagnosticar y arreglar botón de cotizaciones que no funciona
 - [x] Integrar envío de mensaje de facturación al contador (WhatsApp o similar)
+
+## Buzón de Sugerencias - 24 Feb 2026
+- [x] Crear pantalla de buzón de sugerencias accesible desde Centro de Ayuda
+- [x] Formulario con campo de asunto, mensaje y email del usuario
+- [x] Enviar sugerencia a ryrnissi@gmail.com vía endpoint del servidor
+- [x] Confirmación visual al usuario después de enviar

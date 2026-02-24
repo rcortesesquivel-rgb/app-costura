@@ -157,6 +157,13 @@ export default function CentroAyudaScreen() {
                 onPress={handleWhatsApp}
                 iconBg="#25D366"
               />
+              <MenuItem
+                icon="star.fill"
+                label="Buzón de Sugerencias"
+                subtitle="Sugiere mejoras o reporta errores"
+                onPress={() => router.push("/sugerencias" as any)}
+                iconBg="#FF9500"
+              />
             </View>
           </View>
 

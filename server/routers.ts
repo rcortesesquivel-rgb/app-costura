@@ -694,5 +694,54 @@ export const appRouter = router({
         }),
     }),
   }),
+
+  // Buzón de sugerencias
+  sugerencias: router({
+    enviar: protectedProcedure
+      .input(z.object({
+        asunto: z.string().min(1).max(500),
+        mensaje: z.string().min(1).max(5000),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const db_conn = await db.getDb();
+        if (!db_conn) throw new Error("Database not available");
+
+        // Guardar en base de datos
+        await db_conn.insert(db.sugerencias).values({
+          userId: ctx.user.id,
+          nombreUsuario: ctx.user.name || "Sin nombre",
+          emailUsuario: ctx.user.email || "Sin email",
+          asunto: input.asunto,
+          mensaje: input.mensaje,
+        });
+
+        // Notificar al dueño
+        const { notifyOwner } = await import("./_core/notification");
+        try {
+          await notifyOwner({
+            title: `Nueva sugerencia: ${input.asunto}`,
+            content: `De: ${ctx.user.name || ctx.user.email || "Usuario"}\nEmail: ${ctx.user.email || "N/A"}\n\n${input.mensaje}`,
+          });
+        } catch (e) {
+          console.warn("[Sugerencias] No se pudo notificar al dueño:", e);
+        }
+
+        return { success: true };
+      }),
+
+    // Listar sugerencias (solo admin)
+    listar: superAdminProcedure
+      .input(z.object({
+        limit: z.number().min(1).max(100).default(50),
+        offset: z.number().min(0).default(0),
+      }).optional())
+      .query(async ({ input }) => {
+        const db_conn = await db.getDb();
+        if (!db_conn) return [];
+        const limit = input?.limit ?? 50;
+        const offset = input?.offset ?? 0;
+        return db_conn.select().from(db.sugerencias).orderBy(db.desc(db.sugerencias.createdAt)).limit(limit).offset(offset);
+      }),
+  }),
 });
 export type AppRouter = typeof appRouter;

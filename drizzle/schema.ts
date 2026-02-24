@@ -1,4 +1,4 @@
-import { decimal, int, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
+import { boolean, decimal, int, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
 
 /**
  * Core user table backing auth flow.
@@ -239,3 +239,19 @@ export type NotificationPreference = typeof notificationPreferences.$inferSelect
 export type InsertNotificationPreference = typeof notificationPreferences.$inferInsert;
 export type Audio = typeof audios.$inferSelect;
 export type InsertAudio = typeof audios.$inferInsert;
+
+
+// Buzón de sugerencias
+export const sugerencias = mysqlTable("sugerencias", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId"),
+  nombreUsuario: varchar("nombreUsuario", { length: 255 }),
+  emailUsuario: varchar("emailUsuario", { length: 320 }),
+  asunto: varchar("asunto", { length: 500 }).notNull(),
+  mensaje: text("mensaje").notNull(),
+  leida: boolean("leida").default(false).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type Sugerencia = typeof sugerencias.$inferSelect;
+export type InsertSugerencia = typeof sugerencias.$inferInsert;

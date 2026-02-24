@@ -11,6 +11,8 @@ import {
   historialEstados,
   audios,
   emailsAutorizados,
+  sugerencias,
+  InsertSugerencia,
   InsertCliente,
   InsertMedida,
   InsertTrabajo,
@@ -22,7 +24,7 @@ import {
 import { ENV } from "./_core/env";
 
 // Re-export commonly used functions and tables
-export { emailsAutorizados, eq, like, or, desc };
+export { emailsAutorizados, sugerencias, eq, like, or, desc };
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
