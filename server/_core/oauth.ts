@@ -77,7 +77,7 @@ function buildUserResponse(
 }
 
 // Verificar acceso del usuario en whitelist (status + expiración)
-async function verificarAcceso(email: string): Promise<{ permitido: boolean; error?: string; code?: string }> {
+async function verificarAcceso(email: string): Promise<{ permitido: boolean; error?: string; code?: string; checkoutUrl?: string }> {
   const db = await getDb();
   if (!db) return { permitido: true }; // Si no hay BD, permitir (fallback)
 
@@ -108,6 +108,7 @@ async function verificarAcceso(email: string): Promise<{ permitido: boolean; err
       permitido: false,
       error: "Tu periodo de prueba ha vencido. Adquiere tu membresía para seguir usando las herramientas.",
       code: "TRIAL_EXPIRED",
+      checkoutUrl: "https://pay.hotmart.com/T104497671V?checkoutMode=10",
     };
   }
 
@@ -117,6 +118,7 @@ async function verificarAcceso(email: string): Promise<{ permitido: boolean; err
       permitido: false,
       error: "Tu membresía ha vencido. Renueva tu suscripción para seguir usando las herramientas.",
       code: "MEMBERSHIP_EXPIRED",
+      checkoutUrl: "https://pay.hotmart.com/T104497671V?checkoutMode=10",
     };
   }
 
@@ -249,7 +251,7 @@ export function registerOAuthRoutes(app: Express) {
       const acceso = await verificarAcceso(email);
       if (!acceso.permitido) {
         console.log(`[Auth] Signup bloqueado para ${email}: ${acceso.code}`);
-        res.status(403).json({ error: acceso.error, code: acceso.code });
+        res.status(403).json({ error: acceso.error, code: acceso.code, checkoutUrl: acceso.checkoutUrl });
         return;
       }
       console.log(`[Auth] Email autorizado para signup: ${email}`);
@@ -299,7 +301,7 @@ export function registerOAuthRoutes(app: Express) {
       const acceso = await verificarAcceso(email);
       if (!acceso.permitido) {
         console.log(`[Auth] Signin bloqueado para ${email}: ${acceso.code}`);
-        res.status(403).json({ error: acceso.error, code: acceso.code });
+        res.status(403).json({ error: acceso.error, code: acceso.code, checkoutUrl: acceso.checkoutUrl });
         return;
       }
 

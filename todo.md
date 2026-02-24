@@ -485,3 +485,7 @@
 - [x] SQL manual: sentencia para autorizar prueba 48h
 - [x] SQL manual: sentencia para autorizar pago manual 30 días
 - [x] No tocar calculadora ni manuales internos
+
+## Link Hotmart en Prueba Vencida
+- [x] Agregar link de Hotmart checkout en mensaje de prueba vencida
+- [x] Confirmar sentencias SQL para prueba 48h y pagado 30 días

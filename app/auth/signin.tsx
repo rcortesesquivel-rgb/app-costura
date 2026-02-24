@@ -1,4 +1,4 @@
-import { ScrollView, Text, View, Platform, KeyboardAvoidingView, Alert, TouchableOpacity } from "react-native";
+import { ScrollView, Text, View, Platform, KeyboardAvoidingView, Alert, TouchableOpacity, Linking } from "react-native";
 import { useState } from "react";
 import { useRouter } from "expo-router";
 import * as Haptics from "expo-haptics";
@@ -19,6 +19,7 @@ export default function SignInScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+  const [checkoutUrl, setCheckoutUrl] = useState("");
 
   const handleSignIn = async () => {
     setErrorMsg("");
@@ -38,6 +39,12 @@ export default function SignInScreen() {
     } catch (error: any) {
       // Mostrar mensaje exacto del servidor (portero de acceso)
       setErrorMsg(error.message || "Email o contraseña incorrectos");
+      // Si el error incluye checkoutUrl, mostrar botón de compra
+      if (error.checkoutUrl) {
+        setCheckoutUrl(error.checkoutUrl);
+      } else {
+        setCheckoutUrl("");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -63,6 +70,27 @@ export default function SignInScreen() {
               <View style={{ backgroundColor: "#FEE2E2", borderRadius: 8, padding: 12 }}>
                 <Text style={{ color: "#DC2626", fontSize: 14, textAlign: "center" }}>{errorMsg}</Text>
               </View>
+            ) : null}
+
+            {/* Botón de checkout Hotmart cuando prueba/membresía vence */}
+            {checkoutUrl ? (
+              <button
+                onClick={() => { if (typeof window !== "undefined") window.open(checkoutUrl, "_blank"); }}
+                style={{
+                  backgroundColor: "#22C55E",
+                  color: "#FFFFFF",
+                  border: "none",
+                  borderRadius: 12,
+                  padding: "14px 24px",
+                  fontSize: 16,
+                  fontWeight: "600",
+                  cursor: "pointer",
+                  fontFamily: "inherit",
+                  textAlign: "center",
+                }}
+              >
+                Adquirir Membresía
+              </button>
             ) : null}
 
             {/* Web-native form */}
@@ -204,6 +232,16 @@ export default function SignInScreen() {
               <View style={{ backgroundColor: "#FEE2E2", borderRadius: 8, padding: 12 }}>
                 <Text style={{ color: "#DC2626", fontSize: 14, textAlign: "center" }}>{errorMsg}</Text>
               </View>
+            ) : null}
+
+            {checkoutUrl ? (
+              <TouchableOpacity
+                onPress={() => Linking.openURL(checkoutUrl)}
+                style={{ backgroundColor: "#22C55E", borderRadius: 12, padding: 14, alignItems: "center" }}
+                activeOpacity={0.8}
+              >
+                <Text style={{ color: "#FFFFFF", fontSize: 16, fontWeight: "600" }}>Adquirir Membresía</Text>
+              </TouchableOpacity>
             ) : null}
 
             <View className="gap-4">

@@ -68,7 +68,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     if (!response.ok) {
       const err = await response.json().catch(() => ({ error: "Sign up failed" }));
-      throw new Error(err.error || "Sign up failed");
+      const error: any = new Error(err.error || "Sign up failed");
+      if (err.checkoutUrl) error.checkoutUrl = err.checkoutUrl;
+      throw error;
     }
 
     const data = await response.json();
@@ -96,7 +98,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     if (!response.ok) {
       const err = await response.json().catch(() => ({ error: "Sign in failed" }));
-      throw new Error(err.error || "Sign in failed");
+      const error: any = new Error(err.error || "Sign in failed");
+      if (err.checkoutUrl) error.checkoutUrl = err.checkoutUrl;
+      throw error;
     }
 
     const data = await response.json();
