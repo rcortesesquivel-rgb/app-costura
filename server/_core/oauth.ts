@@ -1,6 +1,8 @@
 import { COOKIE_NAME, ONE_YEAR_MS } from "../../shared/const.js";
 import type { Express, Request, Response } from "express";
-import { getUserByOpenId, upsertUser } from "../db";
+import { getUserByOpenId, upsertUser, getDb } from "../db";
+import { emailsAutorizados } from "../../drizzle/schema";
+import { eq } from "drizzle-orm";
 import { getSessionCookieOptions } from "./cookies";
 import { sdk } from "./sdk";
 
@@ -193,6 +195,18 @@ export function registerOAuthRoutes(app: Express) {
       if (!email || !password || !name) {
         res.status(400).json({ error: "email, password, and name are required" });
         return;
+      }
+
+      // Verificar whitelist de emails autorizados
+      const db = await getDb();
+      if (db) {
+        const autorizado = await db.select().from(emailsAutorizados).where(eq(emailsAutorizados.email, email.toLowerCase().trim()));
+        if (!autorizado.length) {
+          console.log(`[Auth] Email no autorizado: ${email}`);
+          res.status(403).json({ error: "Acceso restringido. Si ya realizaste tu pago, espera 5 minutos a que el sistema te autorice o contacta a soporte." });
+          return;
+        }
+        console.log(`[Auth] Email autorizado: ${email}`);
       }
 
       // Use email as openId for email/password authentication

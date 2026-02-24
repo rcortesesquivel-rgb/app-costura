@@ -466,3 +466,9 @@
 - [ ] Crear endpoint backend para generar PDF de resumen de trabajos completados
 - [ ] Agregar botón de exportar en la lista de trabajos (index.tsx)
 - [ ] Conectar botón con endpoint y permitir descarga de PDF
+
+## Whitelist de Emails - Acceso Restringido
+- [x] Crear tabla emails_autorizados en la base de datos
+- [x] Modificar endpoint signup para verificar whitelist antes de crear cuenta
+- [x] Mostrar mensaje "Acceso restringido" si email no está autorizado
+- [x] No afectar diseño de la PWA existente

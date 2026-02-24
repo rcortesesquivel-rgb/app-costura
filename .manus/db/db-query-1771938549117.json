@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE IF NOT EXISTS emailsAutorizados (\n  id INT AUTO_INCREMENT PRIMARY KEY,\n  email VARCHAR(320) NOT NULL UNIQUE,\n  nombre VARCHAR(255),\n  plan ENUM('basic', 'vip', 'lifetime') NOT NULL DEFAULT 'basic',\n  createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 37KVpxZeS2CVQbP.root --database NUhPjFzKcLyhLeGMAd6M8H --execute CREATE TABLE IF NOT EXISTS emailsAutorizados (\n  id INT AUTO_INCREMENT PRIMARY KEY,\n  email VARCHAR(320) NOT NULL UNIQUE,\n  nombre VARCHAR(255),\n  plan ENUM('basic', 'vip', 'lifetime') NOT NULL DEFAULT 'basic',\n  createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 649
+}

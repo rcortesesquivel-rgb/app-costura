@@ -177,6 +177,18 @@ export const notifications = mysqlTable("notifications", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
+// Emails autorizados (whitelist para registro)
+export const emailsAutorizados = mysqlTable("emailsAutorizados", {
+  id: int("id").autoincrement().primaryKey(),
+  email: varchar("email", { length: 320 }).notNull().unique(),
+  nombre: varchar("nombre", { length: 255 }),
+  plan: mysqlEnum("plan", ["basic", "vip", "lifetime"]).default("basic").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type EmailAutorizado = typeof emailsAutorizados.$inferSelect;
+export type InsertEmailAutorizado = typeof emailsAutorizados.$inferInsert;
+
 // Audios adjuntos a trabajos
 export const audios = mysqlTable("audios", {
   id: int("id").autoincrement().primaryKey(),

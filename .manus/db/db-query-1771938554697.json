@@ -1,0 +1,9 @@
+{
+  "query": "INSERT INTO emailsAutorizados (email, nombre, plan) VALUES ('rcortesesquivel@gmail.com', 'Randall Cortés Esquivel', 'lifetime') ON DUPLICATE KEY UPDATE nombre = 'Randall Cortés Esquivel';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 37KVpxZeS2CVQbP.root --database NUhPjFzKcLyhLeGMAd6M8H --execute INSERT INTO emailsAutorizados (email, nombre, plan) VALUES ('rcortesesquivel@gmail.com', 'Randall Cortés Esquivel', 'lifetime') ON DUPLICATE KEY UPDATE nombre = 'Randall Cortés Esquivel';",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 381
+}
