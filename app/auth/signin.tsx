@@ -20,6 +20,9 @@ export default function SignInScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [checkoutUrl, setCheckoutUrl] = useState("");
+  const [showVideo, setShowVideo] = useState(false);
+
+  const VIDEO_URL = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663363564912/ywgbSfzFCqvfRfva.mp4";
 
   const handleSignIn = async () => {
     setErrorMsg("");
@@ -92,6 +95,56 @@ export default function SignInScreen() {
                 Adquirir Membresía
               </button>
             ) : null}
+
+            {/* Video Tutorial */}
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
+              <button
+                onClick={() => setShowVideo(!showVideo)}
+                style={{
+                  display: "flex",
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 8,
+                  backgroundColor: showVideo ? `${colors.primary}20` : `${colors.primary}10`,
+                  border: `1px solid ${colors.primary}40`,
+                  borderRadius: 12,
+                  padding: "10px 20px",
+                  cursor: "pointer",
+                  fontFamily: "inherit",
+                  fontSize: 14,
+                  fontWeight: "600",
+                  color: colors.primary,
+                  transition: "all 0.2s",
+                  width: "100%",
+                  maxWidth: 320,
+                }}
+              >
+                <span style={{ fontSize: 18 }}>{showVideo ? "▲" : "▶"}</span>
+                {showVideo ? "Ocultar tutorial" : "¿Primera vez? Mira cómo registrarte"}
+              </button>
+              {showVideo && (
+                <div style={{
+                  width: "100%",
+                  maxWidth: 320,
+                  borderRadius: 12,
+                  overflow: "hidden",
+                  border: `2px solid ${colors.primary}30`,
+                  boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                }}>
+                  <video
+                    src={VIDEO_URL}
+                    controls
+                    playsInline
+                    style={{
+                      width: "100%",
+                      display: "block",
+                      backgroundColor: "#000",
+                    }}
+                  />
+                </div>
+              )}
+            </div>
 
             {/* Web-native form */}
             <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>

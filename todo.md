@@ -532,3 +532,16 @@
 - [x] Guardar cotizaciones en tabla/estado separado (no afecta números ni estadísticas)
 - [x] Pantalla/sección para ver cotizaciones pendientes
 - [x] Opción de convertir cotización en trabajo real
+
+## Lista de Funciones para Publicidades - 25 Feb 2026
+- [x] Crear lista completa de funciones de la app para marketing
+- [ ] Verificar si se puede incrustar videos tutoriales en secciones
+
+## Video Tutorial "Cómo crear tu usuario" - 25 Feb 2026
+- [ ] Capturar pantallas de login y signup de la app
+- [ ] Crear video tutorial con voz narrando el proceso
+- [ ] Mostrar video al usuario para aprobación
+- [ ] Incrustar video en la página de inicio (después de aprobación)
+
+## Incrustar Video Tutorial en Login - 25 Feb 2026
+- [x] Subir video tutorial al proyecto y mostrarlo en la pantalla de login
