@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE IF NOT EXISTS cotizaciones (\n  id INT AUTO_INCREMENT PRIMARY KEY,\n  userId INT NOT NULL,\n  clienteId INT NOT NULL,\n  descripcion TEXT,\n  precioUnitario DECIMAL(12, 2) DEFAULT 0.00,\n  cantidad INT DEFAULT 1 NOT NULL,\n  impuestos DECIMAL(12, 2) DEFAULT 0.00,\n  varios DECIMAL(12, 2) DEFAULT 0.00,\n  cotizacion_categoria ENUM('arreglo', 'confeccion', 'bordado', 'sublimado', 'otros') DEFAULT 'otros' NOT NULL,\n  cotizacion_urgencia ENUM('baja', 'media', 'alta'),\n  fechaEntrega TIMESTAMP NULL,\n  condicionesPago TEXT,\n  cotizacion_estado ENUM('pendiente', 'aceptada', 'rechazada', 'vencida') DEFAULT 'pendiente' NOT NULL,\n  convertidaEnTrabajoId INT,\n  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,\n  updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 37KVpxZeS2CVQbP.root --database NUhPjFzKcLyhLeGMAd6M8H --execute CREATE TABLE IF NOT EXISTS cotizaciones (\n  id INT AUTO_INCREMENT PRIMARY KEY,\n  userId INT NOT NULL,\n  clienteId INT NOT NULL,\n  descripcion TEXT,\n  precioUnitario DECIMAL(12, 2) DEFAULT 0.00,\n  cantidad INT DEFAULT 1 NOT NULL,\n  impuestos DECIMAL(12, 2) DEFAULT 0.00,\n  varios DECIMAL(12, 2) DEFAULT 0.00,\n  cotizacion_categoria ENUM('arreglo', 'confeccion', 'bordado', 'sublimado', 'otros') DEFAULT 'otros' NOT NULL,\n  cotizacion_urgencia ENUM('baja', 'media', 'alta'),\n  fechaEntrega TIMESTAMP NULL,\n  condicionesPago TEXT,\n  cotizacion_estado ENUM('pendiente', 'aceptada', 'rechazada', 'vencida') DEFAULT 'pendiente' NOT NULL,\n  convertidaEnTrabajoId INT,\n  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,\n  updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1466
+}

@@ -58,6 +58,10 @@ const MAPPING = {
   "arrow.down.doc.fill": "download",
   "doc.text.fill": "receipt-long",
   "dollarsign.circle.fill": "attach-money",
+  "person.crop.circle.badge.plus": "person-add",
+  "square.and.arrow.down": "file-download",
+  "arrow.triangle.2.circlepath": "sync",
+  "tag.fill": "label",
 } as IconMapping;
 
 /**

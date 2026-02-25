@@ -45,6 +45,19 @@ export default function CrearTrabajoScreen() {
     },
   });
 
+  const createCotizacionMutation = trpc.cotizaciones.create.useMutation({
+    onSuccess: async () => {
+      await utils.cotizaciones.list.invalidate();
+      if (Platform.OS !== "web") {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
+      showAlert("Éxito", "Cotización guardada correctamente. Podrás convertirla en trabajo cuando el cliente confirme.", () => router.back());
+    },
+    onError: (error) => {
+      showAlert("Error", "No se pudo guardar la cotización: " + error.message);
+    },
+  });
+
   // Cálculos en tiempo real con useMemo
   const subtotal = useMemo(() => {
     const unitario = parseFloat(precioUnitario) || 0;
@@ -64,13 +77,10 @@ export default function CrearTrabajoScreen() {
     return granTotal - abono;
   }, [granTotal, abonoInicial]);
 
-  const handleGuardar = () => {
+  const buildFormData = () => {
     if (!clienteId || !descripcion.trim() || !precioUnitario) {
       showAlert("Error", "Completa los campos obligatorios: cliente, descripción y precio unitario");
-      return;
-    }
-    if (Platform.OS !== "web") {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      return null;
     }
 
     const data: any = {
@@ -78,7 +88,6 @@ export default function CrearTrabajoScreen() {
       descripcion: descripcion.trim(),
       precioUnitario: precioUnitario,
       cantidad: parseInt(cantidad) || 1,
-      abonoInicial: (parseFloat(abonoInicial) || 0).toFixed(2),
       impuestos: totalImpuestos.toFixed(2),
       varios: totalVarios.toFixed(2),
       categoria: categoria,
@@ -92,6 +101,19 @@ export default function CrearTrabajoScreen() {
       }
     }
 
+    return data;
+  };
+
+  const handleGuardar = () => {
+    const data = buildFormData();
+    if (!data) return;
+
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
+
+    data.abonoInicial = (parseFloat(abonoInicial) || 0).toFixed(2);
+
     if (attachments.length > 0) {
       data.attachments = attachments.map((att) => ({
         uri: att.uri,
@@ -101,6 +123,17 @@ export default function CrearTrabajoScreen() {
     }
 
     createMutation.mutate(data);
+  };
+
+  const handleGuardarCotizacion = () => {
+    const data = buildFormData();
+    if (!data) return;
+
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
+
+    createCotizacionMutation.mutate(data);
   };
 
   if (loadingClientes) {
@@ -389,22 +422,42 @@ export default function CrearTrabajoScreen() {
 
             {/* Botones */}
             <View className="gap-3 mt-4">
+              {/* Guardar como Trabajo */}
               <TouchableOpacity
-                className="rounded-xl py-4 items-center"
+                className="rounded-xl py-4 items-center flex-row justify-center gap-2"
                 style={{ backgroundColor: colors.primary }}
                 onPress={handleGuardar}
-                disabled={createMutation.isPending}
+                disabled={createMutation.isPending || createCotizacionMutation.isPending}
                 activeOpacity={0.8}
               >
+                <IconSymbol name="checkmark.circle.fill" size={20} color="#FFFFFF" />
                 <Text className="text-base font-semibold text-white">
-                  {createMutation.isPending ? "Guardando..." : "Guardar trabajo"}
+                  {createMutation.isPending ? "Guardando..." : "Guardar como Trabajo"}
                 </Text>
               </TouchableOpacity>
+
+              {/* Guardar como Cotización */}
+              <TouchableOpacity
+                className="rounded-xl py-4 items-center flex-row justify-center gap-2"
+                style={{ backgroundColor: "#FF9500" }}
+                onPress={handleGuardarCotizacion}
+                disabled={createMutation.isPending || createCotizacionMutation.isPending}
+                activeOpacity={0.8}
+              >
+                <IconSymbol name="doc.text.fill" size={20} color="#FFFFFF" />
+                <Text className="text-base font-semibold text-white">
+                  {createCotizacionMutation.isPending ? "Guardando..." : "Guardar como Cotización"}
+                </Text>
+              </TouchableOpacity>
+
+              <Text className="text-xs text-muted text-center px-4">
+                Las cotizaciones se guardan por separado y no afectan tus números hasta que las conviertas en trabajo.
+              </Text>
 
               <TouchableOpacity
                 className="rounded-xl py-4 items-center border border-border"
                 onPress={() => router.back()}
-                disabled={createMutation.isPending}
+                disabled={createMutation.isPending || createCotizacionMutation.isPending}
                 activeOpacity={0.7}
               >
                 <Text className="text-base font-semibold text-foreground">Cancelar</Text>

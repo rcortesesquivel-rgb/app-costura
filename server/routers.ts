@@ -124,6 +124,19 @@ export const appRouter = router({
       .query(({ input, ctx }) => {
         return db.searchClientes(input.query, ctx.user.id);
       }),
+
+    bulkCreate: protectedProcedure
+      .input(z.object({
+        contactos: z.array(z.object({
+          nombreCompleto: z.string().min(1).max(255),
+          telefono: z.string().max(20).optional(),
+          codigoPais: z.string().max(5).optional(),
+          whatsapp: z.string().max(20).optional(),
+        })).min(1).max(200),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        return db.bulkCreateClientes(input.contactos, ctx.user.id);
+      }),
   }),
 
   // ============ MEDIDAS ============
@@ -741,6 +754,82 @@ export const appRouter = router({
         const limit = input?.limit ?? 50;
         const offset = input?.offset ?? 0;
         return db_conn.select().from(db.sugerencias).orderBy(db.desc(db.sugerencias.createdAt)).limit(limit).offset(offset);
+      }),
+  }),
+
+  // ============ COTIZACIONES ============
+  cotizaciones: router({
+    list: protectedProcedure.query(({ ctx }) => {
+      return db.getAllCotizaciones(ctx.user.id);
+    }),
+
+    getById: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .query(({ input, ctx }) => {
+        return db.getCotizacionById(input.id, ctx.user.id);
+      }),
+
+    create: protectedProcedure
+      .input(z.object({
+        clienteId: z.number(),
+        descripcion: z.string().optional(),
+        precioUnitario: z.string().optional(),
+        cantidad: z.number().optional(),
+        impuestos: z.string().optional(),
+        varios: z.string().optional(),
+        categoria: z.enum(["arreglo", "confeccion", "bordado", "sublimado", "otros"]).optional(),
+        urgencia: z.enum(["baja", "media", "alta"]).optional(),
+        fechaEntrega: z.date().optional(),
+        condicionesPago: z.string().optional(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const id = await db.createCotizacion({
+          ...input,
+          userId: ctx.user.id,
+        });
+        return { id };
+      }),
+
+    update: protectedProcedure
+      .input(z.object({
+        id: z.number(),
+        data: z.object({
+          descripcion: z.string().optional(),
+          precioUnitario: z.string().optional(),
+          cantidad: z.number().optional(),
+          impuestos: z.string().optional(),
+          varios: z.string().optional(),
+          categoria: z.enum(["arreglo", "confeccion", "bordado", "sublimado", "otros"]).optional(),
+          urgencia: z.enum(["baja", "media", "alta"]).optional(),
+          fechaEntrega: z.date().optional(),
+          condicionesPago: z.string().optional(),
+          estado: z.enum(["pendiente", "aceptada", "rechazada", "vencida"]).optional(),
+        }),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        await db.updateCotizacion(input.id, ctx.user.id, input.data);
+        return { success: true };
+      }),
+
+    delete: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input, ctx }) => {
+        await db.deleteCotizacion(input.id, ctx.user.id);
+        return { success: true };
+      }),
+
+    convertirEnTrabajo: protectedProcedure
+      .input(z.object({
+        cotizacionId: z.number(),
+        abonoInicial: z.string().optional(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const trabajoId = await db.convertirCotizacionEnTrabajo(
+          input.cotizacionId,
+          ctx.user.id,
+          input.abonoInicial || "0.00"
+        );
+        return { trabajoId };
       }),
   }),
 });

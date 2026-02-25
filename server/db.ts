@@ -13,6 +13,8 @@ import {
   emailsAutorizados,
   sugerencias,
   InsertSugerencia,
+  cotizaciones,
+  InsertCotizacion,
   InsertCliente,
   InsertMedida,
   InsertTrabajo,
@@ -24,7 +26,7 @@ import {
 import { ENV } from "./_core/env";
 
 // Re-export commonly used functions and tables
-export { emailsAutorizados, sugerencias, eq, like, or, desc };
+export { emailsAutorizados, sugerencias, cotizaciones, eq, like, or, desc, and };
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
@@ -171,6 +173,58 @@ export async function searchClientes(query: string, userId: number) {
       )
     )
   );
+}
+
+// ============ IMPORTACIÓN MASIVA DE CLIENTES ============
+
+export async function bulkCreateClientes(
+  contactos: { nombreCompleto: string; telefono?: string; codigoPais?: string; whatsapp?: string; direccion?: string }[],
+  userId: number
+): Promise<{ created: number; skipped: number; duplicados: string[] }> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  // Obtener clientes existentes del usuario para detectar duplicados
+  const existentes = await db.select().from(clientes).where(eq(clientes.userId, userId));
+
+  const existentesPorNombre = new Set(existentes.map(c => c.nombreCompleto.toLowerCase().trim()));
+  const existentesPorTelefono = new Set(
+    existentes.filter(c => c.telefono).map(c => c.telefono!.replace(/\D/g, ""))
+  );
+
+  let created = 0;
+  let skipped = 0;
+  const duplicados: string[] = [];
+
+  for (const contacto of contactos) {
+    const nombreLower = contacto.nombreCompleto.toLowerCase().trim();
+    const telefonoClean = contacto.telefono?.replace(/\D/g, "") || "";
+
+    // Detectar duplicado por nombre exacto o teléfono
+    const esDuplicadoNombre = existentesPorNombre.has(nombreLower);
+    const esDuplicadoTelefono = telefonoClean && existentesPorTelefono.has(telefonoClean);
+
+    if (esDuplicadoNombre || esDuplicadoTelefono) {
+      skipped++;
+      duplicados.push(contacto.nombreCompleto);
+      continue;
+    }
+
+    await db.insert(clientes).values({
+      userId,
+      nombreCompleto: contacto.nombreCompleto.trim(),
+      telefono: contacto.telefono || null,
+      codigoPais: contacto.codigoPais || "+506",
+      whatsapp: contacto.whatsapp || contacto.telefono || null,
+    });
+
+    // Agregar a los sets para detectar duplicados dentro del mismo lote
+    existentesPorNombre.add(nombreLower);
+    if (telefonoClean) existentesPorTelefono.add(telefonoClean);
+    created++;
+  }
+
+  return { created, skipped, duplicados };
 }
 
 // ============ MEDIDAS ============
@@ -501,4 +555,87 @@ export async function deleteAudio(audioId: number, userId: number): Promise<void
   if (!audio.length) throw new Error("Audio no encontrado");
 
   await db.delete(audios).where(eq(audios.id, audioId));
+}
+
+// ============ COTIZACIONES ============
+
+export async function getAllCotizaciones(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return db.select().from(cotizaciones).where(eq(cotizaciones.userId, userId)).orderBy(desc(cotizaciones.createdAt));
+}
+
+export async function getCotizacionById(id: number, userId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  
+  const result = await db.select().from(cotizaciones).where(
+    and(eq(cotizaciones.id, id), eq(cotizaciones.userId, userId))
+  );
+  return result[0] || null;
+}
+
+export async function createCotizacion(data: InsertCotizacion) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const result = await db.insert(cotizaciones).values(data);
+  return Number(result[0].insertId);
+}
+
+export async function updateCotizacion(id: number, userId: number, data: Partial<InsertCotizacion>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(cotizaciones).set(data).where(
+    and(eq(cotizaciones.id, id), eq(cotizaciones.userId, userId))
+  );
+}
+
+export async function deleteCotizacion(id: number, userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.delete(cotizaciones).where(
+    and(eq(cotizaciones.id, id), eq(cotizaciones.userId, userId))
+  );
+}
+
+export async function convertirCotizacionEnTrabajo(cotizacionId: number, userId: number, abonoInicial: string = "0.00") {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const cotizacion = await getCotizacionById(cotizacionId, userId);
+  if (!cotizacion) throw new Error("Cotización no encontrada");
+  if (cotizacion.convertidaEnTrabajoId) throw new Error("Esta cotización ya fue convertida en trabajo");
+  
+  // Crear trabajo a partir de la cotización
+  const trabajoData: InsertTrabajo = {
+    userId,
+    clienteId: cotizacion.clienteId,
+    descripcion: cotizacion.descripcion,
+    precioUnitario: cotizacion.precioUnitario,
+    cantidad: cotizacion.cantidad,
+    impuestos: cotizacion.impuestos,
+    varios: cotizacion.varios,
+    categoria: cotizacion.categoria as any,
+    urgencia: cotizacion.urgencia as any,
+    fechaEntrega: cotizacion.fechaEntrega,
+    abonoInicial: abonoInicial,
+    estado: "recibido",
+    pagado: 0,
+  };
+  
+  const trabajoId = await createTrabajo(trabajoData);
+  
+  // Marcar cotización como aceptada y vincular al trabajo
+  await db.update(cotizaciones).set({
+    estado: "aceptada",
+    convertidaEnTrabajoId: trabajoId,
+  }).where(
+    and(eq(cotizaciones.id, cotizacionId), eq(cotizaciones.userId, userId))
+  );
+  
+  return trabajoId;
 }

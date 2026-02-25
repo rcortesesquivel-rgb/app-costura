@@ -53,6 +53,26 @@ export default function ClientesScreen() {
             <Text className="text-base text-muted">Gestiona tu base de clientes</Text>
           </View>
 
+          {/* Botón Importar Contactos */}
+          <TouchableOpacity
+            className="flex-row items-center gap-3 rounded-2xl p-4 border border-border"
+            style={{ backgroundColor: colors.primary + "10", borderColor: colors.primary + "40" }}
+            onPress={() => {
+              if (Platform.OS !== "web") {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              }
+              router.push("/importar-contactos" as any);
+            }}
+            activeOpacity={0.7}
+          >
+            <IconSymbol name="person.crop.circle.badge.plus" size={28} color={colors.primary} />
+            <View className="flex-1">
+              <Text className="text-base font-semibold" style={{ color: colors.primary }}>Importar Contactos</Text>
+              <Text className="text-xs text-muted">Desde la agenda de tu móvil</Text>
+            </View>
+            <IconSymbol name="chevron.right" size={20} color={colors.primary} />
+          </TouchableOpacity>
+
           {/* Buscador */}
           <View className="bg-surface rounded-2xl border border-border flex-row items-center px-4 py-3">
             <IconSymbol name="magnifyingglass" size={20} color={colors.muted} />

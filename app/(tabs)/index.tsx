@@ -249,6 +249,29 @@ export default function MisTrabajosScreen() {
             </View>
           </View>
 
+          {/* Acceso rápido a Cotizaciones */}
+          <TouchableOpacity
+            style={{
+              backgroundColor: "#FF9500",
+              borderRadius: 16,
+              padding: 14,
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 10,
+            }}
+            onPress={() => {
+              if (Platform.OS !== "web") {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              }
+              router.push("/cotizaciones" as any);
+            }}
+            activeOpacity={0.8}
+          >
+            <IconSymbol name="doc.text.fill" size={20} color="#FFFFFF" />
+            <Text style={{ color: "#FFFFFF", fontWeight: "700", fontSize: 15 }}>Ver Cotizaciones</Text>
+          </TouchableOpacity>
+
           {/* Leyenda de colores de urgencia */}
           <View style={{ flexDirection: "row", gap: 12, alignItems: "center" }}>
             <Text style={{ fontSize: 12, color: colors.muted, fontWeight: "600" }}>Urgencia:</Text>

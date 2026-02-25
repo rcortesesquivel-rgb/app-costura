@@ -255,3 +255,26 @@ export const sugerencias = mysqlTable("sugerencias", {
 
 export type Sugerencia = typeof sugerencias.$inferSelect;
 export type InsertSugerencia = typeof sugerencias.$inferInsert;
+
+// Cotizaciones (presupuestos pendientes de convertir en trabajo)
+export const cotizaciones = mysqlTable("cotizaciones", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  clienteId: int("clienteId").notNull(),
+  descripcion: text("descripcion"),
+  precioUnitario: decimal("precioUnitario", { precision: 12, scale: 2 }).default("0.00"),
+  cantidad: int("cantidad").default(1).notNull(),
+  impuestos: decimal("impuestos", { precision: 12, scale: 2 }).default("0.00"),
+  varios: decimal("varios", { precision: 12, scale: 2 }).default("0.00"),
+  categoria: mysqlEnum("cotizacion_categoria", ["arreglo", "confeccion", "bordado", "sublimado", "otros"]).default("otros").notNull(),
+  urgencia: mysqlEnum("cotizacion_urgencia", ["baja", "media", "alta"]),
+  fechaEntrega: timestamp("fechaEntrega"),
+  condicionesPago: text("condicionesPago"),
+  estado: mysqlEnum("cotizacion_estado", ["pendiente", "aceptada", "rechazada", "vencida"]).default("pendiente").notNull(),
+  convertidaEnTrabajoId: int("convertidaEnTrabajoId"), // ID del trabajo si se convirtió
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Cotizacion = typeof cotizaciones.$inferSelect;
+export type InsertCotizacion = typeof cotizaciones.$inferInsert;

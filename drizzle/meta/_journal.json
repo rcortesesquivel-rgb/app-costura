@@ -225,6 +225,13 @@
       "when": 1771946060728,
       "tag": "0031_high_hellcat",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "5",
+      "when": 1772027982858,
+      "tag": "0032_first_black_panther",
+      "breakpoints": true
     }
   ]
 }

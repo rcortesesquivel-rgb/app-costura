@@ -520,3 +520,15 @@
 - [x] Agregar automáticamente el email a whitelist con 48h de prueba
 - [x] Devolver respuesta 200 al completar
 - [x] Entregar URL exacta del webhook al usuario
+
+## Importación de Contactos del Móvil - 25 Feb 2026
+- [x] Pantalla de importación de contactos con acceso a contactos del móvil
+- [x] Lista con checkboxes para seleccionar contactos a importar
+- [x] Detección de duplicados por email/teléfono al importar
+- [x] Guardar contactos seleccionados en la base de datos de clientes
+
+## Separar Cotizaciones de Trabajos - 25 Feb 2026
+- [x] Al crear trabajo, preguntar si es Trabajo o Cotización
+- [x] Guardar cotizaciones en tabla/estado separado (no afecta números ni estadísticas)
+- [x] Pantalla/sección para ver cotizaciones pendientes
+- [x] Opción de convertir cotización en trabajo real
