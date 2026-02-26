@@ -157,14 +157,14 @@ export default function TrabajoDetalleScreen() {
     try {
       const cotizacionText = generateCotizacionText({
         clienteName: cliente.nombreCompleto,
-        clientePhone: cliente.telefono,
-        clienteEmail: cliente.email,
-        descripcion: trabajo.descripcion,
-        precioUnitario: parseFloat(trabajo.precioUnitario),
+        clientePhone: cliente.telefono ?? undefined,
+        clienteEmail: (cliente as any).email ?? undefined,
+        descripcion: trabajo.descripcion ?? '',
+        precioUnitario: parseFloat(trabajo.precioUnitario ?? '0'),
         cantidad: trabajo.cantidad,
-        impuestos: parseFloat(trabajo.impuestos),
-        varios: parseFloat(trabajo.varios),
-        abonoInicial: parseFloat(trabajo.abonoInicial),
+        impuestos: parseFloat(trabajo.impuestos ?? '0'),
+        varios: parseFloat(trabajo.varios ?? '0'),
+        abonoInicial: parseFloat(trabajo.abonoInicial ?? '0'),
         fechaEntrega: trabajo.fechaEntrega ? new Date(trabajo.fechaEntrega).toLocaleDateString("es-CR") : undefined,
         tallerName: "Taller de Costura",
         condicionesPago: paymentConditions,
@@ -218,7 +218,7 @@ export default function TrabajoDetalleScreen() {
     let msg = `📋 *DATOS PARA FACTURACIÓN*\n\n`;
     msg += `👤 Cliente: ${cliente.nombreCompleto}\n`;
     if (cliente.telefono) msg += `📱 Tel: ${cliente.telefono}\n`;
-    if (cliente.email) msg += `📧 Email: ${cliente.email}\n`;
+    if ((cliente as any).email) msg += `📧 Email: ${(cliente as any).email}\n`;
     msg += `\n🧵 Trabajo #${trabajo.id} - ${cat}\n`;
     msg += `📝 ${trabajo.descripcion}\n`;
     msg += `\n💰 *Desglose:*\n`;

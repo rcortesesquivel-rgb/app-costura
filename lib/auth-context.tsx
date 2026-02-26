@@ -10,6 +10,8 @@ export interface AuthUser {
   name: string | null;
   email: string | null;
   role: "user" | "admin";
+  status?: string | null;
+  expiresAt?: string | null;
 }
 
 export interface AuthContextType {
@@ -81,6 +83,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       name: data.user?.name || name,
       email: data.user?.email || email,
       role: "user",
+      status: data.user?.status || null,
+      expiresAt: data.user?.expiresAt || null,
     };
 
     setUser(newUser);
@@ -115,6 +119,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       name: data.user?.name || null,
       email: data.user?.email || email,
       role: data.user?.role || "user",
+      status: data.user?.status || null,
+      expiresAt: data.user?.expiresAt || null,
     };
 
     setUser(loggedUser);

@@ -45,7 +45,7 @@ export function useAppState(onForeground?: () => void, onBackground?: () => void
  */
 export function useWhatsAppReturn(onReturn: () => void, delay: number = 1000) {
   const hasLeftApp = useRef(false);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useAppState(
     () => {

@@ -3,7 +3,7 @@ import { View, Text, ScrollView, TouchableOpacity, TextInput, Alert, Modal, Plat
 import { ScreenContainer } from "@/components/screen-container";
 import { useColors } from "@/hooks/use-colors";
 import { trpc } from "@/lib/trpc";
-import { formatDate } from "@/lib/utils";
+
 import * as Haptics from "expo-haptics";
 
 export default function WhitelistScreen() {
@@ -26,7 +26,7 @@ export default function WhitelistScreen() {
   });
 
   // Cargar lista
-  const { data: whitelistData, refetch } = trpc.whitelist.list.useQuery();
+  const { data: whitelistData, refetch } = trpc.superAdmin.whitelist.list.useQuery();
 
   useEffect(() => {
     if (whitelistData) {
@@ -35,32 +35,32 @@ export default function WhitelistScreen() {
   }, [whitelistData]);
 
   // Crear
-  const createMutation = trpc.whitelist.create.useMutation({
+  const createMutation = trpc.superAdmin.whitelist.create.useMutation({
     onSuccess: () => {
       Alert.alert("Éxito", "Usuario agregado correctamente");
       resetForm();
       refetch();
     },
-    onError: (err) => Alert.alert("Error", err.message),
+    onError: (err: any) => Alert.alert("Error", err.message),
   });
 
   // Actualizar
-  const updateMutation = trpc.whitelist.update.useMutation({
+  const updateMutation = trpc.superAdmin.whitelist.update.useMutation({
     onSuccess: () => {
       Alert.alert("Éxito", "Usuario actualizado correctamente");
       resetForm();
       refetch();
     },
-    onError: (err) => Alert.alert("Error", err.message),
+    onError: (err: any) => Alert.alert("Error", err.message),
   });
 
   // Eliminar
-  const deleteMutation = trpc.whitelist.delete.useMutation({
+  const deleteMutation = trpc.superAdmin.whitelist.delete.useMutation({
     onSuccess: () => {
       Alert.alert("Éxito", "Usuario eliminado correctamente");
       refetch();
     },
-    onError: (err) => Alert.alert("Error", err.message),
+    onError: (err: any) => Alert.alert("Error", err.message),
   });
 
   const resetForm = () => {

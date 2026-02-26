@@ -19,6 +19,7 @@ export default function ResetPasswordScreen() {
   const [checkoutUrl, setCheckoutUrl] = useState('');
 
   const resetPasswordMutation = trpc.auth.resetPassword.useMutation();
+  const validateTokenMutation = trpc.auth.validateResetToken.useMutation();
 
   // Validar token al cargar la pantalla
   useEffect(() => {
@@ -32,7 +33,7 @@ export default function ResetPasswordScreen() {
 
   const validateToken = async () => {
     try {
-      const result = await trpc.auth.validateResetToken.query({ token: token! });
+      const result = await validateTokenMutation.mutateAsync({ token: token! });
 
       if (result.valid && result.email) {
         setTokenValid(true);

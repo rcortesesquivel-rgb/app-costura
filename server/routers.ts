@@ -1,4 +1,3 @@
-import { z } from "zod";
 import { notificationsRouter } from "./notifications-routes";
 import { COOKIE_NAME } from "../shared/const.js";
 import { getSessionCookieOptions } from "./_core/cookies";
@@ -103,12 +102,13 @@ export const appRouter = router({
 
     validateResetToken: publicProcedure
       .input(z.object({ token: z.string() }))
-      .query(async ({ input }) => {
+      .mutation(async ({ input }) => {
         const result = await passwordResetDb.validateResetToken(input.token);
         return {
           valid: result.valid,
           email: result.email,
           message: result.message,
+          userStatus: result.userStatus,
         };
       }),
 
@@ -685,7 +685,7 @@ export const appRouter = router({
           const db_conn = await db.getDb();
           if (!db_conn) throw new Error("Database not available");
           
-          let query = db_conn.select().from(db.emailsAutorizados);
+          let query = db_conn.select().from(db.emailsAutorizados).$dynamic();
           
           if (input?.search) {
             query = query.where(
