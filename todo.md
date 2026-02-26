@@ -545,3 +545,59 @@
 
 ## Incrustar Video Tutorial en Login - 25 Feb 2026
 - [x] Subir video tutorial al proyecto y mostrarlo en la pantalla de login
+
+## Banner de Instrucciones para Usuarios de Prueba - 26 Feb 2026
+- [x] Crear componente de banner minimizable para usuarios de prueba (48h)
+- [x] Mostrar instrucciones iniciales de uso de la app
+- [x] Agregar opción de contactar a soporte en la sección de ayuda
+
+## Sistema de Recuperación de Contraseña - 26 Feb 2026
+- [x] Crear tabla passwordResets en base de datos
+- [x] Implementar endpoint para solicitar recuperación de contraseña
+- [x] Implementar endpoint para validar token y resetear contraseña
+- [x] Crear pantalla de "Olvidé mi contraseña"
+- [x] Crear pantalla de "Nueva contraseña" con token
+- [x] Agregar botón "Olvidé mi contraseña" en login
+- [x] Validar email registrado vs no registrado
+- [x] Mostrar link de checkout Hotmart para emails no registrados
+- [x] Enviar email de recuperación automáticamente
+
+## Verificación y Contador Regresivo - 26 Feb 2026
+- [x] Crear tests para flujo de recuperación de contraseña
+- [x] Crear componente de contador regresivo (48h) para usuarios de prueba
+- [x] Integrar contador en pantalla principal (dashboard)
+- [x] Contador debe actualizar en tiempo real
+- [x] Contador debe desaparecer cuando se agote (expiresAt <= ahora)
+- [x] Probar flujo end-to-end de recuperación
+
+## Pop-up de Conversión Profesional - 26 Feb 2026
+- [x] Crear componente ConversionPopup con diseño elegante
+- [x] Implementar detector de retorno a la app (on focus/resume)
+- [x] Mostrar pop-up después de enviar WhatsApp (cotizaciones, facturación)
+- [x] Mostrar pop-up después de cambiar estado a "Listo" o "Entregado"
+- [x] Incluir nombre del usuario en el título
+- [x] Mostrar información del sorteo (Tablet + Meses gratis)
+- [x] Botón "Activar mi Membresía por $12" → Checkout Hotmart
+- [x] Diseño: dorado/naranja sobre fondo azul marino
+- [x] Botón "Cerrar" pequeño y discreto
+- [x] Mostrar contraste de precios: $12/mes, $120/año, $597 vitalicia
+
+## Corrección Flujo Recuperación - 26 Feb 2026
+- [x] Modificar forgotPassword para retornar estado de usuario (no existe, prueba vencida, activo)
+- [x] Email NO existe → Landing: https://costuraapp-matbtw2g.manus.space/
+- [x] Email existe + prueba vencida → Checkout: https://pay.hotmart.com/T104497671V
+- [x] Email existe + activo → Generar token y permitir reset
+- [x] Actualizar forgot-password.tsx con lógica correcta
+- [x] Actualizar reset-password.tsx para validar estado antes de permitir cambio
+- [x] Guardar checkpoint funcional
+
+## Corrección de Errores F12 - 26 Feb 2026
+- [x] Error 500 → Ahora retorna 401 correctamente (usuario no autenticado)
+- [x] Errores "Unexpected text node" → Corregido Pressable className→style en todos los componentes nuevos
+- [x] Service Worker cache error → Es del proxy de Manus, no del código
+- [x] Verificar forgot-password funciona end-to-end (email no registrado→landing, prueba vencida→checkout, activo→token)
+- [x] Verificar reset-password funciona end-to-end
+- [x] Verificar conversion-popup funciona correctamente
+- [x] Verificar trial-countdown funciona correctamente
+- [x] password-reset-db.ts corregido: busca en emailsAutorizados (no users) para status/expiresAt
+- [ ] Guardar checkpoint funcional

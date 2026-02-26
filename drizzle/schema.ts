@@ -278,3 +278,16 @@ export const cotizaciones = mysqlTable("cotizaciones", {
 
 export type Cotizacion = typeof cotizaciones.$inferSelect;
 export type InsertCotizacion = typeof cotizaciones.$inferInsert;
+
+// Tabla de recuperación de contraseña
+export const passwordResets = mysqlTable("passwordResets", {
+  id: int("id").autoincrement().primaryKey(),
+  email: varchar("email", { length: 320 }).notNull(),
+  token: varchar("token", { length: 255 }).notNull().unique(),
+  expiresAt: timestamp("expiresAt").notNull(),
+  usedAt: timestamp("usedAt"), // NULL si no ha sido usado
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type PasswordReset = typeof passwordResets.$inferSelect;
+export type InsertPasswordReset = typeof passwordResets.$inferInsert;

@@ -9,12 +9,15 @@ import * as adminDb from "./admin-db";
 import * as superAdminDb from "./superadmin-db";
 import * as notificationsDb from "./notifications-db";
 import { storagePut } from "./storage";
+import * as passwordResetDb from "./password-reset-db";
+import { z } from "zod";
+import { TRPCError } from "@trpc/server";
 
 // Procedimiento protegido que requiere autenticación
 const protectedProcedure = publicProcedure.use(async (opts) => {
   const user = opts.ctx.user;
   if (!user || !user.id) {
-    throw new Error("Unauthorized: User not authenticated");
+    throw new TRPCError({ code: "UNAUTHORIZED", message: "Unauthorized: User not authenticated" });
   }
   return opts.next({
     ctx: {
@@ -28,7 +31,7 @@ const protectedProcedure = publicProcedure.use(async (opts) => {
 const adminProcedure = publicProcedure.use(async (opts) => {
   const user = opts.ctx.user;
   if (!user || !user.id || user.role !== "admin") {
-    throw new Error("Unauthorized: Admin access required");
+    throw new TRPCError({ code: "UNAUTHORIZED", message: "Unauthorized: Admin access required" });
   }
   return opts.next({
     ctx: {
@@ -42,7 +45,7 @@ const adminProcedure = publicProcedure.use(async (opts) => {
 const superAdminProcedure = publicProcedure.use(async (opts) => {
   const user = opts.ctx.user;
   if (!user || !user.email || !superAdminDb.isSuperAdmin(user.email)) {
-    throw new Error("Unauthorized: Super admin access required");
+    throw new TRPCError({ code: "FORBIDDEN", message: "Unauthorized: Super admin access required" });
   }
   return opts.next({
     ctx: {
@@ -64,6 +67,60 @@ export const appRouter = router({
         success: true,
       } as const;
     }),
+
+    forgotPassword: publicProcedure
+      .input(z.object({ email: z.string().email() }))
+      .mutation(async ({ input }) => {
+        const result = await passwordResetDb.requestPasswordReset(input.email);
+        
+        if (!result.success) {
+          // Determinar qué URL mostrar según el estado
+          let redirectUrl = "";
+          if (result.userStatus === 'not_found') {
+            // Usuario no existe → Landing page
+            redirectUrl = "https://costuraapp-matbtw2g.manus.space/";
+          } else if (result.userStatus === 'trial_expired') {
+            // Prueba vencida → Checkout
+            redirectUrl = process.env.HOTMART_CHECKOUT_URL || "https://pay.hotmart.com/T104497671V";
+          }
+          
+          return {
+            success: false,
+            message: result.message,
+            userStatus: result.userStatus,
+            redirectUrl,
+          };
+        }
+        
+        return {
+          success: true,
+          message: "Se envió un enlace de recuperación a tu email",
+          userStatus: result.userStatus,
+          token: result.token,
+          resetLink: result.resetLink,
+        };
+      }),
+
+    validateResetToken: publicProcedure
+      .input(z.object({ token: z.string() }))
+      .query(async ({ input }) => {
+        const result = await passwordResetDb.validateResetToken(input.token);
+        return {
+          valid: result.valid,
+          email: result.email,
+          message: result.message,
+        };
+      }),
+
+    resetPassword: publicProcedure
+      .input(z.object({ token: z.string() }))
+      .mutation(async ({ input }) => {
+        const result = await passwordResetDb.resetPassword(input.token);
+        return {
+          success: result.success,
+          message: result.message,
+        };
+      }),
   }),
 
   // ============ CLIENTES ============

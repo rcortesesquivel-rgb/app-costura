@@ -5,6 +5,8 @@ import * as Haptics from "expo-haptics";
 
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { TrialInstructionsBanner } from "@/components/trial-instructions-banner";
+import { TrialCountdown } from "@/components/trial-countdown";
 import { trpc } from "@/lib/trpc";
 import { useColors } from "@/hooks/use-colors";
 import { useAuth } from "@/lib/auth-context";
@@ -214,8 +216,14 @@ export default function MisTrabajosScreen() {
     );
   };
 
+  // Detectar si el usuario está en prueba (status === 'prueba')
+  const isTrialUser = user?.status === 'prueba';
+
   return (
     <ScreenContainer className="bg-background">
+      {/* Banner de instrucciones para usuarios de prueba */}
+      <TrialInstructionsBanner isTrialUser={isTrialUser} />
+      
       <ScrollView
         contentContainerStyle={{ flexGrow: 1, paddingBottom: 80 }}
         refreshControl={
@@ -223,6 +231,8 @@ export default function MisTrabajosScreen() {
         }
       >
         <View className="p-6 gap-6">
+          {/* Contador regresivo para usuarios de prueba */}
+          <TrialCountdown expiresAt={user?.expiresAt ? new Date(user.expiresAt) : null} isTrialUser={isTrialUser} />
           {/* Encabezado */}
           <View className="gap-2">
             <Text className="text-3xl font-bold text-foreground">Mis Trabajos</Text>

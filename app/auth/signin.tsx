@@ -238,23 +238,44 @@ export default function SignInScreen() {
                 {isLoading ? "Iniciando sesión..." : "Iniciar sesión"}
               </button>
 
-              <div style={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8 }}>
-                <span style={{ fontSize: 14, color: colors.muted }}>¿No tienes cuenta?</span>
-                <button
-                  onClick={() => router.replace("/auth/signup" as any)}
-                  style={{
-                    background: "none",
-                    border: "none",
-                    color: colors.primary,
-                    fontSize: 14,
-                    fontWeight: "600",
-                    cursor: "pointer",
-                    padding: 0,
-                    fontFamily: "inherit",
-                  }}
-                >
-                  Regístrate aquí
-                </button>
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                <div style={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8 }}>
+                  <span style={{ fontSize: 14, color: colors.muted }}>¿Olvidaste tu contraseña?</span>
+                  <button
+                    onClick={() => router.push("/auth/forgot-password" as any)}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      color: colors.primary,
+                      fontSize: 14,
+                      fontWeight: "600",
+                      cursor: "pointer",
+                      padding: 0,
+                      fontFamily: "inherit",
+                    }}
+                  >
+                    Recuperar aquí
+                  </button>
+                </div>
+                
+                <div style={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8 }}>
+                  <span style={{ fontSize: 14, color: colors.muted }}>¿No tienes cuenta?</span>
+                  <button
+                    onClick={() => router.replace("/auth/signup" as any)}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      color: colors.primary,
+                      fontSize: 14,
+                      fontWeight: "600",
+                      cursor: "pointer",
+                      padding: 0,
+                      fontFamily: "inherit",
+                    }}
+                  >
+                    Regístrate aquí
+                  </button>
+                </div>
               </div>
             </div>
           </View>
@@ -353,17 +374,32 @@ export default function SignInScreen() {
               backgroundColor={colors.primary}
             />
 
-            <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8 }}>
-              <Text className="text-sm text-muted">¿No tienes cuenta?</Text>
-              <Text
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  router.replace("/auth/signup" as any);
-                }}
-                style={{ color: colors.primary, fontSize: 14, fontWeight: "600" }}
-              >
-                Regístrate aquí
-              </Text>
+            <View style={{ flexDirection: "column", gap: 12 }}>
+              <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8 }}>
+                <Text className="text-sm text-muted">¿Olvidaste tu contraseña?</Text>
+                <Text
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    router.push("/auth/forgot-password" as any);
+                  }}
+                  style={{ color: colors.primary, fontSize: 14, fontWeight: "600" }}
+                >
+                  Recuperar aquí
+                </Text>
+              </View>
+              
+              <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8 }}>
+                <Text className="text-sm text-muted">¿No tienes cuenta?</Text>
+                <Text
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    router.replace("/auth/signup" as any);
+                  }}
+                  style={{ color: colors.primary, fontSize: 14, fontWeight: "600" }}
+                >
+                  Regístrate aquí
+                </Text>
+              </View>
             </View>
           </View>
         </ScrollView>

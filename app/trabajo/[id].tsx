@@ -15,6 +15,8 @@ import { AudioRecorderWidget } from "@/components/audio-recorder";
 import { useAuth } from "@/lib/auth-context";
 import { generateCotizacionText } from "@/lib/generate-cotizacion-text";
 import { PaymentConditionsModal } from "@/components/payment-conditions-modal";
+import { ConversionPopup } from "@/components/conversion-popup";
+import { useWhatsAppReturn, useWindowFocus } from "@/hooks/use-app-state";
 
 
 const ESTADOS_ORDEN = ["recibido", "cortando", "cosiendo", "bordado_personalizado", "listo", "entregado"] as const;
@@ -62,6 +64,24 @@ export default function TrabajoDetalleScreen() {
   const [showFacturacionModal, setShowFacturacionModal] = useState(false);
   const [contadorWhatsApp, setContadorWhatsApp] = useState("");
   const [mensajeFacturacion, setMensajeFacturacion] = useState("");
+  const [showConversionPopup, setShowConversionPopup] = useState(false);
+  const [shouldShowPopupOnReturn, setShouldShowPopupOnReturn] = useState(false);
+
+  // Detectar retorno de WhatsApp
+  useWhatsAppReturn(() => {
+    if (shouldShowPopupOnReturn) {
+      setShowConversionPopup(true);
+      setShouldShowPopupOnReturn(false);
+    }
+  });
+
+  // Detectar focus en web
+  useWindowFocus(() => {
+    if (shouldShowPopupOnReturn) {
+      setShowConversionPopup(true);
+      setShouldShowPopupOnReturn(false);
+    }
+  });
 
   const { data: trabajo, isLoading: loadingTrabajo, refetch } = trpc.trabajos.getById.useQuery({ id: trabajoId });
   const { data: cliente } = trpc.clientes.getById.useQuery(
@@ -177,6 +197,9 @@ export default function TrabajoDetalleScreen() {
     const url = `https://wa.me/${telLimpio}?text=${encodeURIComponent(cotizacionGenerada)}`;
     Linking.openURL(url);
     setShowCotizacionModal(false);
+    
+    // Marcar para mostrar pop-up cuando regrese
+    setShouldShowPopupOnReturn(true);
   };
 
   const generarMensajeFacturacion = () => {
@@ -235,6 +258,9 @@ export default function TrabajoDetalleScreen() {
     const url = `https://wa.me/${telLimpio}?text=${encodeURIComponent(mensaje)}`;
     Linking.openURL(url);
     setShowFacturacionModal(false);
+    
+    // Marcar para mostrar pop-up cuando regrese
+    setShouldShowPopupOnReturn(true);
   };
 
   const handleCambiarEstado = (nuevoEstado: string) => {
@@ -251,6 +277,15 @@ export default function TrabajoDetalleScreen() {
       `¿Estás seguro de cambiar a ${ESTADO_LABELS[nuevoEstado] || nuevoEstado}?`,
       () => {
         doUpdate();
+        
+        // Mostrar pop-up cuando se cambia a "listo" o "entregado"
+        if (nuevoEstado === "listo" || nuevoEstado === "entregado") {
+          setTimeout(() => {
+            setShouldShowPopupOnReturn(true);
+            setShowConversionPopup(true);
+          }, 800);
+        }
+        
         if (nuevoEstado === "listo" && cliente) {
           setTimeout(() => {
             confirmAction(
@@ -308,6 +343,9 @@ export default function TrabajoDetalleScreen() {
 
     const url = `https://wa.me/${telLimpio}?text=${encodeURIComponent(mensaje)}`;
     Linking.openURL(url);
+    
+    // Marcar para mostrar pop-up cuando regrese
+    setShouldShowPopupOnReturn(true);
   };
 
   const handleCompartirRecibo = () => {
@@ -319,6 +357,9 @@ export default function TrabajoDetalleScreen() {
     const mensaje = `Hola ${cliente.nombreCompleto}, aquí le paso su recibo: ${reciboUrl}`;
     const url = `https://wa.me/${telLimpio}?text=${encodeURIComponent(mensaje)}`;
     Linking.openURL(url);
+    
+    // Marcar para mostrar pop-up cuando regrese
+    setShouldShowPopupOnReturn(true);
   };
 
   const handleVerRecibo = () => {
@@ -848,6 +889,22 @@ export default function TrabajoDetalleScreen() {
           </View>
         </View>
       </Modal>
+
+      {/* Pop-up de conversión */}
+      <ConversionPopup
+        visible={showConversionPopup}
+        onClose={() => setShowConversionPopup(false)}
+        userName={user?.name || "Costurera"}
+        onActivate={() => {
+          setShowConversionPopup(false);
+          const checkoutUrl = process.env.EXPO_PUBLIC_HOTMART_CHECKOUT_URL || "https://pay.hotmart.com/T104497671V";
+          if (Platform.OS === "web") {
+            window.open(checkoutUrl, "_blank");
+          } else {
+            Linking.openURL(checkoutUrl);
+          }
+        }}
+      />
     </ScreenContainer>
   );
 }

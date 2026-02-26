@@ -232,6 +232,13 @@
       "when": 1772027982858,
       "tag": "0032_first_black_panther",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "5",
+      "when": 1772125894599,
+      "tag": "0033_married_squadron_supreme",
+      "breakpoints": true
     }
   ]
 }
