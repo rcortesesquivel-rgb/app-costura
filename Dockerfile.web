@@ -1,15 +1,34 @@
+FROM node:22-alpine AS builder
+
+WORKDIR /app
+
+# Instalar pnpm
+RUN corepack enable && corepack prepare pnpm@9.12.0 --activate
+
+# Copiar archivos de dependencias
+COPY package.json pnpm-lock.yaml ./
+
+# Instalar dependencias
+RUN pnpm install --frozen-lockfile
+
+# Copiar el resto del codigo fuente
+COPY . .
+
+# Generar el build web con la URL del backend de Railway
+ARG EXPO_PUBLIC_API_BASE_URL
+ENV EXPO_PUBLIC_API_BASE_URL=${EXPO_PUBLIC_API_BASE_URL}
+
+RUN npx expo export --platform web
+
+# Stage de produccion - servir archivos estaticos
 FROM node:22-alpine
 
 WORKDIR /app
 
-# Copiar el dist pre-generado
-COPY dist ./dist
-
-# Instalar un servidor web simple
 RUN npm install -g serve
 
-# Exponer puerto
+COPY --from=builder /app/dist ./dist
+
 EXPOSE 3000
 
-# Servir la PWA
 CMD ["serve", "-s", "dist", "-l", "3000"]
