@@ -6,7 +6,6 @@
   },
   "deploy": {
     "numReplicas": 1,
-    "startCommand": "node dist/index.js",
     "restartPolicyMaxRetries": 10,
     "restartPolicyWindowMs": 60000
   },
