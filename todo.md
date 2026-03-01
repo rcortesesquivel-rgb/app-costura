@@ -615,9 +615,17 @@
 - [x] Health endpoint respondiendo {"ok":true}
 - [x] Actualizar EXPO_PUBLIC_API_BASE_URL a URL de Railway
 - [x] Test de conexión al backend de Railway pasando (3/3)
-- [ ] Configurar DNS para miasistentedecostura.com (pendiente del usuario)
+- [x] Configurar DNS para www.miasistendedecostura.com en Namecheap
 
-## Desplegar PWA en Vercel con dominio propio - 1 Mar 2026
-- [ ] Desplegar PWA en Vercel
-- [ ] Configurar dominio miasistentedecostura.com en Vercel
-- [ ] Verificar PWA funciona correctamente con backend de Railway
+## Desplegar PWA en Railway con dominio propio - 1 Mar 2026
+- [x] Crear servicio tender-magic en Railway con Dockerfile.web
+- [x] Configurar dominio www.miasistendedecostura.com en Railway
+- [x] Configurar DNS CNAME y TXT en Namecheap
+- [x] PWA cargando correctamente en https://www.miasistendedecostura.com
+
+## Correcciones post-deploy PWA
+- [x] Agregar rcortesesquivel@gmail.com a la whitelist en BD de Railway
+- [x] Corregir fuente MaterialIcons no incluida en deploy PWA (iconos no renderizaban)
+- [x] Agregar dist/assets/node_modules a git (excepción en .gitignore)
+- [x] Configurar rcortesesquivel@gmail.com como Super Admin por defecto
+- [x] Asignar rol admin automáticamente al email del Super Admin en login
