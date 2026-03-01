@@ -5,11 +5,14 @@ WORKDIR /app
 # Instalar pnpm
 RUN corepack enable && corepack prepare pnpm@9.12.0 --activate
 
+# Configurar pnpm para hoist todas las dependencias (necesario para NativeWind/css-interop)
+RUN echo "shamefully-hoist=true" > .npmrc
+
 # Copiar archivos de dependencias
 COPY package.json pnpm-lock.yaml ./
 
-# Instalar dependencias
-RUN pnpm install --frozen-lockfile
+# Instalar dependencias con hoisting completo
+RUN pnpm install --no-frozen-lockfile
 
 # Copiar el resto del codigo fuente
 COPY . .
