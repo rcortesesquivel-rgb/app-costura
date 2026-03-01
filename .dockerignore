@@ -1,6 +1,6 @@
 node_modules
 npm-debug.log
-dist
+# dist - needed for Dockerfile.web PWA deployment
 .git
 .gitignore
 README.md
