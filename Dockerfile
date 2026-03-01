@@ -48,12 +48,7 @@ RUN echo '#!/bin/sh' > /app/entrypoint.sh && \
     echo 'exec node dist/index.js' >> /app/entrypoint.sh && \
     chmod +x /app/entrypoint.sh
 
-# Expose port
-EXPOSE 3000
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:3000/api/health', (r) => {if (r.statusCode !== 200) throw new Error(r.statusCode)})"
+# Railway sets PORT dynamically, no need for EXPOSE or HEALTHCHECK
 
 # Start with entrypoint that runs migrations first
 CMD ["/app/entrypoint.sh"]
