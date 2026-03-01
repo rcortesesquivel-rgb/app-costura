@@ -1,1 +1,1 @@
-SELECT 1;
+-- Migration 0014 (placeholder)

@@ -53,12 +53,6 @@ async function startServer() {
     next();
   });
 
-  // Request logging for debugging
-  app.use((req, _res, next) => {
-    console.log(`[http] ${req.method} ${req.url}`);
-    next();
-  });
-
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
 
@@ -67,7 +61,6 @@ async function startServer() {
   app.get("/api/health", (_req, res) => {
     res.json({ ok: true, timestamp: Date.now() });
   });
-
 
   // Registrar rutas de webhooks
   app.use("/api/webhooks", webhookRoutes);
@@ -85,8 +78,8 @@ async function startServer() {
 
   const preferredPort = parseInt(process.env.PORT || "3000");
   
-  server.listen(preferredPort, "0.0.0.0", () => {
-    console.log(`[api] server listening on port ${preferredPort} on 0.0.0.0`);
+  server.listen(preferredPort, () => {
+    console.log(`[api] server listening on port ${preferredPort}`);
   });
   
   server.on("error", (err: any) => {

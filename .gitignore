@@ -2,12 +2,10 @@
 
 # dependencies
 node_modules/
-# But include dist/assets/node_modules (bundled fonts and assets for PWA)
-!dist/assets/node_modules/
 
 # Expo
 .expo/
-# dist/ - included for Railway PWA deployment
+dist/
 web-build/
 expo-env.d.ts
 
