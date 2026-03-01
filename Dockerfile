@@ -48,7 +48,8 @@ RUN echo '#!/bin/sh' > /app/entrypoint.sh && \
     echo 'exec node dist/index.js' >> /app/entrypoint.sh && \
     chmod +x /app/entrypoint.sh
 
-# Railway sets PORT dynamically, no need for EXPOSE or HEALTHCHECK
+# Expose the port for Railway's proxy
+EXPOSE 3000
 
 # Start with entrypoint that runs migrations first
 CMD ["/app/entrypoint.sh"]
