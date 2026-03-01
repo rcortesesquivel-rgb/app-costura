@@ -78,8 +78,8 @@ async function startServer() {
 
   const preferredPort = parseInt(process.env.PORT || "3000");
   
-  server.listen(preferredPort, () => {
-    console.log(`[api] server listening on port ${preferredPort}`);
+  server.listen(preferredPort, "0.0.0.0", () => {
+    console.log(`[api] server listening on port ${preferredPort} on 0.0.0.0`);
   });
   
   server.on("error", (err: any) => {
