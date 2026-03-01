@@ -615,29 +615,9 @@
 - [x] Health endpoint respondiendo {"ok":true}
 - [x] Actualizar EXPO_PUBLIC_API_BASE_URL a URL de Railway
 - [x] Test de conexión al backend de Railway pasando (3/3)
-- [x] Configurar DNS para www.miasistendedecostura.com en Namecheap
+- [ ] Configurar DNS para miasistentedecostura.com (pendiente del usuario)
 
-## Desplegar PWA en Railway con dominio propio - 1 Mar 2026
-- [x] Crear servicio tender-magic en Railway con Dockerfile.web
-- [x] Configurar dominio www.miasistendedecostura.com en Railway
-- [x] Configurar DNS CNAME y TXT en Namecheap
-- [x] PWA cargando correctamente en https://www.miasistendedecostura.com
-
-## Correcciones post-deploy PWA
-- [x] Agregar rcortesesquivel@gmail.com a la whitelist en BD de Railway
-- [x] Corregir fuente MaterialIcons no incluida en deploy PWA (iconos no renderizaban)
-- [x] Agregar dist/assets/node_modules a git (excepción en .gitignore)
-- [x] Configurar rcortesesquivel@gmail.com como Super Admin por defecto
-- [x] Asignar rol admin automáticamente al email del Super Admin en login
-
-
-## Panel de Administración de Whitelist - 1 Mar 2026
-- [x] Crear endpoints tRPC: whitelist.list, whitelist.create, whitelist.update, whitelist.delete
-- [x] Crear pantalla /app/(admin)/whitelist.tsx en Super Admin
-- [x] Tabla con columnas: Email, Nombre, Plan, Status, Expira en
-- [x] Botón "Agregar Usuario" con modal de formulario
-- [x] Botón "Editar" por fila con modal pre-cargado
-- [x] Botón "Eliminar" con confirmación
-- [x] Filtro por status (prueba/pagado)
-- [x] Buscador por email o nombre
-- [ ] Verificar que funciona correctamente después del login
+## Desplegar PWA en Vercel con dominio propio - 1 Mar 2026
+- [ ] Desplegar PWA en Vercel
+- [ ] Configurar dominio miasistentedecostura.com en Vercel
+- [ ] Verificar PWA funciona correctamente con backend de Railway

@@ -2,7 +2,7 @@ import { eq, desc, like, and } from "drizzle-orm";
 import { users, imagenes } from "../drizzle/schema";
 import { getDb } from "./db";
 
-const SUPER_ADMIN_EMAIL = process.env.SUPER_ADMIN_EMAIL || "rcortesesquivel@gmail.com";
+const SUPER_ADMIN_EMAIL = process.env.SUPER_ADMIN_EMAIL || "admin@example.com";
 
 // ============ VALIDACIÓN ============
 
