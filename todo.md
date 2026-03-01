@@ -629,3 +629,15 @@
 - [x] Agregar dist/assets/node_modules a git (excepción en .gitignore)
 - [x] Configurar rcortesesquivel@gmail.com como Super Admin por defecto
 - [x] Asignar rol admin automáticamente al email del Super Admin en login
+
+
+## Panel de Administración de Whitelist - 1 Mar 2026
+- [x] Crear endpoints tRPC: whitelist.list, whitelist.create, whitelist.update, whitelist.delete
+- [x] Crear pantalla /app/(admin)/whitelist.tsx en Super Admin
+- [x] Tabla con columnas: Email, Nombre, Plan, Status, Expira en
+- [x] Botón "Agregar Usuario" con modal de formulario
+- [x] Botón "Editar" por fila con modal pre-cargado
+- [x] Botón "Eliminar" con confirmación
+- [x] Filtro por status (prueba/pagado)
+- [x] Buscador por email o nombre
+- [ ] Verificar que funciona correctamente después del login
