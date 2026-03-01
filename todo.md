@@ -616,3 +616,8 @@
 - [x] Actualizar EXPO_PUBLIC_API_BASE_URL a URL de Railway
 - [x] Test de conexión al backend de Railway pasando (3/3)
 - [ ] Configurar DNS para miasistentedecostura.com (pendiente del usuario)
+
+## Desplegar PWA en Vercel con dominio propio - 1 Mar 2026
+- [ ] Desplegar PWA en Vercel
+- [ ] Configurar dominio miasistentedecostura.com en Vercel
+- [ ] Verificar PWA funciona correctamente con backend de Railway
