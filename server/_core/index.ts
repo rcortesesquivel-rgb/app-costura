@@ -53,6 +53,12 @@ async function startServer() {
     next();
   });
 
+  // Request logging for debugging
+  app.use((req, _res, next) => {
+    console.log(`[http] ${req.method} ${req.url}`);
+    next();
+  });
+
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
 
