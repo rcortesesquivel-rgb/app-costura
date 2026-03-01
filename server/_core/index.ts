@@ -68,6 +68,36 @@ async function startServer() {
     res.json({ ok: true, timestamp: Date.now() });
   });
 
+  // Endpoint temporal de seed para insertar admin en whitelist
+  app.post("/api/seed-admin", async (req, res) => {
+    const seedKey = req.body?.seedKey;
+    if (seedKey !== "costura-seed-2026-init") {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    try {
+      const { getDb, emailsAutorizados } = await import("../db");
+      const db = await getDb();
+      if (!db) {
+        res.status(500).json({ error: "Database not available" });
+        return;
+      }
+      // Insert admin email into whitelist (sin expiresAt = acceso permanente)
+      const { sql } = await import("drizzle-orm");
+      await db.execute(sql`INSERT INTO emailsAutorizados (email, nombre, plan, status, expiresAt, createdAt) VALUES ('rcortesesquivel@gmail.com', 'Administrador Principal', 'lifetime', 'pagado', NULL, NOW()) ON DUPLICATE KEY UPDATE plan = 'lifetime', status = 'pagado', nombre = 'Administrador Principal', expiresAt = NULL`);
+
+      res.json({ success: true, message: "Admin email added to whitelist" });
+    } catch (error: any) {
+      // If duplicate, that's fine
+      if (error?.message?.includes("Duplicate") || error?.code === "ER_DUP_ENTRY") {
+        res.json({ success: true, message: "Admin email already exists in whitelist" });
+      } else {
+        console.error("[Seed] Error:", error);
+        res.status(500).json({ error: error?.message || "Failed to seed admin" });
+      }
+    }
+  });
+
   // Registrar rutas de webhooks
   app.use("/api/webhooks", webhookRoutes);
   
