@@ -62,6 +62,7 @@ const MAPPING = {
   "square.and.arrow.down": "file-download",
   "arrow.triangle.2.circlepath": "sync",
   "tag.fill": "label",
+  "person.badge.plus": "person-add-alt",
 } as IconMapping;
 
 /**

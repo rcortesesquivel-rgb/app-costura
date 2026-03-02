@@ -601,3 +601,5 @@
 - [x] Verificar trial-countdown funciona correctamente
 - [x] password-reset-db.ts corregido: busca en emailsAutorizados (no users) para status/expiresAt
 - [ ] Guardar checkpoint funcional
+
+- [x] Agregar botón "Gestión de Whitelist / Pruebas 48h" en pantalla Admin para navegar a whitelist

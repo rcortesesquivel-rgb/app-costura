@@ -1,6 +1,7 @@
 import { ScrollView, Text, View, TouchableOpacity, Alert, ActivityIndicator, RefreshControl, Platform } from "react-native";
 import * as Haptics from "expo-haptics";
 import { useState } from "react";
+import { useRouter } from "expo-router";
 import { confirmAction, confirmDestructive, showAlert } from "@/lib/confirm";
 
 import { ScreenContainer } from "@/components/screen-container";
@@ -12,6 +13,7 @@ import { trpc } from "@/lib/trpc";
 export default function AdminScreen() {
   const colors = useColors();
   const { user } = useAuth();
+  const router = useRouter();
   const [refreshing, setRefreshing] = useState(false);
 
   if (!user || user.role !== "admin") {
@@ -63,6 +65,32 @@ export default function AdminScreen() {
             <Text className="text-3xl font-bold text-foreground">Gestión de Usuarios</Text>
             <Text className="text-base text-muted">Administra suscripciones y accesos</Text>
           </View>
+
+          {/* Boton Whitelist / Pruebas 48h */}
+          <TouchableOpacity
+            onPress={() => {
+              if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              router.push("/(admin)/whitelist" as any);
+            }}
+            style={{
+              backgroundColor: colors.primary,
+              borderRadius: 16,
+              padding: 16,
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 12,
+            }}
+            activeOpacity={0.8}
+          >
+            <View style={{ backgroundColor: "rgba(255,255,255,0.2)", borderRadius: 12, padding: 10 }}>
+              <IconSymbol name="person.badge.plus" size={24} color="#FFF" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={{ color: "#FFF", fontSize: 16, fontWeight: "700" }}>Whitelist / Pruebas 48h</Text>
+              <Text style={{ color: "rgba(255,255,255,0.8)", fontSize: 13, marginTop: 2 }}>Agregar pruebas y gestionar accesos</Text>
+            </View>
+            <IconSymbol name="chevron.right" size={20} color="rgba(255,255,255,0.6)" />
+          </TouchableOpacity>
 
           {/* Resumen */}
           <View className="flex-row gap-3">
